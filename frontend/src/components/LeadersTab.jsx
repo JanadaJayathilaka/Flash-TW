@@ -94,25 +94,29 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
           className={`subtab-option ${sortMode === 'storesBySales' ? 'active' : ''}`}
           onClick={() => setSortMode('storesBySales')}
         >
-          <span style={{ fontSize: '18px' }}>💵</span> Top 10 by $
+          <div className="subtab-icon-wrap" style={{ backgroundColor: '#4caf50', color: '#fff', borderRadius: '4px' }}>$</div>
+          <span>Top 10 Locations by<br/>$ Sales Lift</span>
         </button>
         <button 
           className={`subtab-option ${sortMode === 'storesByLift' ? 'active' : ''}`}
           onClick={() => setSortMode('storesByLift')}
         >
-          <span style={{ fontSize: '18px' }}>📈</span> Top 10 by %
+          <div className="subtab-icon-wrap" style={{ backgroundColor: '#26a69a', color: '#fff', borderRadius: '50%' }}>%</div>
+          <span>Top 10 Locations by<br/>% Sales Lift</span>
         </button>
         <button 
           className={`subtab-option ${sortMode === 'territoryBySales' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryBySales')}
         >
-          <span style={{ fontSize: '18px' }}>🗺️</span> Top Territories by $
+          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>account_balance</i></div>
+          <span>Locations by<br/>$ Sales Lift</span>
         </button>
         <button 
           className={`subtab-option ${sortMode === 'territoryByLift' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryByLift')}
         >
-          <span style={{ fontSize: '18px' }}>📊</span> Top Territories by %
+          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>bar_chart</i></div>
+          <span>Locations by<br/>% Sales Lift</span>
         </button>
       </div>
 
@@ -132,11 +136,11 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
             <div key={`${row.STORE_ID || row.TERRITORY}-${rank}`} className="leader-card" style={{ backgroundColor: color }}>
               {/* Header */}
               <div className="card-top">
-                <div className="card-rank">#{rank}</div>
+                <div className="card-rank">{rank}</div>
                 {rank <= 4 && (
                   <div className="trophy-badge" style={{ backgroundColor: TROPHY_COLORS[rank - 1] }}>
-                    <span style={{ fontSize: '14px' }}>🏆</span>
-                    <span style={{ marginTop: '-2px' }}>{TROPHY_LABELS[rank - 1]}</span>
+                    <span style={{ fontSize: '16px' }}>🏆</span>
+                    <span style={{ marginTop: '-2px', fontSize: '10px' }}>{TROPHY_LABELS[rank - 1]}</span>
                   </div>
                 )}
               </div>
@@ -148,7 +152,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
                 </div>
                 {!isTerritory && row.TERRITORY && (
                   <div className="card-subtitle">
-                    Territory: <strong>{row.TERRITORY}</strong>
+                    Location: <strong>{row.REGION_ID} {row.TERRITORY}</strong>
                   </div>
                 )}
               </div>
@@ -175,7 +179,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
                   ${formatNumber(ly)} / ${formatNumber(cy)}
                 </div>
                 <div className="lift-pill" style={{ color: lift >= 0 ? '#15803d' : '#dc2626' }}>
-                  {sortMode.includes('Lift') ? `Lift: ${formatPercent(lift)}` : `Sales: $${formatNumber(cy)}`}
+                  {formatPercent(lift)}
                 </div>
               </div>
 

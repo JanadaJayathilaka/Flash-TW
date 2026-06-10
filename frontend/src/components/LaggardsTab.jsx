@@ -90,25 +90,29 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
           className={`subtab-option ${sortMode === 'lowestSales' ? 'active' : ''}`}
           onClick={() => setSortMode('lowestSales')}
         >
-          <span style={{ fontSize: '18px' }}>📉</span> Low 10 by $
+          <div className="subtab-icon-wrap" style={{ backgroundColor: '#4caf50', color: '#fff', borderRadius: '4px' }}>$</div>
+          <span>Bottom 10 Location by<br/>$ Sales Drop</span>
         </button>
         <button 
           className={`subtab-option ${sortMode === 'highestLost' ? 'active' : ''}`}
           onClick={() => setSortMode('highestLost')}
         >
-          <span style={{ fontSize: '18px' }}>🚨</span> Low 10 by %
+          <div className="subtab-icon-wrap" style={{ backgroundColor: '#26a69a', color: '#fff', borderRadius: '50%' }}>%</div>
+          <span>Bottom 10 Location by<br/>% Sales Drop</span>
         </button>
         <button 
           className={`subtab-option ${sortMode === 'territoryLowestSales' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryLowestSales')}
         >
-          <span style={{ fontSize: '18px' }}>🗺️</span> Low Territories by $
+          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>account_balance</i></div>
+          <span>Locations by<br/>$ Sales Drop</span>
         </button>
         <button 
           className={`subtab-option ${sortMode === 'territoryHighestLost' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryHighestLost')}
         >
-          <span style={{ fontSize: '18px' }}>📊</span> Low Territories by %
+          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>trending_down</i></div>
+          <span>Locations by<br/>% Sales Drop</span>
         </button>
       </div>
 
@@ -128,7 +132,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
             <div key={`${row.STORE_ID || row.TERRITORY}-${rank}`} className="leader-card" style={{ backgroundColor: color }}>
               {/* Header */}
               <div className="card-top">
-                <div className="card-rank">#{rank}</div>
+                <div className="card-rank">{rank}</div>
               </div>
 
               {/* Title Info */}
@@ -138,7 +142,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
                 </div>
                 {!isTerritory && row.TERRITORY && (
                   <div className="card-subtitle">
-                    Territory: <strong>{row.TERRITORY}</strong>
+                    Location: <strong>{row.REGION_ID} {row.TERRITORY}</strong>
                   </div>
                 )}
               </div>
@@ -165,7 +169,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
                   ${formatNumber(ly)} / ${formatNumber(cy)}
                 </div>
                 <div className="lift-pill" style={{ color: lift >= 0 ? '#15803d' : '#dc2626' }}>
-                  {sortMode.includes('Lost') ? `Drop: ${formatPercent(lift)}` : `Sales: $${formatNumber(cy)}`}
+                  {formatPercent(lift)}
                 </div>
               </div>
 

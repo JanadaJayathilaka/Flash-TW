@@ -218,9 +218,10 @@ export default function App() {
       <div className="gen-time">{generatedTimeStr}</div>
 
       <div className="main-container">
-        {/* Title and Date Picker Control */}
-        <div className="title-section">
-          <div className="page-title-wrap">
+        {/* Unified toolbar: Title | Tabs | Search | Actions */}
+        <div className="toolbar-row">
+          {/* Left: Title + Mode dropdown */}
+          <div className="toolbar-left">
             <h1 className="page-title" onClick={() => setShowDatePicker(!showDatePicker)}>
               {activeTab === 'analytics' ? 'Sales - Analytics' : `Flash Sales on ${dateParams?.displayDate || selectedDate}`}
               <span style={{ fontSize: '12px', marginLeft: '6px', color: 'var(--text-secondary)' }}>▼</span>
@@ -264,7 +265,7 @@ export default function App() {
               </div>
             )}
 
-            {/* Mode selection dropdown */}
+            {/* Mode selection dropdown - below title */}
             {activeTab !== 'analytics' && (
               <select
                 className="mode-select"
@@ -277,8 +278,8 @@ export default function App() {
             )}
           </div>
 
-          {/* Navigation tabs */}
-          <div className="tabs-nav">
+          {/* Center: Navigation tabs */}
+          <div className="toolbar-center">
             <div className="tab-btn-group">
               <button 
                 className={`tab-btn ${activeTab === 'allSales' ? 'active' : ''}`}
@@ -306,62 +307,62 @@ export default function App() {
               </button>
             </div>
           </div>
-        </div>
 
-        {/* Global search and download actions */}
-        <div className="controls-section">
-          {activeTab !== 'analytics' ? (
-            <div className="search-container">
-              <span className="search-icon">🔍</span>
-              <input
-                type="text"
-                className="search-input-field"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Separate multiple arguments with ++"
-              />
-              {search && (
-                <span className="search-clear" onClick={() => setSearch('')}>🧹</span>
-              )}
-            </div>
-          ) : (
-            <div style={{ flex: 1 }} />
-          )}
-
-          {/* Export Actions buttons */}
-          <div className="action-buttons">
-            {activeTab === 'allSales' && (
-              <>
-                <button 
-                  className="icon-btn" 
-                  title="Export to Excel"
-                  onClick={() => exportActions?.exportExcel?.()}
-                >
-                  🟢
-                </button>
-                <button 
-                  className="icon-btn" 
-                  title="Export to CSV"
-                  onClick={() => exportActions?.exportCSV?.()}
-                >
-                  📄
-                </button>
-              </>
+          {/* Right: Search + Action icons */}
+          <div className="toolbar-right">
+            {activeTab !== 'analytics' && (
+              <div className="search-container">
+                <span className="search-icon"><i className="material-icons" style={{ fontSize: '20px', color: '#9e9e9e' }}>search</i></span>
+                <input
+                  type="text"
+                  className="search-input-field"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Separate multiple arguments with ++"
+                />
+                {search && (
+                  <span className="search-clear" onClick={() => setSearch('')}>
+                    <i className="material-icons" style={{ fontSize: '18px', color: '#9e9e9e', cursor: 'pointer' }}>cleaning_services</i>
+                  </span>
+                )}
+              </div>
             )}
-            <button 
-              className="icon-btn" 
-              title="Download PDF"
-              onClick={() => exportActions?.exportPDF ? exportActions.exportPDF() : window.print()}
-            >
-              📥
-            </button>
-            <button 
-              className="icon-btn" 
-              title="Print Page"
-              onClick={() => exportActions?.printPDF ? exportActions.printPDF() : window.print()}
-            >
-              🖨️
-            </button>
+
+            {/* Export Actions buttons */}
+            <div className="action-buttons">
+              {activeTab === 'allSales' && (
+                <>
+                  <button 
+                    className="icon-btn" 
+                    title="Export to Excel"
+                    onClick={() => exportActions?.exportExcel?.()}
+                  >
+                    <i className="material-icons" style={{ fontSize: '20px', color: '#4caf50' }}>grid_on</i>
+                  </button>
+                  <button 
+                    className="icon-btn" 
+                    title="Export to CSV"
+                    onClick={() => exportActions?.exportCSV?.()}
+                  >
+                    <i className="material-icons" style={{ fontSize: '20px' }}>description</i>
+                  </button>
+                </>
+              )}
+              <button 
+                className="icon-btn" 
+                title="Download PDF"
+                onClick={() => exportActions?.exportPDF ? exportActions.exportPDF() : window.print()}
+              >
+                <i className="material-icons" style={{ fontSize: '20px' }}>file_download</i>
+              </button>
+              <button 
+                className="icon-btn" 
+                title="Print Page"
+                onClick={() => exportActions?.printPDF ? exportActions.printPDF() : window.print()}
+              >
+                <i className="material-icons" style={{ fontSize: '20px' }}>print</i>
+              </button>
+            </div>
           </div>
         </div>
 

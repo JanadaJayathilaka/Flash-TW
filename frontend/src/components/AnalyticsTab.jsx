@@ -458,19 +458,19 @@ export default function AnalyticsTab({
             className={`analytics-subtab-btn ${activeSubTab === 'trends' ? 'active' : ''}`}
             onClick={() => setActiveSubTab('trends')}
           >
-            📈 Trends
+            <i className="material-icons" style={{ fontSize: '18px', color: '#4caf50' }}>trending_up</i> Trends
           </button>
           <button 
             className="analytics-subtab-btn disabled"
             disabled
           >
-            ❌ Extrapolate
+            <i className="material-icons" style={{ fontSize: '18px', color: '#e53935' }}>close</i> Extrapolate
           </button>
           <button 
             className="analytics-subtab-btn disabled"
             disabled
           >
-            ❌ Lift by Promotion
+            <i className="material-icons" style={{ fontSize: '18px', color: '#e53935' }}>close</i> Lift by Promotion
           </button>
         </div>
       </div>
@@ -478,7 +478,7 @@ export default function AnalyticsTab({
       {/* Main Charts card */}
       <div className="chart-card">
         <h3 className="chart-title">
-          Sales Trend - {compareMode === 'fiscal' ? 'Fiscal' : 'Calendar'} ({viewMode === 'D' ? 'Daily' : viewMode === 'W' ? 'Weekly' : viewMode === 'M' ? 'Monthly' : 'Yearly'})
+          Sales Trend - {compareMode === 'fiscal' ? 'Fiscal' : 'Calendar'} {compareYearRight !== 'Nothing' ? compareYearRight : compareYearLeft !== 'Nothing' ? compareYearLeft : ''} ({viewMode === 'D' ? 'Daily' : viewMode === 'W' ? 'Weekly' : viewMode === 'M' ? 'Monthly' : 'Yearly'})
         </h3>
 
         {loading ? (

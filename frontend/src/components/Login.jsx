@@ -4,7 +4,6 @@ const PASSWORD = '36fonseka';
 
 export default function Login({ onLoginSuccess }) {
   const [input, setInput] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(false);
 
   const handleSubmit = (e) => {
@@ -21,42 +20,40 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="auth-container">
       <form onSubmit={handleSubmit} className="auth-card">
-        <div className="auth-close" onClick={() => setInput('')}>✕</div>
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#0a1f44' }}>Flash Sales Sign In</h2>
-        </div>
+        <button type="button" className="auth-close" onClick={() => setInput('')}>
+          <i className="material-icons">close</i>
+        </button>
 
-        <div className={`auth-field ${error ? 'error' : ''}`}>
-          <span className="auth-icon" style={{ fontSize: '20px' }}>🔒</span>
+        <div className={`auth-field ${error ? 'error' : ''}`} style={{ position: 'relative' }}>
+          <span className="auth-icon">
+            <i className="material-icons" style={{ color: '#1565c0' }}>lock</i>
+          </span>
           <input
-            type={showPassword ? 'text' : 'password'}
+            type="password"
             className="auth-input"
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
               setError(false);
             }}
-            placeholder="Passcode"
+            placeholder=""
             autoFocus
+            id="passcode"
           />
-          <span 
-            className="auth-eye" 
-            onClick={() => setShowPassword(!showPassword)}
-            style={{ fontSize: '18px', userSelect: 'none' }}
-          >
-            {showPassword ? '👁️' : '👁️‍🗨️'}
-          </span>
+          <label htmlFor="passcode" className="auth-label">Passcode</label>
         </div>
 
         {error && (
           <div className="auth-error">
-            Incorrect passcode. Try again.
+            Invalid passcode.
           </div>
         )}
 
-        <button type="submit" className="auth-btn">
-          LOGIN
-        </button>
+        <div style={{ marginTop: '8px' }}>
+          <button type="submit" className="auth-btn">
+            Login
+          </button>
+        </div>
       </form>
     </div>
   );

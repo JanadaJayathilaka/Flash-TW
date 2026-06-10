@@ -358,9 +358,9 @@ export default function AllSalesTab({
               rows.push(
                 <tr key={store.STORE_ID}>
                   <td className="border-right store-name-cell">
-                    {store.STORE_ID} {store.STORE_NAME}
+                    <strong>{store.STORE_ID}</strong> {store.STORE_NAME}
                     {store.DATE_OPENED && (
-                      <span className="store-opened">Opened {store.DATE_OPENED}</span>
+                      <span className="store-opened">First Sale {store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}</span>
                     )}
                   </td>
                   <td>{formatNumber(store.DAY_SALES_LY)}</td>
