@@ -7,6 +7,14 @@ import AnalyticsTab from './components/AnalyticsTab';
 import { fetchLatestDate, fetchStoreDetails, fetchSalesPivotSum, fetchAvailableDates } from './services/api';
 import { buildFiscalIndexes, computeDateParamsFromFiscal, computeCalendarDateParams } from './utils/dateUtils';
 import { MdOutlineArrowDropDown } from "react-icons/md";
+import { LiaBroomSolid } from "react-icons/lia";
+import excelImg from './assets/excel.png'
+import csvImg from './assets/csv.png'
+import { BsDownload } from "react-icons/bs";
+import { BsPrinter } from "react-icons/bs";
+
+
+
 
 export default function App() {
   // Authentication state
@@ -328,16 +336,16 @@ export default function App() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Separate multiple arguments with ++"
                 />
-                {search && (
-                  <span className="search-clear" onClick={() => setSearch('')}>
-                    <i className="material-icons" style={{ fontSize: '18px', color: '#9e9e9e', cursor: 'pointer' }}>cleaning_services</i>
-                  </span>
-                )}
+
+                <span className="search-clear" onClick={() => setSearch('')}>
+                  <LiaBroomSolid className='text-red-800' />
+                </span>
+
               </div>
             )}
 
             {/* Export Actions buttons */}
-            <div className="action-buttons">
+            <div className="action-buttons justify between">
               {activeTab === 'allSales' && (
                 <>
                   <button
@@ -345,14 +353,15 @@ export default function App() {
                     title="Export to Excel"
                     onClick={() => exportActions?.exportExcel?.()}
                   >
-                    <i className="material-icons" style={{ fontSize: '20px', color: '#4caf50' }}>grid_on</i>
+
+                    <img src={excelImg} className='w-5' alt="excel" />
                   </button>
                   <button
-                    className="icon-btn"
+                    className="w-5 h-9"
                     title="Export to CSV"
                     onClick={() => exportActions?.exportCSV?.()}
                   >
-                    <i className="material-icons" style={{ fontSize: '20px' }}>description</i>
+                    <img src={csvImg} alt="csv" />
                   </button>
                 </>
               )}
@@ -361,14 +370,15 @@ export default function App() {
                 title="Download PDF"
                 onClick={() => exportActions?.exportPDF ? exportActions.exportPDF() : window.print()}
               >
-                <i className="material-icons" style={{ fontSize: '20px' }}>file_download</i>
+                <BsDownload />
+
               </button>
               <button
-                className="icon-btn"
+                className="w-5 h-9"
                 title="Print Page"
                 onClick={() => exportActions?.printPDF ? exportActions.printPDF() : window.print()}
               >
-                <i className="material-icons" style={{ fontSize: '20px' }}>print</i>
+                <BsPrinter />
               </button>
             </div>
           </div>

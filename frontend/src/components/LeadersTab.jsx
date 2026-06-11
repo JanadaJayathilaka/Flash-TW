@@ -172,7 +172,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
                 </div>
                 {!isTerritory && row.TERRITORY && (
                   <div className="card-subtitle">
-                    Location: <strong>{row.REGION_ID} {row.TERRITORY}</strong>
+                    Location: {row.REGION_ID} {row.TERRITORY}
                   </div>
                 )}
               </div>
@@ -195,11 +195,11 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
 
               {/* Stats info */}
               <div className="card-stats">
-                <div className="stats-lbl">
+                <div className="stats-lbl border-b w-full">
                   ${formatNumber(ly)} / ${formatNumber(cy)}
                 </div>
                 <div className="lift-pill" style={{ color: lift >= 0 ? '#15803d' : '#dc2626' }}>
-                  {formatPercent(lift)}
+                  {lift > 0 ? '+' : ''}{formatPercent(lift)}
                 </div>
               </div>
 
