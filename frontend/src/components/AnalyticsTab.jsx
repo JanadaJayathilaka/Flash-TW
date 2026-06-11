@@ -371,10 +371,8 @@ export default function AnalyticsTab({
           className="chart-filtersMain"
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'flex-start',
-            flexWrap: 'wrap',
-            gap: '20px',
+            width: '100%',
             padding: '12px 16px',
             backgroundColor: 'var(--surface-color)',
             borderRadius: '8px',
@@ -382,170 +380,178 @@ export default function AnalyticsTab({
             border: '1px solid var(--divider-color)',
           }}
         >
-          {/* Left: Filter Controls Group */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
-            
-            {/* Compare Label and Compare Type select */}
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Compare</span>
-              <span className="small-select">
-                <select
-                  id="selCalTypeFiscalorCal"
-                  value={compareMode === 'fiscal' ? '1' : '2'}
-                  onChange={(e) => setCompareMode(e.target.value === '1' ? 'fiscal' : 'calendar')}
-                >
-                  <option value="1">Fiscal</option>
-                  <option value="2">Calendar</option>
-                </select>
-              </span>
-            </span>
-
-            {/* Comparative Year 1 select */}
-            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
-              <span className="small-select">
-                <select
-                  id="selCalType2"
-                  value={compareYearLeft}
-                  onChange={(e) => setCompareYearLeft(e.target.value)}
-                >
-                  <option value="Nothing">Nothing</option>
-                  {availableYears.map((year) => (
-                    <option
-                      key={year}
-                      value={year.toString()}
-                      disabled={compareYearRight === year.toString()}
-                    >
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </span>
-
-            {/* Separator "with" text */}
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '30px',
-                height: '24px',
-                fontSize: '13px',
-                fontWeight: 600,
-                color: 'var(--text-secondary)',
-              }}
-            >
-              with
-            </span>
-
-            {/* Vertical Stack: Year 2 Select, Mode Select, SMA Checkbox */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
-              {/* Row 1: Year 2 Select */}
-              <span className="small-select">
-                <select
-                  id="selCalType1"
-                  value={compareYearRight}
-                  onChange={(e) => setCompareYearRight(e.target.value)}
-                >
-                  <option value="Nothing">Nothing</option>
-                  {availableYears.map((year) => (
-                    <option
-                      key={year}
-                      value={year.toString()}
-                      disabled={compareYearLeft === year.toString()}
-                    >
-                      {year}
-                    </option>
-                  ))}
-                </select>
+          {/* Column 1 (Left Section): Filter Controls Group */}
+          <div style={{ flex: '1 1 0%', display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+              {/* Compare Label and Compare Type select */}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Compare</span>
+                <span className="small-select">
+                  <select
+                    id="selCalTypeFiscalorCal"
+                    value={compareMode === 'fiscal' ? '1' : '2'}
+                    onChange={(e) => setCompareMode(e.target.value === '1' ? 'fiscal' : 'calendar')}
+                  >
+                    <option value="1">Fiscal</option>
+                    <option value="2">Calendar</option>
+                  </select>
+                </span>
               </span>
 
-              {/* Row 2: Mode/Granularity Select */}
-              <span className="small-select">
-                <select
-                  id="selCalTypeDWMQY"
-                  value={viewMode}
-                  onChange={(e) => setViewMode(e.target.value)}
-                >
-                  <option value="D">Daily</option>
-                  <option value="W">Weekly</option>
-                  <option value="Q">Quarterly</option>
-                  <option value="Y">Yearly</option>
-                </select>
+              {/* Comparative Year 1 select */}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
+                <span className="small-select">
+                  <select
+                    id="selCalType2"
+                    value={compareYearLeft}
+                    onChange={(e) => setCompareYearLeft(e.target.value)}
+                  >
+                    <option value="Nothing">Nothing</option>
+                    {availableYears.map((year) => (
+                      <option
+                        key={year}
+                        value={year.toString()}
+                        disabled={compareYearRight === year.toString()}
+                      >
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </span>
               </span>
 
-              {/* Row 3: SMA Checkbox */}
-              <label
-                id="lblchkSma"
+              {/* Separator "with" text */}
+              <span
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  cursor: 'pointer',
-                  gap: '6px',
-                  userSelect: 'none',
-                  margin: 0,
-                  padding: 0,
+                  justifyContent: 'center',
+                  width: '30px',
+                  height: '24px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--text-secondary)',
                 }}
               >
+                with
+              </span>
+
+              {/* Vertical Stack: Year 2 Select, Mode Select, SMA Checkbox */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+                {/* Row 1: Year 2 Select */}
+                <span className="small-select">
+                  <select
+                    id="selCalType1"
+                    value={compareYearRight}
+                    onChange={(e) => setCompareYearRight(e.target.value)}
+                  >
+                    <option value="Nothing">Nothing</option>
+                    {availableYears.map((year) => (
+                      <option
+                        key={year}
+                        value={year.toString()}
+                        disabled={compareYearLeft === year.toString()}
+                      >
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </span>
+
+                {/* Row 2: Mode/Granularity Select */}
+                <span className="small-select">
+                  <select
+                    id="selCalTypeDWMQY"
+                    value={viewMode}
+                    onChange={(e) => setViewMode(e.target.value)}
+                  >
+                    <option value="D">Daily</option>
+                    <option value="W">Weekly</option>
+                    <option value="Q">Quarterly</option>
+                    <option value="Y">Yearly</option>
+                  </select>
+                </span>
+
+                {/* Row 3: SMA Checkbox */}
+                <label
+                  id="lblchkSma"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    gap: '6px',
+                    userSelect: 'none',
+                    margin: 0,
+                    padding: 0,
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    id="chkSma"
+                    checked={smaVisible}
+                    onChange={() => setSmaVisible(!smaVisible)}
+                    style={{ cursor: 'pointer', margin: 0 }}
+                  />
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>SMA</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2 (Center Section): Segment Selectors (Trends, Extrapolate, LBP) */}
+          <div style={{ flex: '1 1 0%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="img-radio-group" style={{ display: 'flex', gap: '10px' }}>
+              {/* Trends subtab */}
+              <label className="img-radio" style={{ margin: 0 }}>
                 <input
-                  type="checkbox"
-                  id="chkSma"
-                  checked={smaVisible}
-                  onChange={() => setSmaVisible(!smaVisible)}
-                  style={{ cursor: 'pointer', margin: 0 }}
+                  id="rad_AnlT_01"
+                  type="radio"
+                  name="top_analytics_group"
+                  checked={activeSubTab === 'trends'}
+                  onChange={() => setActiveSubTab('trends')}
                 />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>SMA</span>
+                <div className="radio-card">
+                  <div className="icon-wrapper">
+                    <img
+                      className="radio-icon"
+                      src={activeSubTab === 'trends' ? TrendsSelIcon : TrendsIcon}
+                      alt="Trends"
+                    />
+                  </div>
+                  <span>Trends</span>
+                </div>
+              </label>
+
+              {/* Extrapolate (disabled) */}
+              <label className="img-radio" style={{ margin: 0 }}>
+                <input type="radio" name="top_analytics_group" disabled />
+                <div className="radio-card disabled-card">
+                  <div className="icon-wrapper">
+                    <img className="radio-icon" src={ExtrapolateIcon} alt="Extrapolate" style={{ opacity: 0.6 }} />
+                    <div className="red-cross-line line1" />
+                    <div className="red-cross-line line2" />
+                  </div>
+                  <span>Extrapolate</span>
+                </div>
+              </label>
+
+              {/* Lift by Promotion (disabled) */}
+              <label className="img-radio" style={{ margin: 0 }}>
+                <input type="radio" name="top_analytics_group" disabled />
+                <div className="radio-card disabled-card">
+                  <div className="icon-wrapper">
+                    <img className="radio-icon" src={LbpIcon} alt="Lift by Promotion" style={{ opacity: 0.6 }} />
+                    <div className="red-cross-line line1" />
+                    <div className="red-cross-line line2" />
+                  </div>
+                  <span>Lift by Promotion</span>
+                </div>
               </label>
             </div>
           </div>
 
-          {/* Right: Segment Selectors (Trends, Extrapolate, LBP) */}
-          <div className="img-radio-group" style={{ alignSelf: 'center', display: 'flex', gap: '10px' }}>
-            {/* Trends subtab */}
-            <label className="img-radio" style={{ margin: 0 }}>
-              <input
-                id="rad_AnlT_01"
-                type="radio"
-                name="top_analytics_group"
-                checked={activeSubTab === 'trends'}
-                onChange={() => setActiveSubTab('trends')}
-              />
-              <div className="radio-card">
-                {activeSubTab === 'trends' && (
-                  <>
-                    <div className="borderbar top-left" />
-                    <div className="borderbar top-right" />
-                    <div className="borderbar bottom-left" />
-                    <div className="borderbar bottom-right" />
-                  </>
-                )}
-                <img
-                  className="radio-icon"
-                  src={activeSubTab === 'trends' ? TrendsSelIcon : TrendsIcon}
-                  alt="Trends"
-                />
-                <span>Trends</span>
-              </div>
-            </label>
-
-            {/* Extrapolate (disabled) */}
-            <label className="img-radio" style={{ margin: 0 }}>
-              <input type="radio" name="top_analytics_group" disabled />
-              <div className="radio-card disabled-card">
-                <img className="radio-icon" src={ExtrapolateIcon} alt="Extrapolate" />
-                <span>Extrapolate</span>
-              </div>
-            </label>
-
-            {/* Lift by Promotion (disabled) */}
-            <label className="img-radio" style={{ margin: 0 }}>
-              <input type="radio" name="top_analytics_group" disabled />
-              <div className="radio-card disabled-card">
-                <img className="radio-icon" src={LbpIcon} alt="Lift by Promotion" />
-                <span>Lift by Promotion</span>
-              </div>
-            </label>
-          </div>
+          {/* Column 3 (Right Section): Spacer to balance centering */}
+          <div style={{ flex: '1 1 0%' }} />
         </div>
       </div>
 
