@@ -343,7 +343,7 @@ export default function AllSalesTab({
       <table className="sales-table">
         <thead>
           <tr>
-            <th className="border-right">LOCATION/TERRITORY</th>
+            <th className="border-right"><br />LOCATION/TERRITORY</th>
             <th>{lyYear} Wk {wk},<br />Day {dayDisplay} Net $</th>
             <th>{cyYear} Wk {wk},<br />Day {dayDisplay} Net $</th>
             <th className="border-right">1 Day Comp<br />{lyYear} to {cyYear}</th>

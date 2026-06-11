@@ -573,7 +573,10 @@ body {
   border-right: 1px solid #cbd5e1;
 }
 
-.sales-table tr.territory-row td.border-right,
+.sales-table tr.territory-row td.border-right {
+  border-right: none;
+}
+
 .sales-table tr.grand-total-row td.border-right {
   border-right: none;
 }
