@@ -49,7 +49,7 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
       }
     ];
 
-    if (smaVisible && smaData && smaData.length > 0) {
+    if (smaData && smaData.length > 0) {
       datasets.push({
         label: 'SMA',
         data: smaData,
@@ -60,6 +60,7 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
         pointHoverRadius: 0,
         tension: 0,
         fill: false,
+        hidden: !smaVisible,
       });
     }
 
@@ -82,11 +83,11 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
             position: 'top',
             align: 'end',
             labels: {
-              boxWidth: 20,
-              boxHeight: 10,
+              boxWidth: 30,
+              boxHeight: 12,
               font: {
                 family: 'Montserrat',
-                size: 10,
+                size: 12,
                 weight: '600'
               }
             }
