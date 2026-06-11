@@ -40,25 +40,25 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
         label: 'Sales',
         data: salesData || [],
         borderColor: salesColor,
-        backgroundColor: salesColor + '1A', // transparent fill color for hover/legend
-        borderWidth: 2,
-        pointRadius: 1.5,
+        backgroundColor: salesColor,
+        borderWidth: 1.5,
+        pointRadius: 0,
         pointHoverRadius: 4,
-        tension: 0.15,
+        tension: 0,
         fill: false,
       }
     ];
 
     if (smaVisible && smaData && smaData.length > 0) {
       datasets.push({
-        label: `SMA (${SMA_PERIOD} Day)`,
+        label: 'SMA',
         data: smaData,
         borderColor: smaColor,
         backgroundColor: smaColor,
-        borderWidth: 1.0,
+        borderWidth: 1.2,
         pointRadius: 0,
         pointHoverRadius: 0,
-        tension: 0.2,
+        tension: 0,
         fill: false,
       });
     }
@@ -79,10 +79,11 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
         plugins: {
           legend: {
             display: true,
-            position: 'bottom',
+            position: 'top',
+            align: 'end',
             labels: {
               boxWidth: 20,
-              boxHeight: 4,
+              boxHeight: 10,
               font: {
                 family: 'Montserrat',
                 size: 10,
@@ -122,20 +123,25 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
             }
           },
           y: {
+            title: {
+              display: true,
+              text: 'Sales $',
+              font: {
+                family: 'Montserrat',
+                size: 10,
+                weight: 'bold'
+              }
+            },
             min: yMin,
             max: yMax,
             ticks: {
+              includeBounds: true,
               font: {
                 family: 'Montserrat',
-                size: 10
+                size: 9
               },
               callback: function(value) {
-                if (value >= 1e6) {
-                  return '$' + (value / 1e6).toFixed(1) + 'M';
-                } else if (value >= 1e3) {
-                  return '$' + (value / 1e3).toFixed(0) + 'k';
-                }
-                return '$' + value;
+                return Math.round(value).toLocaleString();
               }
             }
           }
@@ -152,7 +158,7 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
 
   return (
     <div className="chart-container" style={{ height: '380px', position: 'relative' }}>
-      <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#475569', textAlign: 'center', marginBottom: '10px' }}>
+      <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#475569', textAlign: 'center', marginBottom: '10px' }}>
         {title}
       </h4>
       <div style={{ position: 'relative', width: '100%', height: '310px' }}>
@@ -327,7 +333,7 @@ export default function AnalyticsTab({
 
   // Match live site colors
   const getSalesColor = (year) => {
-    if (year === 2025) return '#606266'; // grey/muted
+    if (year === 2025) return '#495057'; // dark grey / black
     if (year === 2026) return '#3984c6'; // light blue/cyan
     if (year === 2024) return '#ff9f43';
     if (year === 2023) return '#10b981';
@@ -361,153 +367,201 @@ export default function AnalyticsTab({
     <div>
       {/* Filters & Control bar matching .chart-containerTop .chart-filtersMain */}
       <div className="chart-containerTop">
-        <div className="chart-filtersMain">
-          {/* Compare dropdown selection */}
-          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ width: '70px', position: 'relative', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Compare</span>
-            <span className="small-select">
-              <select
-                id="selCalTypeFiscalorCal"
-                value={compareMode === 'fiscal' ? '1' : '2'}
-                onChange={(e) => setCompareMode(e.target.value === '1' ? 'fiscal' : 'calendar')}
-              >
-                <option value="1">Fiscal</option>
-                <option value="2">Calendar</option>
-              </select>
+        <div
+          className="chart-filtersMain"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            flexWrap: 'wrap',
+            gap: '20px',
+            padding: '12px 16px',
+            backgroundColor: 'var(--surface-color)',
+            borderRadius: '8px',
+            boxShadow: 'var(--card-shadow)',
+            border: '1px solid var(--divider-color)',
+          }}
+        >
+          {/* Left: Filter Controls Group */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+            
+            {/* Compare Label and Compare Type select */}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Compare</span>
+              <span className="small-select">
+                <select
+                  id="selCalTypeFiscalorCal"
+                  value={compareMode === 'fiscal' ? '1' : '2'}
+                  onChange={(e) => setCompareMode(e.target.value === '1' ? 'fiscal' : 'calendar')}
+                >
+                  <option value="1">Fiscal</option>
+                  <option value="2">Calendar</option>
+                </select>
+              </span>
             </span>
-          </span>
 
-          {/* Comparative Year 1 dropdown */}
-          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span className="small-select">
-              <select
-                id="selCalType2"
-                value={compareYearLeft}
-                onChange={(e) => setCompareYearLeft(e.target.value)}
-              >
-                <option value="Nothing">Nothing</option>
-                {availableYears.map(year => (
-                  <option
-                    key={year}
-                    value={year.toString()}
-                    disabled={compareYearRight === year.toString()}
-                  >
-                    {year}
-                  </option>
-                ))}
-              </select>
+            {/* Comparative Year 1 select */}
+            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
+              <span className="small-select">
+                <select
+                  id="selCalType2"
+                  value={compareYearLeft}
+                  onChange={(e) => setCompareYearLeft(e.target.value)}
+                >
+                  <option value="Nothing">Nothing</option>
+                  {availableYears.map((year) => (
+                    <option
+                      key={year}
+                      value={year.toString()}
+                      disabled={compareYearRight === year.toString()}
+                    >
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </span>
             </span>
-          </span>
 
-          {/* Separator "with" text */}
-          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span style={{ width: '40px', position: 'relative', textAlign: 'center', marginRight: '5px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>with</span>
-            <span className="small-select">
-              <select
-                id="selCalType1"
-                value={compareYearRight}
-                onChange={(e) => setCompareYearRight(e.target.value)}
-              >
-                <option value="Nothing">Nothing</option>
-                {availableYears.map(year => (
-                  <option
-                    key={year}
-                    value={year.toString()}
-                    disabled={compareYearLeft === year.toString()}
-                  >
-                    {year}
-                  </option>
-                ))}
-              </select>
+            {/* Separator "with" text */}
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '30px',
+                height: '24px',
+                fontSize: '13px',
+                fontWeight: 600,
+                color: 'var(--text-secondary)',
+              }}
+            >
+              with
             </span>
-          </span>
 
-          {/* Mode/Granularity dropdown */}
-          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-            <span className="small-select">
-              <select
-                id="selCalTypeDWMQY"
-                value={viewMode}
-                onChange={(e) => setViewMode(e.target.value)}
+            {/* Vertical Stack: Year 2 Select, Mode Select, SMA Checkbox */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+              {/* Row 1: Year 2 Select */}
+              <span className="small-select">
+                <select
+                  id="selCalType1"
+                  value={compareYearRight}
+                  onChange={(e) => setCompareYearRight(e.target.value)}
+                >
+                  <option value="Nothing">Nothing</option>
+                  {availableYears.map((year) => (
+                    <option
+                      key={year}
+                      value={year.toString()}
+                      disabled={compareYearLeft === year.toString()}
+                    >
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </span>
+
+              {/* Row 2: Mode/Granularity Select */}
+              <span className="small-select">
+                <select
+                  id="selCalTypeDWMQY"
+                  value={viewMode}
+                  onChange={(e) => setViewMode(e.target.value)}
+                >
+                  <option value="D">Daily</option>
+                  <option value="W">Weekly</option>
+                  <option value="Q">Quarterly</option>
+                  <option value="Y">Yearly</option>
+                </select>
+              </span>
+
+              {/* Row 3: SMA Checkbox */}
+              <label
+                id="lblchkSma"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  gap: '6px',
+                  userSelect: 'none',
+                  margin: 0,
+                  padding: 0,
+                }}
               >
-                <option value="D">Daily</option>
-                <option value="W">Weekly</option>
-                <option value="Q">Quarterly</option>
-                <option value="Y">Yearly</option>
-              </select>
-            </span>
-          </span>
-
-          {/* SMA toggler */}
-          <label id="lblchkSma" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', userSelect: 'none' }}>
-            <input
-              type="checkbox"
-              id="chkSma"
-              checked={smaVisible}
-              onChange={() => setSmaVisible(!smaVisible)}
-              style={{ cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>SMA</span>
-          </label>
-        </div>
-      </div>
-
-      {/* Styled Selector segments */}
-      <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', top: '-10px', marginBottom: '15px' }}>
-        <div className="img-radio-group">
-          {/* Trends subtab */}
-          <label className="img-radio">
-            <input
-              id="rad_AnlT_01"
-              type="radio"
-              name="top_analytics_group"
-              checked={activeSubTab === 'trends'}
-              onChange={() => setActiveSubTab('trends')}
-            />
-            <div className="radio-card">
-              {activeSubTab === 'trends' && (
-                <>
-                  <div className="borderbar top-left" />
-                  <div className="borderbar top-right" />
-                  <div className="borderbar bottom-left" />
-                  <div className="borderbar bottom-right" />
-                </>
-              )}
-              <img className="radio-icon" src={activeSubTab === 'trends' ? TrendsSelIcon : TrendsIcon} alt="Trends" />
-              <span>Trends</span>
+                <input
+                  type="checkbox"
+                  id="chkSma"
+                  checked={smaVisible}
+                  onChange={() => setSmaVisible(!smaVisible)}
+                  style={{ cursor: 'pointer', margin: 0 }}
+                />
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>SMA</span>
+              </label>
             </div>
-          </label>
+          </div>
 
-          {/* Extrapolate (disabled) */}
-          <label className="img-radio">
-            <input
-              type="radio"
-              name="top_analytics_group"
-              disabled
-            />
-            <div className="radio-card disabled-card">
-              <img className="radio-icon" src={ExtrapolateIcon} alt="Extrapolate" />
-              <span>Extrapolate</span>
-            </div>
-          </label>
+          {/* Right: Segment Selectors (Trends, Extrapolate, LBP) */}
+          <div className="img-radio-group" style={{ alignSelf: 'center', display: 'flex', gap: '10px' }}>
+            {/* Trends subtab */}
+            <label className="img-radio" style={{ margin: 0 }}>
+              <input
+                id="rad_AnlT_01"
+                type="radio"
+                name="top_analytics_group"
+                checked={activeSubTab === 'trends'}
+                onChange={() => setActiveSubTab('trends')}
+              />
+              <div className="radio-card">
+                {activeSubTab === 'trends' && (
+                  <>
+                    <div className="borderbar top-left" />
+                    <div className="borderbar top-right" />
+                    <div className="borderbar bottom-left" />
+                    <div className="borderbar bottom-right" />
+                  </>
+                )}
+                <img
+                  className="radio-icon"
+                  src={activeSubTab === 'trends' ? TrendsSelIcon : TrendsIcon}
+                  alt="Trends"
+                />
+                <span>Trends</span>
+              </div>
+            </label>
 
-          {/* Lift by Promotion (disabled) */}
-          <label className="img-radio">
-            <input
-              type="radio"
-              name="top_analytics_group"
-              disabled
-            />
-            <div className="radio-card disabled-card">
-              <img className="radio-icon" src={LbpIcon} alt="Lift by Promotion" />
-              <span>Lift by Promotion</span>
-            </div>
-          </label>
+            {/* Extrapolate (disabled) */}
+            <label className="img-radio" style={{ margin: 0 }}>
+              <input type="radio" name="top_analytics_group" disabled />
+              <div className="radio-card disabled-card">
+                <img className="radio-icon" src={ExtrapolateIcon} alt="Extrapolate" />
+                <span>Extrapolate</span>
+              </div>
+            </label>
+
+            {/* Lift by Promotion (disabled) */}
+            <label className="img-radio" style={{ margin: 0 }}>
+              <input type="radio" name="top_analytics_group" disabled />
+              <div className="radio-card disabled-card">
+                <img className="radio-icon" src={LbpIcon} alt="Lift by Promotion" />
+                <span>Lift by Promotion</span>
+              </div>
+            </label>
+          </div>
         </div>
       </div>
 
       {/* Main Charts card */}
-      <div className="allAnltcCharts">
+      <div
+        className="allAnltcCharts"
+        style={{
+          display: 'flex',
+          flexDirection: showBoth ? 'row' : 'column',
+          flexWrap: 'wrap',
+          gap: '20px',
+          position: 'relative',
+          marginTop: '20px',
+          width: '100%',
+        }}
+      >
         {loading ? (
           <div className="loading-view" style={{ width: '100%' }}>Loading chart data...</div>
         ) : error ? (
@@ -517,13 +571,21 @@ export default function AnalyticsTab({
         ) : (
           <>
             {visibleCharts.map(({ year, data }) => {
-              const colClass = showBoth ? 'col s12 m12 l6 chart-wrapper-left' : 'col s12 m12 l12 chart-wrapper-left';
               const chartId = `salesChart_${year}`;
-              const title = `Year ${year} Sales Data (${viewMode === 'D' ? 'Daily' : viewMode === 'W' ? 'Weekly' : viewMode === 'Q' ? 'Quarterly' : 'Yearly'})`;
+              const compareModeTitle = compareMode.charAt(0).toUpperCase() + compareMode.slice(1);
+              const intervalLabel = viewMode === 'D' ? 'Daily' : viewMode === 'W' ? 'Weekly' : viewMode === 'Q' ? 'Quarterly' : 'Yearly';
+              const title = `Sales Trend - ${compareModeTitle} ${year} (${intervalLabel})`;
               const color = getSalesColor(year);
 
               return (
-                <div key={year} className={colClass} style={{ flexGrow: 1 }}>
+                <div
+                  key={year}
+                  style={{
+                    flex: showBoth ? '1 1 calc(50% - 10px)' : '1 1 100%',
+                    minWidth: showBoth ? '300px' : '100%',
+                    position: 'relative',
+                  }}
+                >
                   <AnalyticsChart
                     id={chartId}
                     year={year}

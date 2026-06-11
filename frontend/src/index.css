@@ -959,6 +959,15 @@ body {
   color: #000000;
 }
 
+.img-radio input:checked + .radio-card {
+  background-color: #e8f5e9 !important;
+  --color: #2ece52;
+}
+
+.img-radio input:checked + .radio-card span {
+  color: #2e7d32 !important;
+}
+
 .chart-wrapper-left, 
 .chart-wrapper-right {
   padding: 0;
@@ -1280,4 +1289,34 @@ body {
     margin-bottom: 20px;
     box-shadow: none !important;
   }
+}
+
+/* Float centered swap button between side-by-side charts */
+.swap-btn {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  transition: all 0.2s;
+}
+
+.swap-btn:hover {
+  background: #f8f9fa;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.swap-btn i {
+  font-size: 18px;
+  color: #495057;
 }
