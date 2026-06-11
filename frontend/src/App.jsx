@@ -223,9 +223,13 @@ export default function App() {
         <div className="toolbar-row">
           {/* Left: Title + Mode dropdown */}
           <div className="toolbar-left">
-            <h1 className="page-title" onClick={() => setShowDatePicker(!showDatePicker)}>
+            <h1
+              className="page-title"
+              onClick={() => activeTab !== 'analytics' && setShowDatePicker(!showDatePicker)}
+              style={activeTab === 'analytics' ? { cursor: 'default' } : undefined}
+            >
               {activeTab === 'analytics' ? 'Sales - Analytics' : `Flash Sales on ${dateParams?.displayDate || selectedDate}`}
-              <MdOutlineArrowDropDown className="title-arrow-icon" />
+              {activeTab !== 'analytics' && <MdOutlineArrowDropDown className="title-arrow-icon" />}
             </h1>
 
             {showDatePicker && (
