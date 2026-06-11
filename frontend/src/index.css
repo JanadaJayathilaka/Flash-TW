@@ -200,7 +200,7 @@ body {
   flex-direction: column;
   gap: 2px;
   position: relative;
-  flex-shrink: 0;
+  flex: 1;
 }
 
 .page-title {
@@ -239,27 +239,35 @@ body {
 /* Tabs */
 .tab-btn-group {
   display: flex;
-  background-color: #e2e8f0;
   border-radius: 8px;
-  padding: 4px;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.15);
 }
 
 .tab-btn {
-  padding: 8px 16px;
+  padding: 10px 24px;
   border: none;
-  background: none;
+  background-color: #0b3b95;
+  color: #ffffff;
   font-family: var(--font-family);
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
-  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s;
-  color: var(--text-secondary);
+  transition: background-color 0.2s ease;
+  border-right: 1px solid rgba(255, 255, 255, 0.4);
   white-space: nowrap;
 }
 
+.tab-btn:last-child {
+  border-right: none;
+}
+
+.tab-btn:hover:not(.active) {
+  background-color: #0d44ad;
+}
+
 .tab-btn.active {
-  background-color: var(--primary-color);
+  background-color: #1976d2;
   color: #ffffff;
 }
 
