@@ -157,11 +157,11 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
   }, [labels, salesData, smaData, smaVisible, yMin, yMax, salesColor]);
 
   return (
-    <div className="chart-container" style={{ height: '380px', position: 'relative' }}>
-      <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#475569', textAlign: 'center', marginBottom: '10px' }}>
+    <div className="chart-container" style={{ height: '520px', position: 'relative' }}>
+      <h4 style={{ fontSize: '14px', fontWeight: 500, color: '#475569', textAlign: 'center', marginBottom: '10px' }}>
         {title}
       </h4>
-      <div style={{ position: 'relative', width: '100%', height: '310px' }}>
+      <div style={{ position: 'relative', width: '100%', height: '450px' }}>
         <canvas ref={canvasRef} id={id} />
       </div>
     </div>
