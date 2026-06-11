@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+@import "tailwindcss";
 
 :root {
   --font-family: 'Montserrat', sans-serif;
@@ -494,31 +495,33 @@ body {
 
 .subtab-option {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  margin-bottom: 35px;
+  margin-top: 40px;
+  gap: 25px;
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
-  padding: 12px 20px;
+  padding: 6px 20px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
   font-size: 11px;
   text-align: center;
-  min-width: 120px;
+  min-width: 400px;
 }
 
 .subtab-option.active {
   border-color: var(--primary-color);
-  border-bottom: 3px solid var(--primary-color);
-  background-color: #e1f1ff;
-  color: var(--primary-color);
+  border: 1px solid #42d456;
+  background-color: #d5eed9fd;
+  color: black;
 }
 
 .subtab-icon-wrap {
-  width: 36px;
-  height: 36px;
+  width: 25px;
+  height: 25px;
   border-radius: 4px;
   display: flex;
   align-items: center;

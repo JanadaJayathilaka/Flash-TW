@@ -7,6 +7,9 @@ import TopSalesLiftSelImg from '../assets/TopsalesIcons/TopSalesLift_sel.png';
 import TerSalesLift$img from '../assets/TopsalesIcons/TerSalesLift.png'
 import TerSalesLiftsel$img from '../assets/TopsalesIcons/TerSalesLift_sel.png'
 import TerSalesLiftperimg from '../assets/TopsalesIcons/TerSales_sel.png'
+import TerSalesimg from '../assets/TopsalesIcons/TerSales.png'
+import { IoTrophySharp } from "react-icons/io5";
+
 const CARD_COLORS = [
   '#1c5e20', // 1st
   '#2f7d32', // 2nd
@@ -95,39 +98,50 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
   return (
     <div>
       {/* Subtabs controls */}
-      <div className="subtabs-bar">
-        <button
-          className={`subtab-option ${sortMode === 'storesBySales' ? 'active' : ''}`}
-          onClick={() => setSortMode('storesBySales')}
-        >
-          <img src={sortMode === 'storesBySales' ? TopSalesSelImg : TopSalesImg} className="subtab-icon-wrap" />
-          <span>Top 10 Locations by<br />$ Sales Lift</span>
-        </button>
-        <button
+      <div className="flex justify-between w-full">
+        <div className='flex-row items-center align-center'>
+          <button
+            className={`subtab-option  ${sortMode === 'storesBySales' ? 'active' : ''}`}
+            onClick={() => setSortMode('storesBySales')}
+          >
+            <div className='flex gap-2 items-center'>
+              <img src={sortMode === 'storesBySales' ? TopSalesSelImg : TopSalesImg} className="subtab-icon-wrap" />
+              <span className=''>Top 10 Locations by $ Sales Lift</span>
+            </div>
+
+          </button>
+        </div>
+
+
+        <div className='flex-row items-center align-center '> <button
           className={`subtab-option ${sortMode === 'storesByLift' ? 'active' : ''}`}
           onClick={() => setSortMode('storesByLift')}
         >
           <img src={sortMode === 'storesByLift' ? TopSalesLiftSelImg : TopSalesLiftImg} className="subtab-icon-wrap" />
-          <span>Top 10 Locations by<br />% Sales Lift</span>
-        </button>
-        <button
+          <span>Top 10 Locations by % Sales Lift</span>
+        </button></div>
+
+        <div className='flex-row items-center align-center '> <button
           className={`subtab-option ${sortMode === 'territoryBySales' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryBySales')}
         >
           <img src={sortMode === 'territoryBySales' ? TerSalesLiftsel$img : TerSalesLift$img} className="subtab-icon-wrap" />
-          <span>Locations by<br />$ Sales Lift</span>
-        </button>
-        <button
+          <span>Locations by$ Sales Lift</span>
+        </button></div>
+
+
+        <div className='flex-row items-center align-center '><button
           className={`subtab-option ${sortMode === 'territoryByLift' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryByLift')}
         >
-          <img src={sortMode === 'territoryByLift' ? TerSalesLiftperimg : TerSalesLift$img} className="subtab-icon-wrap" />
-          <span>Locations by<br />% Sales Lift</span>
-        </button>
+          <img src={sortMode === 'territoryByLift' ? TerSalesLiftperimg : TerSalesimg} className="subtab-icon-wrap" />
+          <span>Locations by % Sales Lift</span>
+        </button></div>
+
       </div>
 
       {/* Cards Grid */}
-      <div className="cards-grid">
+      <div className="cards-grid mt-2">
         {rankedData.map(({ row, rank, color }) => {
           const ly = Number(row[m.ly] ?? 0);
           const cy = Number(row[m.cy] ?? 0);
@@ -145,7 +159,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
                 <div className="card-rank">{rank}</div>
                 {rank <= 4 && (
                   <div className="trophy-badge" style={{ backgroundColor: TROPHY_COLORS[rank - 1] }}>
-                    <span style={{ fontSize: '16px' }}>🏆</span>
+                    <span style={{ fontSize: '16px' }}><IoTrophySharp /></span>
                     <span style={{ marginTop: '-2px', fontSize: '10px' }}>{TROPHY_LABELS[rank - 1]}</span>
                   </div>
                 )}
