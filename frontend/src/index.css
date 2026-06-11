@@ -595,6 +595,7 @@ body {
   font-weight: 700;
   border-top: 1px solid #cbd5e1;
   border-bottom: none;
+  padding-top: 20px;
 }
 
 .sales-table tr.grand-total-row td:first-child {
@@ -605,6 +606,7 @@ body {
   background-color: #f1f5f9 !important;
   border-top: 1px solid #cbd5e1;
   border-bottom: none;
+  padding-top: 20px;
 }
 
 .comp-pos {
