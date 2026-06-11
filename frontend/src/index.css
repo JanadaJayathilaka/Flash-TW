@@ -7,7 +7,7 @@
   --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
-  --primary-color: #1976D2;
+  --primary-color: #1C65D6;
   --primary-hover: #1565C0;
   --success-color: #15803d;
   --danger-color: #dc2626;
@@ -300,7 +300,7 @@ body {
 .tab-btn {
   padding: 8px 16px;
   border: none;
-  background-color: #0b3b95;
+  background-color: #113A94;
   color: #ffffff;
   font-family: var(--font-family);
   font-weight: 500;
@@ -320,7 +320,7 @@ body {
 }
 
 .tab-btn.active {
-  background-color: #1976d2;
+  background-color: #1C65D6;
   color: #ffffff;
 }
 
