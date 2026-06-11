@@ -392,12 +392,12 @@ body {
   border-radius: 8px;
   box-shadow: var(--card-shadow);
   overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--divider-color);
-  max-height: calc(100vh - 220px);
   position: relative;
 }
 
-/* Custom scrollbar for table wrapper */
+/* Custom scrollbar for table wrapper (horizontal only) */
 .table-wrapper::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -418,9 +418,53 @@ body {
 
 .sales-table {
   width: 100%;
+  min-width: 1300px;
   border-collapse: collapse;
   text-align: right;
   font-size: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sales-table thead,
+.sales-table tbody,
+.sales-table tfoot {
+  display: block;
+}
+
+.sales-table thead,
+.sales-table tfoot {
+  padding-right: 8px;
+  /* Alignment adjustment for scrollbar gutter */
+}
+
+.sales-table tbody {
+  overflow-y: scroll;
+  height: 580px;
+}
+
+/* Custom scrollbar for tbody */
+.sales-table tbody::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.sales-table tbody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sales-table tbody::-webkit-scrollbar-thumb {
+  background-color: #888888;
+  border-radius: 4px;
+}
+
+.sales-table tbody::-webkit-scrollbar-thumb:hover {
+  background-color: #555555;
+}
+
+.sales-table tr {
+  display: flex;
+  width: 100%;
 }
 
 .sales-table th,
@@ -430,6 +474,7 @@ body {
   border-right: none;
   border-top: none;
   border-bottom: none;
+  box-sizing: border-box;
 }
 
 .sales-table th {
@@ -468,6 +513,54 @@ body {
 .sales-table td:nth-child(3n+4) {
   text-align: center;
 }
+
+/* Column Widths */
+.sales-table th:nth-child(1),
+.sales-table td:nth-child(1) {
+  width: 22%;
+  flex-shrink: 0;
+}
+
+.sales-table th:nth-child(2),
+.sales-table td:nth-child(2),
+.sales-table th:nth-child(3),
+.sales-table td:nth-child(3),
+.sales-table th:nth-child(5),
+.sales-table td:nth-child(5),
+.sales-table th:nth-child(6),
+.sales-table td:nth-child(6),
+.sales-table th:nth-child(8),
+.sales-table td:nth-child(8),
+.sales-table th:nth-child(9),
+.sales-table td:nth-child(9),
+.sales-table th:nth-child(11),
+.sales-table td:nth-child(11),
+.sales-table th:nth-child(12),
+.sales-table td:nth-child(12) {
+  width: 6.25%;
+  flex-shrink: 0;
+}
+
+.sales-table th:nth-child(4),
+.sales-table td:nth-child(4),
+.sales-table th:nth-child(7),
+.sales-table td:nth-child(7),
+.sales-table th:nth-child(10),
+.sales-table td:nth-child(10),
+.sales-table th:nth-child(13),
+.sales-table td:nth-child(13) {
+  width: 7%;
+  flex-shrink: 0;
+}
+
+/* CY Data Font Color */
+.sales-table td:nth-child(3),
+.sales-table td:nth-child(6),
+.sales-table td:nth-child(9),
+.sales-table td:nth-child(12) {
+  color: #3A7785;
+}
+
 
 .sales-table tr:hover td {
   background-color: #f8fafc;
@@ -519,6 +612,13 @@ body {
 }
 
 .store-name-cell {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.store-name-text {
   font-weight: 400;
 }
 
