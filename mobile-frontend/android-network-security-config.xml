@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- AWS EC2 production backend -->
+        <domain includeSubdomains="true">18.188.166.170</domain>
+        <!-- Android emulator alias for host machine (localhost) -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>
