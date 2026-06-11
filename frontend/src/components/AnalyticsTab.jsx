@@ -114,6 +114,9 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
             grid: {
               display: false,
             },
+            border: {
+              display: false,
+            },
             ticks: {
               font: {
                 family: 'Montserrat',
@@ -123,6 +126,12 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
             }
           },
           y: {
+            grid: {
+              color: '#f1f5f9', // soft grid lines
+            },
+            border: {
+              display: false,
+            },
             title: {
               display: true,
               text: 'Sales $',
