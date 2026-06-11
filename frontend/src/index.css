@@ -1320,28 +1320,28 @@ body {
 .swap-btn {
   position: absolute;
   left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  top: 0px;
+  transform: translateX(-50%);
   z-index: 10;
-  background: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 4px;
-  width: 28px;
-  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  width: auto;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  box-shadow: none;
   transition: all 0.2s;
 }
 
 .swap-btn:hover {
-  background: #f8f9fa;
-  transform: translate(-50%, -50%) scale(1.1);
+  background: transparent;
+  transform: translateX(-50%) scale(1.2);
 }
 
 .swap-btn i {
-  font-size: 18px;
+  font-size: 24px;
   color: #495057;
 }
