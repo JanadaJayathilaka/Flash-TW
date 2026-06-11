@@ -1,123 +1,193 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Chart, registerables } from 'chart.js';
 import { fetchSalesChartByDateRange } from '../services/api';
+
+// Import local icons for the segment cards
+import TrendsIcon from '../assets/Trends.png';
+import TrendsSelIcon from '../assets/Trends_sel.png';
+import ExtrapolateIcon from '../assets/Extrapolate.png';
+import LbpIcon from '../assets/LBP.png';
+
+// Register all Chart.js modules
+Chart.register(...registerables);
 
 const SMA_PERIOD = 7;
 
-// --- Chart Nice Ticks algorithms ---
-function niceNum(range, round) {
-  if (range === 0) return 0;
-  const exponent = Math.floor(Math.log10(range));
-  const fraction = range / Math.pow(10, exponent);
-  let niceFraction;
-  if (round) {
-    if (fraction < 1.5) niceFraction = 1;
-    else if (fraction < 3) niceFraction = 2;
-    else if (fraction < 7) niceFraction = 5;
-    else niceFraction = 10;
-  } else {
-    if (fraction <= 1) niceFraction = 1;
-    else if (fraction <= 2) niceFraction = 2;
-    else if (fraction <= 5) niceFraction = 5;
-    else niceFraction = 10;
-  }
-  return niceFraction * Math.pow(10, exponent);
-}
+/**
+ * Self-contained Chart Component using HTML5 canvas & Chart.js
+ */
+function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisible, yMin, yMax, salesColor }) {
+  const canvasRef = useRef(null);
+  const chartInstanceRef = useRef(null);
 
-function computeNiceTicks(dataMin, dataMax, maxTicks = 11) {
-  let minVal = dataMin;
-  let maxVal = dataMax;
-  if (minVal === maxVal) {
-    minVal -= 1;
-    maxVal += 1;
-  }
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    const ctx = canvasRef.current.getContext('2d');
 
-  // Include 0 if range ratio is large
-  if (minVal > 0 && maxVal > 0 && minVal / maxVal < 0.5) {
-    minVal = 0;
-  }
+    // Compute SMA trend color: green if last point >= first point, red otherwise
+    const validSma = (smaData || []).filter(v => v !== null);
+    let smaColor = '#00a651'; // default green
+    if (validSma.length >= 2) {
+      const lastVal = validSma[validSma.length - 1];
+      const firstVal = validSma[0];
+      if (lastVal < firstVal) {
+        smaColor = '#d32f2f'; // trending down (red)
+      }
+    }
 
-  const range = niceNum(maxVal - minVal, false);
-  const step = niceNum(range / (maxTicks - 1), true);
-  const niceMin = Math.floor(minVal / step) * step;
-  const niceMax = Math.ceil(maxVal / step) * step;
+    const datasets = [
+      {
+        label: 'Sales',
+        data: salesData || [],
+        borderColor: salesColor,
+        backgroundColor: salesColor + '1A', // transparent fill color for hover/legend
+        borderWidth: 2,
+        pointRadius: 1.5,
+        pointHoverRadius: 4,
+        tension: 0.15,
+        fill: false,
+      }
+    ];
 
-  const ticks = [];
-  for (let v = niceMin; v <= niceMax + step * 0.5; v += step) {
-    ticks.push(parseFloat(v.toFixed(10)));
-  }
-  return { niceMin, niceMax, ticks, step };
-}
+    if (smaVisible && smaData && smaData.length > 0) {
+      datasets.push({
+        label: `SMA (${SMA_PERIOD} Day)`,
+        data: smaData,
+        borderColor: smaColor,
+        backgroundColor: smaColor,
+        borderWidth: 1.0,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        tension: 0.2,
+        fill: false,
+      });
+    }
 
-// --- Bezier Curve Spline Smoothing ---
-const TENSION = 0.3;
+    chartInstanceRef.current = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels || [],
+        datasets: datasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              boxWidth: 20,
+              boxHeight: 4,
+              font: {
+                family: 'Montserrat',
+                size: 10,
+                weight: '600'
+              }
+            }
+          },
+          tooltip: {
+            enabled: true,
+            titleFont: { family: 'Montserrat', size: 12, weight: 'bold' },
+            bodyFont: { family: 'Montserrat', size: 11 },
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                if (label) {
+                  label += ': ';
+                }
+                if (context.parsed.y !== null) {
+                  label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(context.parsed.y);
+                }
+                return label;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              display: false,
+            },
+            ticks: {
+              font: {
+                family: 'Montserrat',
+                size: 9
+              },
+              maxTicksLimit: 12,
+            }
+          },
+          y: {
+            min: yMin,
+            max: yMax,
+            ticks: {
+              font: {
+                family: 'Montserrat',
+                size: 10
+              },
+              callback: function(value) {
+                if (value >= 1e6) {
+                  return '$' + (value / 1e6).toFixed(1) + 'M';
+                } else if (value >= 1e3) {
+                  return '$' + (value / 1e3).toFixed(0) + 'k';
+                }
+                return '$' + value;
+              }
+            }
+          }
+        }
+      }
+    });
 
-function splineControlPoints(prev, cur, next) {
-  const d01 = Math.sqrt((cur.x - prev.x) ** 2 + (cur.y - prev.y) ** 2);
-  const d12 = Math.sqrt((next.x - cur.x) ** 2 + (next.y - cur.y) ** 2);
-  const denom = d01 + d12 || 1;
-  const fa = (TENSION * d01) / denom;
-  const fb = (TENSION * d12) / denom;
-  return {
-    cp1: { x: cur.x - fa * (next.x - prev.x), y: cur.y - fa * (next.y - prev.y) },
-    cp2: { x: cur.x + fb * (next.x - prev.x), y: cur.y + fb * (next.y - prev.y) },
-  };
-}
+    return () => {
+      if (chartInstanceRef.current) {
+        chartInstanceRef.current.destroy();
+      }
+    };
+  }, [labels, salesData, smaData, smaVisible, yMin, yMax, salesColor]);
 
-function buildSmoothedPath(points) {
-  if (points.length === 0) return '';
-  if (points.length === 1) return `M${points[0].x},${points[0].y}`;
-
-  const cps = [];
-  for (let i = 0; i < points.length; i++) {
-    const prev = points[i - 1] || points[i];
-    const cur = points[i];
-    const next = points[i + 1] || points[i];
-    cps.push(splineControlPoints(prev, cur, next));
-  }
-
-  let d = `M${points[0].x.toFixed(2)},${points[0].y.toFixed(2)}`;
-  for (let i = 1; i < points.length; i++) {
-    const cp1 = cps[i - 1].cp2;
-    const cp2 = cps[i].cp1;
-    const p = points[i];
-    d += ` C${cp1.x.toFixed(2)},${cp1.y.toFixed(2)} ${cp2.x.toFixed(2)},${cp2.y.toFixed(2)} ${p.x.toFixed(2)},${p.y.toFixed(2)}`;
-  }
-  return d;
+  return (
+    <div className="chart-container" style={{ height: '380px', position: 'relative' }}>
+      <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#475569', textAlign: 'center', marginBottom: '10px' }}>
+        {title}
+      </h4>
+      <div style={{ position: 'relative', width: '100%', height: '310px' }}>
+        <canvas ref={canvasRef} id={id} />
+      </div>
+    </div>
+  );
 }
 
 export default function AnalyticsTab({
   calendarMode = 'fiscal',
   dateParams,
+  fiscalIndexes,
   onBindExportActions,
 }) {
   const [activeSubTab, setActiveSubTab] = useState('trends'); // trends | extrapolate | lifts
   const [compareMode, setCompareMode] = useState(calendarMode); // fiscal | calendar
-  const [compareYearLeft, setCompareYearLeft] = useState('Nothing'); // Nothing | 2025
+  const [compareYearLeft, setCompareYearLeft] = useState('Nothing'); // Nothing | 2022 | 2023 | 2024 | 2025 | 2026
   const [compareYearRight, setCompareYearRight] = useState('2026'); // 2026
-  const [viewMode, setViewMode] = useState('D'); // D | W | M | Y
+  const [viewMode, setViewMode] = useState('D'); // D (Daily) | W (Weekly) | M (Quarterly) | Y (Yearly)
   const [smaVisible, setSmaVisible] = useState(false);
 
   const [chartDataByYear, setChartDataByYear] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const containerRef = useRef(null);
-  const [containerWidth, setContainerWidth] = useState(800);
+  // Years options available
+  const availableYears = [2022, 2023, 2024, 2025, 2026];
 
-  // Measure container width for chart responsiveness
+  // Map calendarMode prop to internal compareMode state when it changes
   useEffect(() => {
-    if (containerRef.current) {
-      setContainerWidth(containerRef.current.getBoundingClientRect().width || 800);
-    }
-    const handleResize = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.getBoundingClientRect().width || 800);
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    setCompareMode(calendarMode);
+  }, [calendarMode]);
 
+  // Compute selected comparative years
   const selectedYears = useMemo(() => {
     const out = [];
     if (compareYearLeft !== 'Nothing') out.push(parseInt(compareYearLeft, 10));
@@ -128,26 +198,44 @@ export default function AnalyticsTab({
     return out;
   }, [compareYearLeft, compareYearRight]);
 
+  // Dynamically compute exact start/end dates for each comparative year based on selected report date and mode
   const yearRanges = useMemo(() => {
     if (!dateParams) return {};
-    const cyYear = parseInt(dateParams.boxDayCY.split(' ')[0], 10);
-    const lyYear = parseInt(dateParams.boxDayLY.split(' ')[0], 10);
 
+    const activeDateStr = dateParams.DT_1;
+    const [, actM, actD] = activeDateStr.split('-').map(Number);
     const out = {};
-    if (Number.isFinite(cyYear)) {
-      out[cyYear] = {
-        startDate: dateParams.P_YTD_1_S,
-        endDate: dateParams.P_YTD_1_E,
-      };
+
+    // Fiscal year ranges using database calendar mappings
+    if (compareMode === 'fiscal' && fiscalIndexes) {
+      const { calendar, dayIndex } = fiscalIndexes;
+      const activeDetails = calendar[activeDateStr];
+
+      if (activeDetails) {
+        const activeDayInYear = activeDetails.DayInYear;
+
+        availableYears.forEach(year => {
+          const start = dayIndex[`${year}_1`] || `${year}-01-01`;
+          const end = dayIndex[`${year}_${activeDayInYear}`] || `${year}-12-31`;
+          out[year] = { startDate: start, endDate: end };
+        });
+        return out;
+      }
     }
-    if (Number.isFinite(lyYear)) {
-      out[lyYear] = {
-        startDate: dateParams.P_YTD_2_S,
-        endDate: dateParams.P_YTD_2_E,
-      };
-    }
+
+    // Calendar fallback calculations
+    availableYears.forEach(year => {
+      let endD = new Date(year, actM - 1, actD);
+      if (endD.getMonth() !== (actM - 1)) {
+        endD = new Date(year, actM, 0); // Leap-safe fallback
+      }
+      const start = `${year}-01-01`;
+      const end = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`;
+      out[year] = { startDate: start, endDate: end };
+    });
+
     return out;
-  }, [dateParams]);
+  }, [compareMode, dateParams, fiscalIndexes]);
 
   // Fetch chart data when selected years, date ranges or viewMode change
   const loadChart = useCallback(async (years, mode) => {
@@ -185,194 +273,73 @@ export default function AnalyticsTab({
   }, [yearRanges]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadChart(selectedYears, viewMode);
-  }, [compareMode, selectedYears, viewMode, loadChart]);
+  }, [selectedYears, viewMode, loadChart]);
 
   const visibleCharts = useMemo(() => {
     const rows = [];
     if (compareYearLeft !== 'Nothing') {
       const year = parseInt(compareYearLeft, 10);
       const data = chartDataByYear[year];
-      if (data) rows.push({ year, data });
+      if (data) rows.push({ year, data, isLeft: true });
     }
     if (compareYearRight !== 'Nothing') {
       const year = parseInt(compareYearRight, 10);
       const data = chartDataByYear[year];
-      if (data && !rows.some((x) => x.year === year)) rows.push({ year, data });
+      if (data) {
+        // Prevent duplicate rows if both side selects point to the same year (though dropdown disables it)
+        if (!rows.some(x => x.year === year)) {
+          rows.push({ year, data, isLeft: false });
+        }
+      }
     }
     return rows;
   }, [chartDataByYear, compareYearLeft, compareYearRight]);
 
-  // Y-axis Nice Ticks calculations across all visible datasets
-  const { yMin, yMax, yTicks } = useMemo(() => {
+  // Synchronize Y-axis scales: calculate minimum and maximum values across all visible datasets
+  const { yMin, yMax } = useMemo(() => {
     if (visibleCharts.length === 0) {
-      return { yMin: 0, yMax: 1, yTicks: [0] };
+      return { yMin: undefined, yMax: undefined };
     }
 
     const allVals = [];
     visibleCharts.forEach(({ data }) => {
-      allVals.push(...data.Sales);
-      if (smaVisible) {
-        allVals.push(...data.Sma.filter((v) => v !== null));
+      if (data.Sales) allVals.push(...data.Sales);
+      if (smaVisible && data.Sma) {
+        allVals.push(...data.Sma.filter(v => v !== null));
       }
     });
 
     if (allVals.length === 0) {
-      return { yMin: 0, yMax: 1, yTicks: [0] };
+      return { yMin: undefined, yMax: undefined };
     }
 
     const dataMin = Math.min(...allVals);
     const dataMax = Math.max(...allVals);
 
-    const { niceMin, niceMax, ticks } = computeNiceTicks(dataMin, dataMax, 8);
-    return { yMin: niceMin, yMax: niceMax, yTicks: ticks };
+    const range = dataMax - dataMin;
+    const padding = range * 0.05 || 10;
+    const yMinVal = Math.max(0, dataMin - padding);
+    const yMaxVal = dataMax + padding;
+
+    return { yMin: yMinVal, yMax: yMaxVal };
   }, [visibleCharts, smaVisible]);
 
-  const getSmaColor = (sma) => {
-    const valid = sma.filter((v) => v !== null);
-    if (valid.length < 2) return '#999999';
-    return valid[valid.length - 1] >= valid[0] ? '#00a651' : '#D32F2F';
-  };
-
+  // Match live site colors
   const getSalesColor = (year) => {
-    if (year === 2025) return '#606266';
-    if (year === 2026) return '#3984c6';
-    return '#3984c6';
+    if (year === 2025) return '#606266'; // grey/muted
+    if (year === 2026) return '#3984c6'; // light blue/cyan
+    if (year === 2024) return '#ff9f43';
+    if (year === 2023) return '#10b981';
+    return '#ee4444'; // fallback red
   };
 
-  // Render SVG Line Graph
-  const renderSvgChart = (year, chartData) => {
-    if (!chartData || !chartData.Labels || chartData.Labels.length === 0) {
-      return <div style={{ textAlign: 'center', padding: '24px' }}>No chart data.</div>;
-    }
-
-    const padLeft = 64;
-    const padRight = 16;
-    const padTop = 16;
-    const padBottom = 48;
-
-    const chartW = containerWidth;
-    const plotW = chartW - padLeft - padRight;
-    const plotH = 300 - padTop - padBottom;
-
-    const toX = (i, total) => padLeft + (total > 1 ? (i / (total - 1)) * plotW : plotW / 2);
-    const toY = (val) => padTop + plotH - ((val - yMin) / (yMax - yMin || 1)) * plotH;
-
-    const salesPts = chartData.Sales.map((v, i) => ({ x: toX(i, chartData.Sales.length), y: toY(v) }));
-    const salesPath = buildSmoothedPath(salesPts);
-
-    const smaPts = chartData.Sma
-      .map((v, i) => (v !== null ? { x: toX(i, chartData.Sma.length), y: toY(v) } : null))
-      .filter(Boolean);
-    const smaPath = smaVisible ? buildSmoothedPath(smaPts) : '';
-
-    // Standard labels on X axis
-    const maxLabels = 8;
-    const step = Math.max(1, Math.ceil(chartData.Labels.length / maxLabels));
-    const xLabels = [];
-    for (let i = 0; i < chartData.Labels.length; i += step) {
-      xLabels.push({ label: chartData.Labels[i], x: toX(i, chartData.Labels.length) });
-    }
-
-    const salesColor = getSalesColor(year);
-    const smaColor = getSmaColor(chartData.Sma);
-
-    return (
-      <div key={year} style={{ marginBottom: '24px' }}>
-        <h4 style={{ fontSize: '13px', fontWeight: 700, color: '#475569', marginBottom: '8px' }}>
-          Year {year} Sales Data
-        </h4>
-        <svg width={chartW} height={300} style={{ overflow: 'visible' }}>
-          {/* Y Axis Grid lines */}
-          {yTicks.map((tick, i) => (
-            <g key={i}>
-              <line
-                x1={padLeft}
-                y1={toY(tick)}
-                x2={chartW - padRight}
-                y2={toY(tick)}
-                stroke="#e2e8f0"
-                strokeWidth={0.5}
-              />
-              <text
-                x={padLeft - 8}
-                y={toY(tick) + 3}
-                fontSize={10}
-                fill="#475569"
-                textAnchor="end"
-                fontFamily="Montserrat"
-              >
-                {Math.round(tick).toLocaleString()}
-              </text>
-            </g>
-          ))}
-
-          {/* Bottom boundary line */}
-          <line
-            x1={padLeft}
-            y1={300 - padBottom}
-            x2={chartW - padRight}
-            y2={300 - padBottom}
-            stroke="#1e293b"
-            strokeWidth={1.5}
-          />
-
-          {/* X Axis Labels */}
-          {xLabels.map((item, i) => (
-            <text
-              key={i}
-              x={item.x}
-              y={300 - padBottom + 16}
-              fontSize={9}
-              fill="#94a3b8"
-              textAnchor="middle"
-              fontFamily="Montserrat"
-            >
-              {item.label}
-            </text>
-          ))}
-
-          {/* Sales path */}
-          {salesPath && (
-            <path
-              d={salesPath}
-              fill="none"
-              stroke={salesColor}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          )}
-
-          {/* SMA path */}
-          {smaVisible && smaPath && (
-            <path
-              d={smaPath}
-              fill="none"
-              stroke={smaColor}
-              strokeWidth={1.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          )}
-        </svg>
-
-        {/* Legend */}
-        <div className="chart-legends">
-          <div className="legend-item">
-            <span className="legend-color" style={{ backgroundColor: salesColor }} />
-            <span>Sales</span>
-          </div>
-          {smaVisible && (
-            <div className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: smaColor }} />
-              <span>SMA ({SMA_PERIOD} Day)</span>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+  // Swap dropdown selections Year 1 and Year 2
+  const handleSwap = () => {
+    const leftVal = compareYearLeft;
+    const rightVal = compareYearRight;
+    setCompareYearLeft(rightVal);
+    setCompareYearRight(leftVal);
   };
 
   const handlePrint = useCallback(() => {
@@ -388,107 +355,198 @@ export default function AnalyticsTab({
     }
   }, [onBindExportActions, handlePrint]);
 
+  const showBoth = compareYearLeft !== 'Nothing' && compareYearRight !== 'Nothing';
+
   return (
-    <div ref={containerRef}>
-      {/* Filters & Control bar */}
-      <div className="analytics-controls">
-        {/* Left Side Options */}
-        <div className="analytics-control-group">
-          <span>Compare</span>
-          <select 
-            className="mode-select"
-            value={compareMode}
-            onChange={(e) => setCompareMode(e.target.value)}
-          >
-            <option value="fiscal">Fiscal</option>
-            <option value="calendar">Calendar</option>
-          </select>
-        </div>
+    <div>
+      {/* Filters & Control bar matching .chart-containerTop .chart-filtersMain */}
+      <div className="chart-containerTop">
+        <div className="chart-filtersMain">
+          {/* Compare dropdown selection */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ width: '70px', position: 'relative', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Compare</span>
+            <span className="small-select">
+              <select
+                id="selCalTypeFiscalorCal"
+                value={compareMode === 'fiscal' ? '1' : '2'}
+                onChange={(e) => setCompareMode(e.target.value === '1' ? 'fiscal' : 'calendar')}
+              >
+                <option value="1">Fiscal</option>
+                <option value="2">Calendar</option>
+              </select>
+            </span>
+          </span>
 
-        <div className="analytics-control-group">
-          <select
-            className="mode-select"
-            value={compareYearLeft}
-            onChange={(e) => setCompareYearLeft(e.target.value)}
-          >
-            <option value="Nothing">Nothing</option>
-            <option value="2025" disabled={compareYearRight === '2025'}>2025</option>
-            <option value="2026" disabled={compareYearRight === '2026'}>2026</option>
-          </select>
-          <span>with</span>
-          <select
-            className="mode-select"
-            value={compareYearRight}
-            onChange={(e) => setCompareYearRight(e.target.value)}
-          >
-            <option value="Nothing">Nothing</option>
-            <option value="2025" disabled={compareYearLeft === '2025'}>2025</option>
-            <option value="2026" disabled={compareYearLeft === '2026'}>2026</option>
-          </select>
-        </div>
+          {/* Comparative Year 1 dropdown */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span className="small-select">
+              <select
+                id="selCalType2"
+                value={compareYearLeft}
+                onChange={(e) => setCompareYearLeft(e.target.value)}
+              >
+                <option value="Nothing">Nothing</option>
+                {availableYears.map(year => (
+                  <option
+                    key={year}
+                    value={year.toString()}
+                    disabled={compareYearRight === year.toString()}
+                  >
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </span>
 
-        <div className="analytics-control-group">
-          <select
-            className="mode-select"
-            value={viewMode}
-            onChange={(e) => setViewMode(e.target.value)}
-          >
-            <option value="D">Daily</option>
-            <option value="W">Weekly</option>
-            <option value="M">Monthly</option>
-            <option value="Y">Yearly</option>
-          </select>
-        </div>
+          {/* Separator "with" text */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ width: '40px', position: 'relative', textAlign: 'center', marginRight: '5px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>with</span>
+            <span className="small-select">
+              <select
+                id="selCalType1"
+                value={compareYearRight}
+                onChange={(e) => setCompareYearRight(e.target.value)}
+              >
+                <option value="Nothing">Nothing</option>
+                {availableYears.map(year => (
+                  <option
+                    key={year}
+                    value={year.toString()}
+                    disabled={compareYearLeft === year.toString()}
+                  >
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </span>
 
-        <div className="analytics-control-group">
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-            <input 
+          {/* Mode/Granularity dropdown */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span className="small-select">
+              <select
+                id="selCalTypeDWMQY"
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value)}
+              >
+                <option value="D">Daily</option>
+                <option value="W">Weekly</option>
+                <option value="Q">Quarterly</option>
+                <option value="Y">Yearly</option>
+              </select>
+            </span>
+          </span>
+
+          {/* SMA toggler */}
+          <label id="lblchkSma" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', userSelect: 'none' }}>
+            <input
               type="checkbox"
+              id="chkSma"
               checked={smaVisible}
               onChange={() => setSmaVisible(!smaVisible)}
               style={{ cursor: 'pointer' }}
             />
-            <span>SMA</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>SMA</span>
           </label>
         </div>
+      </div>
 
-        {/* Right Side radio layout */}
-        <div style={{ marginLeft: 'auto' }} className="analytics-subtabs">
-          <button 
-            className={`analytics-subtab-btn ${activeSubTab === 'trends' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('trends')}
-          >
-            <i className="material-icons" style={{ fontSize: '18px', color: '#4caf50' }}>trending_up</i> Trends
-          </button>
-          <button 
-            className="analytics-subtab-btn disabled"
-            disabled
-          >
-            <i className="material-icons" style={{ fontSize: '18px', color: '#e53935' }}>close</i> Extrapolate
-          </button>
-          <button 
-            className="analytics-subtab-btn disabled"
-            disabled
-          >
-            <i className="material-icons" style={{ fontSize: '18px', color: '#e53935' }}>close</i> Lift by Promotion
-          </button>
+      {/* Styled Selector segments */}
+      <div style={{ display: 'flex', justifyContent: 'center', position: 'relative', top: '-10px', marginBottom: '15px' }}>
+        <div className="img-radio-group">
+          {/* Trends subtab */}
+          <label className="img-radio">
+            <input
+              id="rad_AnlT_01"
+              type="radio"
+              name="top_analytics_group"
+              checked={activeSubTab === 'trends'}
+              onChange={() => setActiveSubTab('trends')}
+            />
+            <div className="radio-card">
+              {activeSubTab === 'trends' && (
+                <>
+                  <div className="borderbar top-left" />
+                  <div className="borderbar top-right" />
+                  <div className="borderbar bottom-left" />
+                  <div className="borderbar bottom-right" />
+                </>
+              )}
+              <img className="radio-icon" src={activeSubTab === 'trends' ? TrendsSelIcon : TrendsIcon} alt="Trends" />
+              <span>Trends</span>
+            </div>
+          </label>
+
+          {/* Extrapolate (disabled) */}
+          <label className="img-radio">
+            <input
+              type="radio"
+              name="top_analytics_group"
+              disabled
+            />
+            <div className="radio-card disabled-card">
+              <img className="radio-icon" src={ExtrapolateIcon} alt="Extrapolate" />
+              <span>Extrapolate</span>
+            </div>
+          </label>
+
+          {/* Lift by Promotion (disabled) */}
+          <label className="img-radio">
+            <input
+              type="radio"
+              name="top_analytics_group"
+              disabled
+            />
+            <div className="radio-card disabled-card">
+              <img className="radio-icon" src={LbpIcon} alt="Lift by Promotion" />
+              <span>Lift by Promotion</span>
+            </div>
+          </label>
         </div>
       </div>
 
       {/* Main Charts card */}
-      <div className="chart-card">
-        <h3 className="chart-title">
-          Sales Trend - {compareMode === 'fiscal' ? 'Fiscal' : 'Calendar'} {compareYearRight !== 'Nothing' ? compareYearRight : compareYearLeft !== 'Nothing' ? compareYearLeft : ''} ({viewMode === 'D' ? 'Daily' : viewMode === 'W' ? 'Weekly' : viewMode === 'M' ? 'Monthly' : 'Yearly'})
-        </h3>
-
+      <div className="allAnltcCharts">
         {loading ? (
-          <div className="loading-view">Loading chart data...</div>
+          <div className="loading-view" style={{ width: '100%' }}>Loading chart data...</div>
         ) : error ? (
-          <div className="error-view" style={{ color: 'var(--danger-color)' }}>{error}</div>
+          <div className="error-view" style={{ color: 'var(--danger-color)', width: '100%' }}>{error}</div>
         ) : visibleCharts.length === 0 ? (
-          <div className="error-view">Select a year to generate the sales trend chart.</div>
+          <div className="error-view" style={{ width: '100%' }}>Select a year to generate the sales trend chart.</div>
         ) : (
-          visibleCharts.map(({ year, data }) => renderSvgChart(year, data))
+          <>
+            {visibleCharts.map(({ year, data }) => {
+              const colClass = showBoth ? 'col s12 m12 l6 chart-wrapper-left' : 'col s12 m12 l12 chart-wrapper-left';
+              const chartId = `salesChart_${year}`;
+              const title = `Year ${year} Sales Data (${viewMode === 'D' ? 'Daily' : viewMode === 'W' ? 'Weekly' : viewMode === 'Q' ? 'Quarterly' : 'Yearly'})`;
+              const color = getSalesColor(year);
+
+              return (
+                <div key={year} className={colClass} style={{ flexGrow: 1 }}>
+                  <AnalyticsChart
+                    id={chartId}
+                    year={year}
+                    title={title}
+                    labels={data.Labels}
+                    salesData={data.Sales}
+                    smaData={data.Sma}
+                    smaVisible={smaVisible}
+                    yMin={yMin}
+                    yMax={yMax}
+                    salesColor={color}
+                  />
+                </div>
+              );
+            })}
+
+            {/* Float centered swap button displayed when 2 charts are visible */}
+            {showBoth && (
+              <span id="spnSwap" className="swap-btn" onClick={handleSwap} title="Swap comparative years">
+                <i className="material-icons">swap_horiz</i>
+              </span>
+            )}
+          </>
         )}
       </div>
     </div>

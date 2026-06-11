@@ -411,6 +411,7 @@ export default function App() {
             <AnalyticsTab
               calendarMode={calendarMode}
               dateParams={dateParams}
+              fiscalIndexes={fiscalIndexes}
               onBindExportActions={handleBindActions}
             />
           )}
