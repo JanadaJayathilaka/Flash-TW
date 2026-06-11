@@ -89,8 +89,10 @@ export default function AllSalesTab({
       return ((cy - ly) / ly) * 100;
     };
 
+    const regionPrefix = stores[0]?.REGION_ID ? `${stores[0].REGION_ID} ` : '';
+
     return {
-      STORE_NAME: `${territoryName} Total`,
+      STORE_NAME: `${regionPrefix}${territoryName} Total`,
       IS_TERRITORY_TOTAL: true,
       DAY_SALES_LY: lyDay,
       DAY_SALES_CY: cyDay,
@@ -335,17 +337,17 @@ export default function AllSalesTab({
         <thead>
           <tr>
             <th className="border-right">LOCATION/TERRITORY</th>
-            <th>{lyYear} Wk {wk}<br />Day {dayDisplay} Net $</th>
-            <th>{cyYear} Wk {wk}<br />Day {dayDisplay} Net $</th>
+            <th>{lyYear} Wk {wk},<br />Day {dayDisplay} Net $</th>
+            <th>{cyYear} Wk {wk},<br />Day {dayDisplay} Net $</th>
             <th className="border-right">1 Day Comp<br />{lyYear} to {cyYear}</th>
-            <th>{lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}<br />{isCalendar ? 'MTD' : 'WTD'} Net $</th>
-            <th>{cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}<br />{isCalendar ? 'MTD' : 'WTD'} Net $</th>
+            <th>{lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},<br />{isCalendar ? 'MTD' : 'WTD'} Net $</th>
+            <th>{cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},<br />{isCalendar ? 'MTD' : 'WTD'} Net $</th>
             <th className="border-right">{isCalendar ? 'MTD' : 'WTD'} Comp<br />{lyYear} to {cyYear}</th>
-            <th>{lyYear} Q{q}<br />QTD Net $</th>
-            <th>{cyYear} Q{q}<br />QTD Net $</th>
+            <th>{lyYear} Q{q},<br />QTD Net $</th>
+            <th>{cyYear} Q{q},<br />QTD Net $</th>
             <th className="border-right">QTD Comp<br />{lyYear} to {cyYear}</th>
-            <th>{lyYear}<br />YTD Net $</th>
-            <th>{cyYear}<br />YTD Net $</th>
+            <th>{lyYear},<br />YTD Net $</th>
+            <th>{cyYear},<br />YTD Net $</th>
             <th className="border-right">YTD Comp<br />{lyYear} to {cyYear}</th>
           </tr>
         </thead>
@@ -358,28 +360,28 @@ export default function AllSalesTab({
               rows.push(
                 <tr key={store.STORE_ID}>
                   <td className="border-right store-name-cell">
-                    <strong>{store.STORE_ID}</strong> {store.STORE_NAME}
+                    {store.STORE_ID} {store.STORE_NAME}
                     {store.DATE_OPENED && (
                       <span className="store-opened">First Sale {store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}</span>
                     )}
                   </td>
                   <td>{formatNumber(store.DAY_SALES_LY)}</td>
-                  <td style={{ fontStyle: 'italic' }}>{formatNumber(store.DAY_SALES_CY)}</td>
+                  <td>{formatNumber(store.DAY_SALES_CY)}</td>
                   <td className={`border-right ${store.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                     {formatPercent(store.DAY_SALES_COMP)}
                   </td>
                   <td>{formatNumber(store.WTD_SALES_LY)}</td>
-                  <td style={{ fontStyle: 'italic' }}>{formatNumber(store.WTD_SALES_CY)}</td>
+                  <td>{formatNumber(store.WTD_SALES_CY)}</td>
                   <td className={`border-right ${store.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                     {formatPercent(store.WTD_SALES_COMP)}
                   </td>
                   <td>{formatNumber(store.QTD_SALES_LY)}</td>
-                  <td style={{ fontStyle: 'italic' }}>{formatNumber(store.QTD_SALES_CY)}</td>
+                  <td>{formatNumber(store.QTD_SALES_CY)}</td>
                   <td className={`border-right ${store.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                     {formatPercent(store.QTD_SALES_COMP)}
                   </td>
                   <td>{formatNumber(store.YTD_SALES_LY)}</td>
-                  <td style={{ fontStyle: 'italic' }}>{formatNumber(store.YTD_SALES_CY)}</td>
+                  <td>{formatNumber(store.YTD_SALES_CY)}</td>
                   <td className={`border-right ${store.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                     {formatPercent(store.YTD_SALES_COMP)}
                   </td>
@@ -393,22 +395,22 @@ export default function AllSalesTab({
               <tr key={`${territoryName}-Total`} className="territory-row">
                 <td className="border-right">{tTotal.STORE_NAME}</td>
                 <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
-                <td style={{ fontStyle: 'italic' }}>{formatNumber(tTotal.DAY_SALES_CY)}</td>
+                <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
                 <td className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                   {formatPercent(tTotal.DAY_SALES_COMP)}
                 </td>
                 <td>{formatNumber(tTotal.WTD_SALES_LY)}</td>
-                <td style={{ fontStyle: 'italic' }}>{formatNumber(tTotal.WTD_SALES_CY)}</td>
+                <td>{formatNumber(tTotal.WTD_SALES_CY)}</td>
                 <td className={`border-right ${tTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                   {formatPercent(tTotal.WTD_SALES_COMP)}
                 </td>
                 <td>{formatNumber(tTotal.QTD_SALES_LY)}</td>
-                <td style={{ fontStyle: 'italic' }}>{formatNumber(tTotal.QTD_SALES_CY)}</td>
+                <td>{formatNumber(tTotal.QTD_SALES_CY)}</td>
                 <td className={`border-right ${tTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                   {formatPercent(tTotal.QTD_SALES_COMP)}
                 </td>
                 <td>{formatNumber(tTotal.YTD_SALES_LY)}</td>
-                <td style={{ fontStyle: 'italic' }}>{formatNumber(tTotal.YTD_SALES_CY)}</td>
+                <td>{formatNumber(tTotal.YTD_SALES_CY)}</td>
                 <td className={`border-right ${tTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                   {formatPercent(tTotal.YTD_SALES_COMP)}
                 </td>
@@ -417,37 +419,37 @@ export default function AllSalesTab({
 
             return rows;
           })}
-
-          {/* Grand Total Row */}
-          {grandTotal && (
+        </tbody>
+        {grandTotal && (
+          <tfoot>
             <tr className="grand-total-row">
               <td className="border-right">
                 GRAND TOTAL
                 <span className="grand-total-sub">0 Locations yet to report day's sales</span>
               </td>
               <td>{formatNumber(grandTotal.DAY_SALES_LY)}</td>
-              <td style={{ fontStyle: 'italic' }}>{formatNumber(grandTotal.DAY_SALES_CY)}</td>
+              <td>{formatNumber(grandTotal.DAY_SALES_CY)}</td>
               <td className={`border-right ${grandTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                 {formatPercent(grandTotal.DAY_SALES_COMP)}
               </td>
               <td>{formatNumber(grandTotal.WTD_SALES_LY)}</td>
-              <td style={{ fontStyle: 'italic' }}>{formatNumber(grandTotal.WTD_SALES_CY)}</td>
+              <td>{formatNumber(grandTotal.WTD_SALES_CY)}</td>
               <td className={`border-right ${grandTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                 {formatPercent(grandTotal.WTD_SALES_COMP)}
               </td>
-              <td>{formatNumber(grandTotal.QTD_SALES_CY)}</td> {/* Note: in pivotsum backend, QTD is returned in CY/LY */}
-              <td style={{ fontStyle: 'italic' }}>{formatNumber(grandTotal.QTD_SALES_CY)}</td>
+              <td>{formatNumber(grandTotal.QTD_SALES_LY)}</td>
+              <td>{formatNumber(grandTotal.QTD_SALES_CY)}</td>
               <td className={`border-right ${grandTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                 {formatPercent(grandTotal.QTD_SALES_COMP)}
               </td>
               <td>{formatNumber(grandTotal.YTD_SALES_LY)}</td>
-              <td style={{ fontStyle: 'italic' }}>{formatNumber(grandTotal.YTD_SALES_CY)}</td>
+              <td>{formatNumber(grandTotal.YTD_SALES_CY)}</td>
               <td className={`border-right ${grandTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                 {formatPercent(grandTotal.YTD_SALES_COMP)}
               </td>
             </tr>
-          )}
-        </tbody>
+          </tfoot>
+        )}
       </table>
     </div>
   );

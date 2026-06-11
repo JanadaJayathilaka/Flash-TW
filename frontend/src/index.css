@@ -2,7 +2,7 @@
 
 :root {
   --font-family: 'Montserrat', sans-serif;
-  --bg-color: #f1f5f9;
+  --bg-color: #ffffff;
   --surface-color: #ffffff;
   --text-primary: #1e293b;
   --text-secondary: #475569;
@@ -397,40 +397,69 @@ body {
   position: relative;
 }
 
+/* Custom scrollbar for table wrapper */
+.table-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: #888888;
+  border-radius: 4px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #555555;
+}
+
 .sales-table {
   width: 100%;
   border-collapse: collapse;
   text-align: right;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .sales-table th,
 .sales-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--divider-color);
+  padding: 10px 8px;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
 }
 
 .sales-table th {
-  background-color: #D9E1F2;
-  color: var(--text-primary);
-  font-weight: 700;
-  border-bottom: 2px solid #808080;
+  background-color: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
   position: sticky;
   top: 0;
   z-index: 10;
   vertical-align: middle;
+  text-align: center;
+  border-top: none;
+  border-bottom: 1px solid #cbd5e1;
+  /* separator line below header */
 }
 
-.sales-table th:first-child,
+.sales-table th:first-child {
+  text-align: left;
+  position: sticky;
+  left: 0;
+  top: 0;
+  background-color: #f1f5f9;
+  z-index: 11;
+  border-bottom: 1px solid #cbd5e1;
+}
+
 .sales-table td:first-child {
   text-align: left;
   position: sticky;
   left: 0;
-  background-color: #D9E1F2;
-  z-index: 11;
-}
-
-.sales-table td:first-child {
   background-color: var(--surface-color);
   z-index: 9;
 }
@@ -439,22 +468,38 @@ body {
   background-color: #f8fafc;
 }
 
-/* Column group borders */
+/* Column group borders overridden to match uniform thin borders */
 .sales-table th.border-right,
 .sales-table td.border-right {
-  border-right: 2px solid #b0b8c8;
+  border-right: 1px solid #cbd5e1;
 }
 
 .sales-table tr.territory-row td {
   background-color: #EBF3FB !important;
   font-weight: 700;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1px solid #cbd5e1;
 }
 
+/* Sticky bottom Grand Total row */
 .sales-table tr.grand-total-row td {
-  background-color: #E4EAF2 !important;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  background-color: #f1f5f9 !important;
   font-weight: 700;
-  border-top: 2px solid #808080;
-  border-bottom: 2px solid #808080;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: none;
+}
+
+.sales-table tr.grand-total-row td:first-child {
+  position: sticky;
+  left: 0;
+  bottom: 0;
+  z-index: 12;
+  background-color: #f1f5f9 !important;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: none;
 }
 
 .comp-pos {
@@ -466,21 +511,22 @@ body {
 }
 
 .store-name-cell {
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .store-opened {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--text-muted);
   font-weight: 400;
-  margin-left: 6px;
+  margin-left: 16px;
 }
 
 .grand-total-sub {
-  font-size: 10px;
-  color: var(--text-secondary);
+  font-size: 9px;
+  color: #64748b;
   font-weight: 400;
   display: block;
+  margin-top: 2px;
 }
 
 /* Cards (Leaders & Laggards) */
@@ -783,7 +829,7 @@ body {
   font-size: 15px;
   font-weight: 300;
   letter-spacing: 0.5px;
-  z-index: 1000;
+  z-index: 1100;
   white-space: nowrap;
 }
 
