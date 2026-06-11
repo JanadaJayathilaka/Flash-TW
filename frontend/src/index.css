@@ -420,7 +420,7 @@ body {
   width: 100%;
   border-collapse: collapse;
   text-align: right;
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .sales-table th,
@@ -440,7 +440,7 @@ body {
   top: 0;
   z-index: 10;
   vertical-align: middle;
-  text-align: center;
+  text-align: right;
   border-top: none;
   border-bottom: 1px solid #cbd5e1;
   /* separator line below header */
@@ -462,6 +462,11 @@ body {
   left: 0;
   background-color: var(--surface-color);
   z-index: 9;
+}
+
+.sales-table th:nth-child(3n+4),
+.sales-table td:nth-child(3n+4) {
+  text-align: center;
 }
 
 .sales-table tr:hover td {
