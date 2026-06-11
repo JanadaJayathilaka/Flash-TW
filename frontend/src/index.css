@@ -551,8 +551,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 35px;
-  margin-top: 40px;
+  margin-bottom: 45px;
+  margin-top: 45px;
   gap: 25px;
   background-color: var(--surface-color);
   border: 1px solid var(--border-color);
@@ -567,9 +567,8 @@ body {
 }
 
 .subtab-option.active {
-  border-color: var(--primary-color);
-  border: 1px solid #42d456;
-  background-color: #d5eed9fd;
+  border: 1px solid #98f5a7fd;
+  background-color: #c3ffcdfd;
   color: black;
 }
 
@@ -633,7 +632,7 @@ body {
 
 .card-rank {
   font-size: 36px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1;
 }
 
@@ -652,7 +651,7 @@ body {
 
 .card-title {
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 400;
   margin-top: 8px;
 }
 
@@ -674,7 +673,7 @@ body {
 
 .bar-lbl {
   width: 75px;
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .bar-outer {
@@ -695,7 +694,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
   padding-bottom: 8px;
   margin-bottom: 8px;
 }
@@ -703,14 +701,16 @@ body {
 .stats-lbl {
   font-size: 12px;
   font-weight: 500;
+  border-bottom: 1px solid #cbd3dda6;
 }
 
 .lift-pill {
-  padding: 3px 8px;
+  padding: 3px 6px;
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: #eee8e8;
   font-weight: 700;
   font-size: 11px;
+  margin-left: 10px
 }
 
 .card-bottom {
@@ -720,13 +720,13 @@ body {
 }
 
 .bottom-lbl {
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 400;
 }
 
 .bottom-val {
   font-size: 20px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 /* Analytics Chart Tab */

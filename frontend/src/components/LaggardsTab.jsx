@@ -1,13 +1,20 @@
 import { useState, useMemo } from 'react';
 import { formatNumber, formatPercent, getBestMetric } from '../utils/dateUtils';
-
+import BotSales_sel from '../assets/LaggardsIcons/BotSales_sel.png'
+import BotSales from '../assets/LaggardsIcons/BotSales.png'
+import BotSalesLift_sel from '../assets/LaggardsIcons/BotSalesLift_sel.png'
+import BotSalesLift from '../assets/LaggardsIcons/BotSalesLift.png'
+import TerSalesLag_sel from '../assets/LaggardsIcons/TerSalesLag_sel.png.png'
+import TerSalesLag from '../assets/LaggardsIcons/TerSalesLag.png'
+import TerSalesLagLift_sel from '../assets/LaggardsIcons/TerSalesLiftLag_sel.png'
+import TerSalesLagLift from '../assets/LaggardsIcons/TerSalesLiftLag.png'
 const CARD_COLORS = [
   '#b61c1c',
   '#c62827',
   '#e53f3d',
   '#f5511e',
   '#ef6c00',
-  '#795548',  
+  '#795548',
   '#997d74',
   '#ff9f00',
   '#ffb019',
@@ -85,35 +92,43 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
   return (
     <div>
       {/* Subtabs controls */}
-      <div className="subtabs-bar">
-        <button 
-          className={`subtab-option ${sortMode === 'lowestSales' ? 'active' : ''}`}
-          onClick={() => setSortMode('lowestSales')}
-        >
-          <div className="subtab-icon-wrap" style={{ backgroundColor: '#4caf50', color: '#fff', borderRadius: '4px' }}>$</div>
-          <span>Bottom 10 Location by<br/>$ Sales Drop</span>
-        </button>
-        <button 
+      <div className="flex justify-between w-full">
+        <div className='flex-row items-center align-center '>
+          <button
+            className={`subtab-option ${sortMode === 'lowestSales' ? 'active' : ''}`}
+            onClick={() => setSortMode('lowestSales')}
+          >
+            <img src={sortMode === 'lowestSales' ? BotSales_sel : BotSales} className="subtab-icon-wrap" />
+            <span>Bottom 10 Location by $ Sales Drop</span>
+          </button>
+        </div>
+
+        <div className='flex-row items-center align-center '><button
           className={`subtab-option ${sortMode === 'highestLost' ? 'active' : ''}`}
           onClick={() => setSortMode('highestLost')}
         >
-          <div className="subtab-icon-wrap" style={{ backgroundColor: '#26a69a', color: '#fff', borderRadius: '50%' }}>%</div>
-          <span>Bottom 10 Location by<br/>% Sales Drop</span>
-        </button>
-        <button 
+          <img src={sortMode === 'highestLost' ? BotSalesLift_sel : BotSalesLift} className="subtab-icon-wrap" />
+          <span>Bottom 10 Location by % Sales Drop</span>
+        </button></div>
+
+
+        <div className='flex-row items-center align-center '><button
           className={`subtab-option ${sortMode === 'territoryLowestSales' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryLowestSales')}
         >
-          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>account_balance</i></div>
-          <span>Locations by<br/>$ Sales Drop</span>
-        </button>
-        <button 
+          <img src={sortMode === 'territoryLowestSales' ? TerSalesLag_sel : TerSalesLag} className="subtab-icon-wrap" />
+          <span>Locations by $ Sales Drop</span>
+        </button></div>
+
+
+        <div className='flex-row items-center align-center '> <button
           className={`subtab-option ${sortMode === 'territoryHighestLost' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryHighestLost')}
         >
-          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>trending_down</i></div>
-          <span>Locations by<br/>% Sales Drop</span>
-        </button>
+          <img src={sortMode === 'territoryHighestLost' ? TerSalesLagLift_sel : TerSalesLagLift} className="subtab-icon-wrap" />
+          <span>Locations by % Sales Drop</span>
+        </button></div>
+
       </div>
 
       {/* Cards Grid */}
@@ -165,7 +180,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
 
               {/* Stats info */}
               <div className="card-stats">
-                <div className="stats-lbl">
+                <div className="stats-lbl border-b w-full">
                   ${formatNumber(ly)} / ${formatNumber(cy)}
                 </div>
                 <div className="lift-pill" style={{ color: lift >= 0 ? '#15803d' : '#dc2626' }}>
