@@ -69,7 +69,14 @@ export default function AllSalesTab({
   const sortedTerritories = useMemo(() => {
     return Object.entries(territories)
       .filter(([, stores]) => stores.length > 0)
-      .sort(([a], [b]) => a.localeCompare(b));
+      .sort(([nameA, storesA], [nameB, storesB]) => {
+        const regA = Number(storesA[0]?.REGION_ID) || 0;
+        const regB = Number(storesB[0]?.REGION_ID) || 0;
+        if (regA !== regB) {
+          return regA - regB;
+        }
+        return nameA.localeCompare(nameB);
+      });
   }, [territories]);
 
   // Recalculate territory totals dynamically based on filtered stores (or just use precalculated if unfiltered)
