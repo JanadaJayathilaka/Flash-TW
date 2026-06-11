@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Login from './components/Login';
 import AllSalesTab from './components/AllSalesTab';
 import LeadersTab from './components/LeadersTab';
@@ -199,9 +199,9 @@ export default function App() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
-  const handleBindActions = (actions) => {
+  const handleBindActions = useCallback((actions) => {
     setExportActions(actions);
-  };
+  }, []);
 
   return (
     <div>

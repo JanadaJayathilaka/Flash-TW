@@ -876,7 +876,7 @@ body {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .chart-containerTop {
@@ -899,7 +899,7 @@ body {
   border: 1px solid var(--divider-color);
 }
 
-.chart-filtersMain input[type="radio"], 
+.chart-filtersMain input[type="radio"],
 .chart-filtersMain input[type="checkbox"] {
   position: static !important;
   opacity: 1 !important;
@@ -938,6 +938,7 @@ body {
 .radio-card {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 6px 16px;
   border-radius: 6px;
@@ -946,6 +947,10 @@ body {
   cursor: pointer;
   transition: all 0.2s;
   user-select: none;
+  min-width: 220px;
+  margin-top: 24px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .radio-card img {
@@ -963,16 +968,16 @@ body {
   margin: 0;
 }
 
-.img-radio input:checked + .radio-card {
+.img-radio input:checked+.radio-card {
   background-color: #e8f5e9 !important;
   border-color: #28a745 !important;
 }
 
-.img-radio input:checked + .radio-card span {
+.img-radio input:checked+.radio-card span {
   color: #28a745 !important;
 }
 
-.chart-wrapper-left, 
+.chart-wrapper-left,
 .chart-wrapper-right {
   padding: 0;
 }
@@ -981,6 +986,7 @@ body {
   .chart-wrapper-left {
     padding-right: 30px !important;
   }
+
   .chart-wrapper-right {
     padding-left: 30px !important;
   }
@@ -1011,7 +1017,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   cursor: pointer;
   z-index: 10;
   transition: all 0.2s ease;
@@ -1324,7 +1330,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
   transition: all 0.2s;
 }
 

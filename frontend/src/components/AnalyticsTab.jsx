@@ -373,11 +373,10 @@ export default function AnalyticsTab({
             display: 'flex',
             alignItems: 'flex-start',
             width: '100%',
-            padding: '12px 16px',
-            backgroundColor: 'var(--surface-color)',
-            borderRadius: '8px',
-            boxShadow: 'var(--card-shadow)',
-            border: '1px solid var(--divider-color)',
+            padding: '12px 0px',
+            background: 'none',
+            border: 'none',
+            boxShadow: 'none',
           }}
         >
           {/* Column 1 (Left Section): Filter Controls Group */}
@@ -566,6 +565,10 @@ export default function AnalyticsTab({
           position: 'relative',
           marginTop: '20px',
           width: '100%',
+          boxShadow: 'none',
+          border: 'none',
+          background: 'none',
+          padding: '0',
         }}
       >
         {loading ? (
