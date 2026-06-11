@@ -1,6 +1,12 @@
 import { useState, useMemo } from 'react';
 import { formatNumber, formatPercent, getBestMetric } from '../utils/dateUtils';
-
+import TopSalesImg from '../assets/TopsalesIcons/TopSales.png'
+import TopSalesSelImg from '../assets/TopsalesIcons/TopSales_sel.png';
+import TopSalesLiftImg from '../assets/TopsalesIcons/TopSalesLift.png';
+import TopSalesLiftSelImg from '../assets/TopsalesIcons/TopSalesLift_sel.png';
+import TerSalesLift$img from '../assets/TopsalesIcons/TerSalesLift.png'
+import TerSalesLiftsel$img from '../assets/TopsalesIcons/TerSalesLift_sel.png'
+import TerSalesLiftperimg from '../assets/TopsalesIcons/TerSales_sel.png'
 const CARD_COLORS = [
   '#1c5e20', // 1st
   '#2f7d32', // 2nd
@@ -90,33 +96,33 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
     <div>
       {/* Subtabs controls */}
       <div className="subtabs-bar">
-        <button 
+        <button
           className={`subtab-option ${sortMode === 'storesBySales' ? 'active' : ''}`}
           onClick={() => setSortMode('storesBySales')}
         >
-          <div className="subtab-icon-wrap" style={{ backgroundColor: '#4caf50', color: '#fff', borderRadius: '4px' }}>$</div>
-          <span>Top 10 Locations by<br/>$ Sales Lift</span>
+          <img src={sortMode === 'storesBySales' ? TopSalesSelImg : TopSalesImg} className="subtab-icon-wrap" />
+          <span>Top 10 Locations by<br />$ Sales Lift</span>
         </button>
-        <button 
+        <button
           className={`subtab-option ${sortMode === 'storesByLift' ? 'active' : ''}`}
           onClick={() => setSortMode('storesByLift')}
         >
-          <div className="subtab-icon-wrap" style={{ backgroundColor: '#26a69a', color: '#fff', borderRadius: '50%' }}>%</div>
-          <span>Top 10 Locations by<br/>% Sales Lift</span>
+          <img src={sortMode === 'storesByLift' ? TopSalesLiftSelImg : TopSalesLiftImg} className="subtab-icon-wrap" />
+          <span>Top 10 Locations by<br />% Sales Lift</span>
         </button>
-        <button 
+        <button
           className={`subtab-option ${sortMode === 'territoryBySales' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryBySales')}
         >
-          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>account_balance</i></div>
-          <span>Locations by<br/>$ Sales Lift</span>
+          <img src={sortMode === 'territoryBySales' ? TerSalesLiftsel$img : TerSalesLift$img} className="subtab-icon-wrap" />
+          <span>Locations by<br />$ Sales Lift</span>
         </button>
-        <button 
+        <button
           className={`subtab-option ${sortMode === 'territoryByLift' ? 'active' : ''}`}
           onClick={() => setSortMode('territoryByLift')}
         >
-          <div className="subtab-icon-wrap"><i className="material-icons" style={{ fontSize: '28px', color: '#616161' }}>bar_chart</i></div>
-          <span>Locations by<br/>% Sales Lift</span>
+          <img src={sortMode === 'territoryByLift' ? TerSalesLiftperimg : TerSalesLift$img} className="subtab-icon-wrap" />
+          <span>Locations by<br />% Sales Lift</span>
         </button>
       </div>
 
