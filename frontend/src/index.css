@@ -228,7 +228,7 @@ body {
 
 .page-title {
   font-size: 26px;
-  font-weight: 300;
+  font-weight: 400;
   color: #1e293b;
   cursor: pointer;
   white-space: nowrap;
@@ -271,7 +271,7 @@ body {
   cursor: pointer;
   outline: none;
   padding: 0 16px 4px 0;
-  margin-left: 12px;
+  margin-left: 14px;
 }
 
 .select-arrow-icon {
@@ -437,11 +437,37 @@ body {
 .sales-table tfoot {
   padding-right: 8px;
   /* Alignment adjustment for scrollbar gutter */
+  background: linear-gradient(to top, #E8EFFA, #ffffff);
+  position: relative;
+}
+
+.sales-table thead::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  background: linear-gradient(to top, #E8EFFA, #ffffff);
+  border-bottom: 1px solid #cbd5e1;
+  box-sizing: border-box;
+}
+
+.sales-table tfoot::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 100%;
+  background: linear-gradient(to top, #E8EFFA, #ffffff);
+  border-top: 1px solid #cbd5e1;
+  box-sizing: border-box;
 }
 
 .sales-table tbody {
   overflow-y: scroll;
-  height: 580px;
+  height: 590px;
 }
 
 /* Custom scrollbar for tbody */
@@ -452,6 +478,7 @@ body {
 
 .sales-table tbody::-webkit-scrollbar-track {
   background: transparent;
+  border: none;
 }
 
 .sales-table tbody::-webkit-scrollbar-thumb {
@@ -571,6 +598,12 @@ body {
 .sales-table th.border-right,
 .sales-table td.border-right {
   border-right: 1px solid #cbd5e1;
+}
+
+/* Remove the right border on the last column (YTD Comp) to avoid vertical line next to scrollbar */
+.sales-table th:last-child,
+.sales-table td:last-child {
+  border-right: none !important;
 }
 
 .sales-table tr.territory-row td.border-right {
