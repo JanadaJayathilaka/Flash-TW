@@ -6,6 +6,7 @@ import LaggardsTab from './components/LaggardsTab';
 import AnalyticsTab from './components/AnalyticsTab';
 import { fetchLatestDate, fetchStoreDetails, fetchSalesPivotSum, fetchAvailableDates } from './services/api';
 import { buildFiscalIndexes, computeDateParamsFromFiscal, computeCalendarDateParams } from './utils/dateUtils';
+import { MdOutlineArrowDropDown } from "react-icons/md";
 
 export default function App() {
   // Authentication state
@@ -224,7 +225,7 @@ export default function App() {
           <div className="toolbar-left">
             <h1 className="page-title" onClick={() => setShowDatePicker(!showDatePicker)}>
               {activeTab === 'analytics' ? 'Sales - Analytics' : `Flash Sales on ${dateParams?.displayDate || selectedDate}`}
-              <span style={{ fontSize: '10px', marginLeft: '24px', color: '#1e293b', verticalAlign: 'middle' }}>▼</span>
+              <MdOutlineArrowDropDown className="title-arrow-icon" />
             </h1>
 
             {showDatePicker && (
@@ -267,14 +268,17 @@ export default function App() {
 
             {/* Mode selection dropdown - below title */}
             {activeTab !== 'analytics' && (
-              <select
-                className="mode-select"
-                value={calendarMode}
-                onChange={(e) => setCalendarMode(e.target.value)}
-              >
-                <option value="fiscal">Fiscal</option>
-                <option value="calendar">Calendar</option>
-              </select>
+              <div className="custom-select-wrapper">
+                <select
+                  className="mode-select"
+                  value={calendarMode}
+                  onChange={(e) => setCalendarMode(e.target.value)}
+                >
+                  <option value="fiscal">Fiscal</option>
+                  <option value="calendar">Calendar</option>
+                </select>
+                <MdOutlineArrowDropDown className="select-arrow-icon" />
+              </div>
             )}
           </div>
 
