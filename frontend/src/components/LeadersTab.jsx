@@ -9,22 +9,7 @@ import TerSalesLiftsel$img from '../assets/TopsalesIcons/TerSalesLift_sel.png'
 import TerSalesLiftperimg from '../assets/TopsalesIcons/TerSales_sel.png'
 import TerSalesimg from '../assets/TopsalesIcons/TerSales.png'
 import { IoTrophySharp } from "react-icons/io5";
-
-const CARD_COLORS = [
-  '#1c5e20', // 1st
-  '#2f7d32', // 2nd
-  '#43a047', // 3rd
-  '#26a59a', // 4th
-  '#1d89e4', // 5th
-  '#1564c0', // 6th
-  '#3949ab',
-  '#5d35b0',
-  '#4a148c',
-  '#7a1fa2'
-];
-
-const TROPHY_COLORS = ['#D7D7D6', '#EDC400', '#AFB8BB', '#B16A24'];
-const TROPHY_LABELS = ['PL', 'GL', 'SL', 'BZ'];
+import { CARD_COLORS_TOPSALES, TROPHY_COLORS, TROPHY_LABELS } from '../../constants'
 
 export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }) {
   const [sortMode, setSortMode] = useState('storesBySales'); // storesBySales | storesByLift | territoryBySales | territoryByLift
@@ -72,7 +57,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
     let result = sortedData.map((row, index) => ({
       row,
       rank: index + 1,
-      color: CARD_COLORS[index % CARD_COLORS.length],
+      color: CARD_COLORS_TOPSALES[index % CARD_COLORS_TOPSALES.length],
     })).slice(0, 10);
 
     // Filter by search terms

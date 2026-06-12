@@ -8,18 +8,7 @@ import TerSalesLag_sel from '../assets/LaggardsIcons/TerSalesLag_sel.png.png'
 import TerSalesLag from '../assets/LaggardsIcons/TerSalesLag.png'
 import TerSalesLagLift_sel from '../assets/LaggardsIcons/TerSalesLiftLag_sel.png'
 import TerSalesLagLift from '../assets/LaggardsIcons/TerSalesLiftLag.png'
-const CARD_COLORS = [
-  '#b61c1c',
-  '#c62827',
-  '#e53f3d',
-  '#f5511e',
-  '#ef6c00',
-  '#795548',
-  '#997d74',
-  '#ff9f00',
-  '#ffb019',
-  '#f9ba00'
-];
+import { CARD_COLORS } from '../../constants'
 
 export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search }) {
   const [sortMode, setSortMode] = useState('lowestSales'); // lowestSales | highestLost | territoryLowestSales | territoryHighestLost

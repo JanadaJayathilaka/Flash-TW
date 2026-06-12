@@ -10,8 +10,7 @@ import { MdOutlineArrowDropDown } from "react-icons/md";
 import { LiaBroomSolid } from "react-icons/lia";
 import excelImg from './assets/excel.png'
 import csvImg from './assets/csv.png'
-import { BsDownload } from "react-icons/bs";
-import { BsPrinter } from "react-icons/bs";
+import { BsDownload, BsPrinter, BsSearch } from "react-icons/bs";
 
 
 
@@ -320,11 +319,12 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right: Search + Action icons */}
           <div className="toolbar-right">
             {activeTab !== 'analytics' && (
               <div className="search-container">
-                <span className="search-icon"><i className="material-icons" style={{ fontSize: '20px', color: '#9e9e9e' }}>search</i></span>
+                <span className="search-icon">
+                  <BsSearch size={16} />
+                </span>
                 <input
                   type="text"
                   className="search-input-field"
@@ -334,14 +334,14 @@ export default function App() {
                 />
 
                 <span className="search-clear" onClick={() => setSearch('')}>
-                  <LiaBroomSolid className='text-red-800' />
+                  <LiaBroomSolid size={18} className='text-red-800' />
                 </span>
 
               </div>
             )}
 
             {/* Export Actions buttons */}
-            <div className="action-buttons justify between">
+            <div className="action-buttons">
               {activeTab === 'allSales' && (
                 <>
                   <button
@@ -349,15 +349,14 @@ export default function App() {
                     title="Export to Excel"
                     onClick={() => exportActions?.exportExcel?.()}
                   >
-
-                    <img src={excelImg} className='w-5' alt="excel" />
+                    <img src={excelImg} className='w-6 h-6 object-contain' alt="excel" />
                   </button>
                   <button
-                    className="w-5 h-9"
+                    className="icon-btn"
                     title="Export to CSV"
                     onClick={() => exportActions?.exportCSV?.()}
                   >
-                    <img src={csvImg} alt="csv" />
+                    <img src={csvImg} className='w-6 h-6 object-contain' alt="csv" />
                   </button>
                 </>
               )}
@@ -366,15 +365,14 @@ export default function App() {
                 title="Download PDF"
                 onClick={() => exportActions?.exportPDF ? exportActions.exportPDF() : window.print()}
               >
-                <BsDownload />
-
+                <BsDownload size={18} />
               </button>
               <button
-                className="w-5 h-9"
+                className="icon-btn"
                 title="Print Page"
                 onClick={() => exportActions?.printPDF ? exportActions.printPDF() : window.print()}
               >
-                <BsPrinter />
+                <BsPrinter size={18} />
               </button>
             </div>
           </div>
