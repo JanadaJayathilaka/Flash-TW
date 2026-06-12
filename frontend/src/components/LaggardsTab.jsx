@@ -71,7 +71,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
   }, [data, sortMode, m, loading, search, getNormalizedLostSales]);
 
   if (loading) {
-    return <div className="loading-view">Loading bottom performers...</div>;
+    return <div className="loading-view">Loading Laggards...</div>;
   }
 
   if (!data || data.length === 0) {

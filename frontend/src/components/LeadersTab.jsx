@@ -73,7 +73,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
   }, [data, sortMode, m, loading, search, getNormalizedLift]);
 
   if (loading) {
-    return <div className="loading-view">Loading top performers...</div>;
+    return <div className="loading-view">Loading top Sales...</div>;
   }
 
   if (!data || data.length === 0) {
