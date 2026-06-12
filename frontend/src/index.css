@@ -624,6 +624,24 @@ body {
   }
 }
 
+/* Card entrance animations */
+@keyframes cardFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(1);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animated-card {
+  animation: cardFadeInUp 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+}
+
 .leader-card {
   border-radius: 12px;
   padding: 16px;

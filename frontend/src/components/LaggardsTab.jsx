@@ -121,8 +121,8 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
       </div>
 
       {/* Cards Grid */}
-      <div className="cards-grid">
-        {rankedData.map(({ row, rank, color }) => {
+      <div className="cards-grid" key={sortMode}>
+        {rankedData.map(({ row, rank, color }, index) => {
           const ly = Number(row[m.ly] ?? 0);
           const cy = Number(row[m.cy] ?? 0);
           const sTotal = ly + cy || 1;
@@ -133,7 +133,14 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
           const isTerritory = sortMode.includes('territory');
 
           return (
-            <div key={`${row.STORE_ID || row.TERRITORY}-${rank}`} className="leader-card" style={{ backgroundColor: color }}>
+            <div
+              key={`${row.STORE_ID || row.TERRITORY}-${rank}`}
+              className="leader-card animated-card"
+              style={{
+                backgroundColor: color,
+                animationDelay: `${index * 50}ms`
+              }}
+            >
               {/* Header */}
               <div className="card-top">
                 <div className="card-rank">{rank}</div>
