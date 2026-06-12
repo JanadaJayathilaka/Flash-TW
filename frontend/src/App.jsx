@@ -202,13 +202,13 @@ export default function App() {
     setShowDatePicker(false);
   };
 
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={handleLoginSuccess} />;
-  }
-
   const handleBindActions = useCallback((actions) => {
     setExportActions(actions);
   }, []);
+
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <div>
