@@ -8,18 +8,7 @@ import TerSalesLag_sel from '../assets/LaggardsIcons/TerSalesLag_sel.png.png'
 import TerSalesLag from '../assets/LaggardsIcons/TerSalesLag.png'
 import TerSalesLagLift_sel from '../assets/LaggardsIcons/TerSalesLiftLag_sel.png'
 import TerSalesLagLift from '../assets/LaggardsIcons/TerSalesLiftLag.png'
-const CARD_COLORS = [
-  '#b61c1c',
-  '#c62827',
-  '#e53f3d',
-  '#f5511e',
-  '#ef6c00',
-  '#795548',
-  '#997d74',
-  '#ff9f00',
-  '#ffb019',
-  '#f9ba00'
-];
+import { CARD_COLORS } from '../../constants'
 
 export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search }) {
   const [sortMode, setSortMode] = useState('lowestSales'); // lowestSales | highestLost | territoryLowestSales | territoryHighestLost
@@ -82,7 +71,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
   }, [data, sortMode, m, loading, search, getNormalizedLostSales]);
 
   if (loading) {
-    return <div className="loading-view">Loading bottom performers...</div>;
+    return <div className="loading-view">Loading Laggards...</div>;
   }
 
   if (!data || data.length === 0) {
@@ -132,8 +121,8 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
       </div>
 
       {/* Cards Grid */}
-      <div className="cards-grid">
-        {rankedData.map(({ row, rank, color }) => {
+      <div className="cards-grid" key={sortMode}>
+        {rankedData.map(({ row, rank, color }, index) => {
           const ly = Number(row[m.ly] ?? 0);
           const cy = Number(row[m.cy] ?? 0);
           const sTotal = ly + cy || 1;
@@ -144,7 +133,14 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
           const isTerritory = sortMode.includes('territory');
 
           return (
-            <div key={`${row.STORE_ID || row.TERRITORY}-${rank}`} className="leader-card" style={{ backgroundColor: color }}>
+            <div
+              key={`${row.STORE_ID || row.TERRITORY}-${rank}`}
+              className="leader-card animated-card"
+              style={{
+                backgroundColor: color,
+                animationDelay: `${index * 50}ms`
+              }}
+            >
               {/* Header */}
               <div className="card-top">
                 <div className="card-rank">{rank}</div>

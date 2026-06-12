@@ -49,7 +49,7 @@ export default function Login({ onLoginSuccess }) {
           </div>
         )}
 
-        <div style={{ marginTop: '8px' }}>
+        <div style={{ marginTop: '25px', marginLeft: "20px", marginRight: "10px", }}>
           <button type="submit" className="auth-btn">
             Login
           </button>
