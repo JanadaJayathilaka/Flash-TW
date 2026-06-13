@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatNumber, formatPercent, getBestMetric } from '../utils/dateUtils';
+import { highlightText } from '../utils/highlightUtils';
 import TopSalesImg from '../assets/TopsalesIcons/TopSales.png'
 import TopSalesSelImg from '../assets/TopsalesIcons/TopSales_sel.png';
 import TopSalesLiftImg from '../assets/TopsalesIcons/TopSalesLift.png';
@@ -160,11 +161,15 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
               {/* Title Info */}
               <div>
                 <div className="card-title">
-                  {isTerritory ? `Territory: ${row.TERRITORY}` : `${row.STORE_ID} ${row.STORE_NAME}`}
+                  {isTerritory ? (
+                    <>Territory: {highlightText(row.TERRITORY, search)}</>
+                  ) : (
+                    <>{highlightText(row.STORE_ID, search)} {highlightText(row.STORE_NAME, search)}</>
+                  )}
                 </div>
                 {!isTerritory && row.TERRITORY && (
                   <div className="card-subtitle">
-                    Location: {row.REGION_ID} {row.TERRITORY}
+                    Location: {highlightText(row.REGION_ID, search)} {highlightText(row.TERRITORY, search)}
                   </div>
                 )}
               </div>

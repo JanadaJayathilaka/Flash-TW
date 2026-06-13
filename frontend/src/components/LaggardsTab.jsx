@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { formatNumber, formatPercent, getBestMetric } from '../utils/dateUtils';
+import { highlightText } from '../utils/highlightUtils';
 import BotSales_sel from '../assets/LaggardsIcons/BotSales_sel.png'
 import BotSales from '../assets/LaggardsIcons/BotSales.png'
 import BotSalesLift_sel from '../assets/LaggardsIcons/BotSalesLift_sel.png'
@@ -149,11 +150,15 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
               {/* Title Info */}
               <div>
                 <div className="card-title">
-                  {isTerritory ? `Territory: ${row.TERRITORY}` : `${row.STORE_ID} ${row.STORE_NAME}`}
+                  {isTerritory ? (
+                    <>Territory: {highlightText(row.TERRITORY, search)}</>
+                  ) : (
+                    <>{highlightText(row.STORE_ID, search)} {highlightText(row.STORE_NAME, search)}</>
+                  )}
                 </div>
                 {!isTerritory && row.TERRITORY && (
                   <div className="card-subtitle">
-                    Location: <strong>{row.REGION_ID} {row.TERRITORY}</strong>
+                    Location: <strong>{highlightText(row.REGION_ID, search)} {highlightText(row.TERRITORY, search)}</strong>
                   </div>
                 )}
               </div>

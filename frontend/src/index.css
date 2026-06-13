@@ -374,6 +374,14 @@ body {
   justify-content: center;
 }
 
+.search-highlight {
+  background-color: rgba(253, 224, 71, 0.6);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: inherit;
+}
+
 .action-buttons {
   display: flex;
   gap: 8px;

@@ -1,6 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import * as XLSX from 'xlsx-js-style';
 import { formatNumber, formatPercent } from '../utils/dateUtils';
+import { highlightText } from '../utils/highlightUtils';
 
 export default function AllSalesTab({
   data,
@@ -368,7 +369,7 @@ export default function AllSalesTab({
                 <tr key={store.STORE_ID}>
                   <td className="border-right store-name-cell">
                     <span className="store-name-text">
-                      <strong>{store.STORE_ID}</strong> {store.STORE_NAME}
+                      <strong>{highlightText(store.STORE_ID, search)}</strong> {highlightText(store.STORE_NAME, search)}
                     </span>
                     {store.DATE_OPENED && (
                       <span className="store-opened">First Sale {store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}</span>
@@ -402,7 +403,7 @@ export default function AllSalesTab({
             const tTotal = computeTerritoryTotal(territoryName, stores);
             rows.push(
               <tr key={`${territoryName}-Total`} className="territory-row">
-                <td className="border-right">{tTotal.STORE_NAME}</td>
+                <td className="border-right">{highlightText(tTotal.STORE_NAME, search)}</td>
                 <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
                 <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
                 <td className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
