@@ -318,7 +318,7 @@ export default function App() {
                 className="search-input-field"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Separate multiple arguments with "
+                placeholder="Separate multiple arguments with +"
               />
               {search && (
                 <span className="search-clear" onClick={() => setSearch('')}>🧹</span>
