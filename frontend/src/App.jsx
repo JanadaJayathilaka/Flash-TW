@@ -45,8 +45,8 @@ export default function App() {
   // Generated time label (frozen on load/refresh)
   const generatedTimeStr = useMemo(() => {
     const now = new Date();
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const h = now.getHours();
     const h12 = h % 12 || 12;
     const ampm = h >= 12 ? 'PM' : 'AM';
@@ -136,10 +136,10 @@ export default function App() {
 
         const res = await fetchSalesPivotSum(params);
         setPivotData(res.PivotData || []);
-        
+
         const endTime = new Date();
         const durationSec = ((endTime - startTime) / 1000).toFixed(2);
-        
+
         setTimingMetrics({
           rowCount: res.TotalCount || res.PivotData?.length || 0,
           started: startedStr,
@@ -225,7 +225,7 @@ export default function App() {
               {activeTab === 'analytics' ? 'Sales - Analytics' : `Flash Sales on ${dateParams?.displayDate || selectedDate}`}
               <span style={{ fontSize: '12px', marginLeft: '6px', color: 'var(--text-secondary)' }}>▼</span>
             </h1>
-            
+
             {showDatePicker && (
               <div className="custom-calendar-overlay" onClick={() => setShowDatePicker(false)}>
                 <div className="custom-calendar-card" onClick={(e) => e.stopPropagation()}>
@@ -280,25 +280,25 @@ export default function App() {
           {/* Navigation tabs */}
           <div className="tabs-nav">
             <div className="tab-btn-group">
-              <button 
+              <button
                 className={`tab-btn ${activeTab === 'allSales' ? 'active' : ''}`}
                 onClick={() => setActiveTab('allSales')}
               >
                 All Sales
               </button>
-              <button 
+              <button
                 className={`tab-btn ${activeTab === 'topSales' ? 'active' : ''}`}
                 onClick={() => setActiveTab('topSales')}
               >
                 Top Sales
               </button>
-              <button 
+              <button
                 className={`tab-btn ${activeTab === 'laggards' ? 'active' : ''}`}
                 onClick={() => setActiveTab('laggards')}
               >
                 Laggards
               </button>
-              <button 
+              <button
                 className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
                 onClick={() => setActiveTab('analytics')}
               >
@@ -318,7 +318,7 @@ export default function App() {
                 className="search-input-field"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Separate multiple arguments with ++"
+                placeholder="Separate multiple arguments with "
               />
               {search && (
                 <span className="search-clear" onClick={() => setSearch('')}>🧹</span>
@@ -332,15 +332,15 @@ export default function App() {
           <div className="action-buttons">
             {activeTab === 'allSales' && (
               <>
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Export to Excel"
                   onClick={() => exportActions?.exportExcel?.()}
                 >
                   🟢
                 </button>
-                <button 
-                  className="icon-btn" 
+                <button
+                  className="icon-btn"
                   title="Export to CSV"
                   onClick={() => exportActions?.exportCSV?.()}
                 >
@@ -348,15 +348,15 @@ export default function App() {
                 </button>
               </>
             )}
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Download PDF"
               onClick={() => exportActions?.exportPDF ? exportActions.exportPDF() : window.print()}
             >
               📥
             </button>
-            <button 
-              className="icon-btn" 
+            <button
+              className="icon-btn"
               title="Print Page"
               onClick={() => exportActions?.printPDF ? exportActions.printPDF() : window.print()}
             >
