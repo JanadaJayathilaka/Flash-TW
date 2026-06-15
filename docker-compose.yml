@@ -1,0 +1,6 @@
+services:
+  frontend:
+    build: ./frontend
+    container_name: flash-frontend
+    ports:
+      - "5173:5173"
