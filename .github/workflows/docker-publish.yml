@@ -1,9 +1,9 @@
-name: Build and Push Docker Image
+name: Build and Push Frontend Docker Image
 
 on:
 push:
 branches:
-- janada2
+- main
 
 jobs:
 docker:
@@ -11,7 +11,7 @@ runs-on: ubuntu-latest
 
 
 steps:
-  - name: Checkout Repository
+  - name: Checkout Code
     uses: actions/checkout@v4
 
   - name: Set up Docker Buildx
@@ -23,10 +23,11 @@ steps:
       username: ${{ secrets.DOCKERHUB_USERNAME }}
       password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-  - name: Build and Push
+  - name: Build and Push Frontend Image
     uses: docker/build-push-action@v6
     with:
-      context: .
+      context: ./frontend
+      file: ./frontend/Dockerfile
       push: true
       tags: |
         janadajayathila1/flash-frontend:latest
