@@ -69,21 +69,46 @@ export async function fetchAvailableDates() {
  * Fetch chart data for Analytics tab by explicit date range.
  */
 export async function fetchSalesChartByDateRange(startDate, endDate, mode, smaPeriod = 7) {
-  const qs = new URLSearchParams({
-    startDate,
-    endDate,
-    mode,
-    smaPeriod: smaPeriod.toString(),
-  }).toString();
-  const url = `${API_BASE_URL}/api/sales/analytics?${qs}`;
-  console.log('[api] Fetching analytics range chart:', url);
+  const query = `
+    query GetSalesAnalytics($startDate: String!, $endDate: String!, $mode: String!, $smaPeriod: Int) {
+      salesAnalytics(startDate: $startDate, endDate: $endDate, mode: $mode, smaPeriod: $smaPeriod) {
+        Labels
+        Sales
+        Sma
+      }
+    }
+  `;
 
-  const res = await fetch(url);
+  const url = `${API_BASE_URL}/graphql`;
+  console.log('[api] Fetching analytics range chart via GraphQL:', url);
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      variables: {
+        startDate,
+        endDate,
+        mode,
+        smaPeriod: parseInt(smaPeriod) || 7,
+      },
+    }),
+  });
+
   if (!res.ok) {
     const body = await res.text();
-    console.error('[api] Analytics range chart error:', res.status, body);
+    console.error('[api] GraphQL analytics chart error:', res.status, body);
     throw new Error(`HTTP ${res.status}: ${body}`);
   }
 
-  return res.json();
+  const result = await res.json();
+  if (result.errors) {
+    console.error('[api] GraphQL query returned errors:', result.errors);
+    throw new Error(result.errors[0].message || 'GraphQL Query Error');
+  }
+
+  return result.data.salesAnalytics;
 }

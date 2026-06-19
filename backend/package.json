@@ -8,11 +8,13 @@
     "dev": "nodemon src/server.js"
   },
   "dependencies": {
+    "@apollo/server": "^4.11.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "graphql": "^16.10.0",
     "mssql": "^11.0.1",
-    "odbc": "^2.4.9"
+    "odbc": "2.4.9"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

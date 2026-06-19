@@ -685,36 +685,42 @@ function buildChartPayload(rawRows, mode, smaPeriod) {
   return { Labels: labels, Sales: sales, Sma: sma };
 }
 
+async function getAnalyticsData(startDate, endDate, modeRaw, smaPeriod) {
+  const mode = (modeRaw || 'D').toString().toUpperCase() === 'Q' ? 'M' : (modeRaw || 'D').toString().toUpperCase();
+  const period = parseInt(smaPeriod) || 7;
+
+  const sql = `
+    SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
+    FROM AHLIBR.STRSLSSMRY
+    WHERE STATUS = 1
+      AND SALES_ON_DATE >= ?
+      AND SALES_ON_DATE <= ?
+    GROUP BY SALES_ON_DATE
+    ORDER BY SALES_ON_DATE
+  `;
+
+  const rawRows = await odbcQuery(sql, [startDate, endDate]);
+  console.log(`[getAnalyticsData] Got ${rawRows.length} raw daily rows`);
+
+  return buildChartPayload(rawRows, mode, period);
+}
+
 // GET /api/sales/analytics — Date-range analytics endpoint (matches web app call shape)
 router.get('/analytics', async (req, res) => {
   try {
     const startDate = (req.query.startDate || '').toString();
     const endDate = (req.query.endDate || '').toString();
-    const modeRaw = (req.query.mode || 'D').toString().toUpperCase();
-    const mode = modeRaw === 'Q' ? 'M' : modeRaw;
+    const modeRaw = (req.query.mode || 'D').toString();
     const smaPeriod = parseInt(req.query.smaPeriod) || 7;
 
     if (!startDate || !endDate) {
       return res.status(400).json({ error: 'startDate and endDate are required' });
     }
 
-    console.log(`[analytics] startDate=${startDate}, endDate=${endDate}, mode=${mode}, smaPeriod=${smaPeriod}`);
+    console.log(`[analytics] REST: startDate=${startDate}, endDate=${endDate}, modeRaw=${modeRaw}, smaPeriod=${smaPeriod}`);
 
-    const sql = `
-      SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-      FROM AHLIBR.STRSLSSMRY
-      WHERE STATUS = 1
-        AND SALES_ON_DATE >= ?
-        AND SALES_ON_DATE <= ?
-      GROUP BY SALES_ON_DATE
-      ORDER BY SALES_ON_DATE
-    `;
-
-    const rawRows = await odbcQuery(sql, [startDate, endDate]);
-    console.log(`[analytics] Got ${rawRows.length} raw daily rows`);
-
-    const payload = buildChartPayload(rawRows, mode, smaPeriod);
-    console.log(`[analytics] Returning ${payload.Labels.length} data points`);
+    const payload = await getAnalyticsData(startDate, endDate, modeRaw, smaPeriod);
+    console.log(`[analytics] REST: Returning ${payload.Labels.length} data points`);
     res.json(payload);
   } catch (err) {
     console.error('GET /api/sales/analytics error:', err);
@@ -758,3 +764,4 @@ router.get('/chart', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.getAnalyticsData = getAnalyticsData;
