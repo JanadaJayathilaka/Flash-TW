@@ -97,7 +97,7 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
             titleFont: { family: 'Montserrat', size: 12, weight: 'bold' },
             bodyFont: { family: 'Montserrat', size: 11 },
             callbacks: {
-              label: function(context) {
+              label: function (context) {
                 let label = context.dataset.label || '';
                 if (label) {
                   label += ': ';
@@ -150,7 +150,7 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
                 family: 'Montserrat',
                 size: 9
               },
-              callback: function(value) {
+              callback: function (value) {
                 return Math.round(value).toLocaleString();
               }
             }
@@ -174,6 +174,124 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
       <div style={{ position: 'relative', width: '100%', height: '450px' }}>
         <canvas ref={canvasRef} id={id} />
       </div>
+    </div>
+  );
+}
+
+/**
+ * Custom styled dropdown that supports colored strikethrough on disabled items.
+ * Native <select>/<option> elements cannot reliably render text-decoration cross-browser.
+ */
+function StyledSelect({ id, value, onChange, options }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+
+  return (
+    <div
+      ref={ref}
+      id={id}
+      style={{ position: 'relative', display: 'inline-block' }}
+    >
+      {/* Trigger button — mimics small-select look */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '3px',
+          background: 'transparent',
+          border: '1px solid #cbd5e1',
+          borderRadius: '4px',
+          padding: '1px 5px 1px 6px',
+          fontFamily: 'var(--font-family)',
+          fontSize: '12px',
+          fontWeight: 600,
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          lineHeight: '18px',
+        }}
+      >
+        {selected ? selected.label : value}
+        <span style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1 }}>▾</span>
+      </button>
+
+      {/* Dropdown panel */}
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 3px)',
+            left: 0,
+            zIndex: 9999,
+            background: '#fff',
+            border: '1px solid #cbd5e1',
+            borderRadius: '6px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            minWidth: '90px',
+            padding: '4px 0',
+            fontSize: '12px',
+            fontFamily: 'var(--font-family)',
+          }}
+        >
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            const isDisabled = opt.disabled;
+            return (
+              <div
+                key={opt.value}
+                onClick={() => {
+                  if (isDisabled) return;
+                  onChange(opt.value);
+                  setOpen(false);
+                }}
+                style={{
+                  position: 'relative',
+                  padding: '4px 12px',
+                  cursor: isDisabled ? 'default' : 'pointer',
+                  color: isDisabled ? '#b0b8c9' : isSelected ? 'var(--primary-color)' : 'var(--text-primary)',
+                  fontWeight: isSelected ? 600 : 400,
+                  background: isSelected && !isDisabled ? '#f0f6ff' : 'transparent',
+                  userSelect: 'none',
+                  borderRadius: '2px',
+                }}
+                onMouseEnter={(e) => { if (!isDisabled) e.currentTarget.style.background = '#f8fafc'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isSelected && !isDisabled ? '#f0f6ff' : 'transparent'; }}
+              >
+                {opt.label}
+                {/* Colored strikethrough line overlay */}
+                {isDisabled && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      left: '8px',
+                      right: '8px',
+                      top: '50%',
+                      height: '0.8px',
+                      background: opt.strikeColor || '#94a3b8',
+                      transform: 'translateY(-50%)',
+                      borderRadius: '1px',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -409,24 +527,20 @@ export default function AnalyticsTab({
 
               {/* Comparative Year 1 select */}
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', height: '24px' }}>
-                <span className="small-select">
-                  <select
-                    id="selCalType2"
-                    value={compareYearLeft}
-                    onChange={(e) => setCompareYearLeft(e.target.value)}
-                  >
-                    <option value="Nothing">Nothing</option>
-                    {availableYears.map((year) => (
-                      <option
-                        key={year}
-                        value={year.toString()}
-                        disabled={compareYearRight === year.toString()}
-                      >
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </span>
+                <StyledSelect
+                  id="selCalType2"
+                  value={compareYearLeft}
+                  onChange={(val) => setCompareYearLeft(val)}
+                  options={[
+                    { value: 'Nothing', label: 'Nothing' },
+                    ...availableYears.map((year) => ({
+                      value: year.toString(),
+                      label: year.toString(),
+                      disabled: year < 2025 || compareYearRight === year.toString(),
+                      strikeColor: getSalesColor(year),
+                    }))
+                  ]}
+                />
               </span>
 
               {/* Separator "with" text */}
@@ -448,38 +562,33 @@ export default function AnalyticsTab({
               {/* Vertical Stack: Year 2 Select, Mode Select, SMA Checkbox */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
                 {/* Row 1: Year 2 Select */}
-                <span className="small-select">
-                  <select
-                    id="selCalType1"
-                    value={compareYearRight}
-                    onChange={(e) => setCompareYearRight(e.target.value)}
-                  >
-                    <option value="Nothing">Nothing</option>
-                    {availableYears.map((year) => (
-                      <option
-                        key={year}
-                        value={year.toString()}
-                        disabled={compareYearLeft === year.toString()}
-                      >
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </span>
+                <StyledSelect
+                  id="selCalType1"
+                  value={compareYearRight}
+                  onChange={(val) => setCompareYearRight(val)}
+                  options={[
+                    { value: 'Nothing', label: 'Nothing' },
+                    ...availableYears.map((year) => ({
+                      value: year.toString(),
+                      label: year.toString(),
+                      disabled: year < 2025 || compareYearLeft === year.toString(),
+                      strikeColor: getSalesColor(year),
+                    }))
+                  ]}
+                />
 
                 {/* Row 2: Mode/Granularity Select */}
-                <span className="small-select">
-                  <select
-                    id="selCalTypeDWMQY"
-                    value={viewMode}
-                    onChange={(e) => setViewMode(e.target.value)}
-                  >
-                    <option value="D">Daily</option>
-                    <option value="W">Weekly</option>
-                    <option value="Q">Quarterly</option>
-                    <option value="Y">Yearly</option>
-                  </select>
-                </span>
+                <StyledSelect
+                  id="selCalTypeDWMQY"
+                  value={viewMode}
+                  onChange={(val) => setViewMode(val)}
+                  options={[
+                    { value: 'D', label: 'Daily' },
+                    { value: 'W', label: 'Weekly',    disabled: true, strikeColor: '#94a3b8' },
+                    { value: 'Q', label: 'Quarterly', disabled: true, strikeColor: '#94a3b8' },
+                    { value: 'Y', label: 'Yearly',    disabled: true, strikeColor: '#94a3b8' },
+                  ]}
+                />
 
                 {/* Row 3: SMA Checkbox */}
                 <label

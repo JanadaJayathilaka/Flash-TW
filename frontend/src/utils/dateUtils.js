@@ -205,18 +205,12 @@ export function computeCalendarDateParams(selectedDate) {
   const DT_1 = fmt(currentDate);
   const DT_2 = fmt(prevYearSameDay);
 
-  // WTD — Sunday start
   const currentDayOfWeek = currentDate.getDay(); // 0=Sun
-  const prevDayOfWeek = prevYearSameDay.getDay();
 
-  const weekStart = new Date(currentDate);
-  weekStart.setDate(currentDate.getDate() - currentDayOfWeek);
-  const prevWeekStart = new Date(prevYearSameDay);
-  prevWeekStart.setDate(prevYearSameDay.getDate() - prevDayOfWeek);
-
-  const P_WTD_1_S = fmt(weekStart);
+  // MTD — 1st of the month start
+  const P_WTD_1_S = fmt(new Date(currentYear, month - 1, 1));
   const P_WTD_1_E = DT_1;
-  const P_WTD_2_S = fmt(prevWeekStart);
+  const P_WTD_2_S = fmt(new Date(prevYear, month - 1, 1));
   const P_WTD_2_E = DT_2;
 
   // QTD — standard calendar quarters

@@ -3,6 +3,43 @@ import * as XLSX from 'xlsx-js-style';
 import { formatNumber, formatPercent } from '../utils/dateUtils';
 import { highlightText } from '../utils/highlightUtils';
 
+function getSearchableRowStrings(r) {
+  const dateStr = r.DATE_OPENED
+    ? (r.DATE_OPENED.length >= 10 ? r.DATE_OPENED.substring(2) : r.DATE_OPENED)
+    : '';
+  const firstSaleStr = dateStr ? `First Sale ${dateStr}` : '';
+  return [
+    r.STORE_ID != null ? String(r.STORE_ID) : '',
+    r.STORE_NAME || '',
+    dateStr,
+    firstSaleStr,
+    r.REGION_ID != null ? String(r.REGION_ID) : '',
+    r.TERRITORY || '',
+    // Formatted values (with commas)
+    formatNumber(r.DAY_SALES_LY),
+    formatNumber(r.DAY_SALES_CY),
+    formatPercent(r.DAY_SALES_COMP),
+    formatNumber(r.WTD_SALES_LY),
+    formatNumber(r.WTD_SALES_CY),
+    formatPercent(r.WTD_SALES_COMP),
+    formatNumber(r.QTD_SALES_LY),
+    formatNumber(r.QTD_SALES_CY),
+    formatPercent(r.QTD_SALES_COMP),
+    formatNumber(r.YTD_SALES_LY),
+    formatNumber(r.YTD_SALES_CY),
+    formatPercent(r.YTD_SALES_COMP),
+    // Unformatted values (without commas)
+    r.DAY_SALES_LY != null ? String(Math.round(r.DAY_SALES_LY)) : '',
+    r.DAY_SALES_CY != null ? String(Math.round(r.DAY_SALES_CY)) : '',
+    r.WTD_SALES_LY != null ? String(Math.round(r.WTD_SALES_LY)) : '',
+    r.WTD_SALES_CY != null ? String(Math.round(r.WTD_SALES_CY)) : '',
+    r.QTD_SALES_LY != null ? String(Math.round(r.QTD_SALES_LY)) : '',
+    r.QTD_SALES_CY != null ? String(Math.round(r.QTD_SALES_CY)) : '',
+    r.YTD_SALES_LY != null ? String(Math.round(r.YTD_SALES_LY)) : '',
+    r.YTD_SALES_CY != null ? String(Math.round(r.YTD_SALES_CY)) : '',
+  ];
+}
+
 export default function AllSalesTab({
   data,
   loading,
@@ -55,11 +92,10 @@ export default function AllSalesTab({
         if (territoryMatched) return; // Keep all stores in this territory
         
         territories[t] = territories[t].filter((r) =>
-          terms.some(
-            (q) =>
-              (r.STORE_NAME ?? '').toLowerCase().includes(q) ||
-              (r.STORE_ID ?? '').toString().includes(q)
-          )
+          terms.some((q) => {
+            const searchableStrings = getSearchableRowStrings(r);
+            return searchableStrings.some((str) => str.toLowerCase().includes(q));
+          })
         );
       });
     }
@@ -326,6 +362,7 @@ export default function AllSalesTab({
       onBindExportActions({
         exportExcel: handleExportExcel,
         exportCSV: handleExportCSV,
+        exportPDF: () => window.print(),
         printPDF: () => window.print(),
       });
     }
@@ -372,28 +409,30 @@ export default function AllSalesTab({
                       <strong>{highlightText(store.STORE_ID, search)}</strong> {highlightText(store.STORE_NAME, search)}
                     </span>
                     {store.DATE_OPENED && (
-                      <span className="store-opened">First Sale {store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}</span>
+                      <span className="store-opened">
+                        {highlightText(`First Sale ${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`, search)}
+                      </span>
                     )}
                   </td>
-                  <td>{formatNumber(store.DAY_SALES_LY)}</td>
-                  <td>{formatNumber(store.DAY_SALES_CY)}</td>
+                  <td>{highlightText(formatNumber(store.DAY_SALES_LY), search)}</td>
+                  <td>{highlightText(formatNumber(store.DAY_SALES_CY), search)}</td>
                   <td className={`border-right ${store.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                    {formatPercent(store.DAY_SALES_COMP)}
+                    {highlightText(formatPercent(store.DAY_SALES_COMP), search)}
                   </td>
-                  <td>{formatNumber(store.WTD_SALES_LY)}</td>
-                  <td>{formatNumber(store.WTD_SALES_CY)}</td>
+                  <td>{highlightText(formatNumber(store.WTD_SALES_LY), search)}</td>
+                  <td>{highlightText(formatNumber(store.WTD_SALES_CY), search)}</td>
                   <td className={`border-right ${store.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                    {formatPercent(store.WTD_SALES_COMP)}
+                    {highlightText(formatPercent(store.WTD_SALES_COMP), search)}
                   </td>
-                  <td>{formatNumber(store.QTD_SALES_LY)}</td>
-                  <td>{formatNumber(store.QTD_SALES_CY)}</td>
+                  <td>{highlightText(formatNumber(store.QTD_SALES_LY), search)}</td>
+                  <td>{highlightText(formatNumber(store.QTD_SALES_CY), search)}</td>
                   <td className={`border-right ${store.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                    {formatPercent(store.QTD_SALES_COMP)}
+                    {highlightText(formatPercent(store.QTD_SALES_COMP), search)}
                   </td>
-                  <td>{formatNumber(store.YTD_SALES_LY)}</td>
-                  <td>{formatNumber(store.YTD_SALES_CY)}</td>
+                  <td>{highlightText(formatNumber(store.YTD_SALES_LY), search)}</td>
+                  <td>{highlightText(formatNumber(store.YTD_SALES_CY), search)}</td>
                   <td className={`border-right ${store.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                    {formatPercent(store.YTD_SALES_COMP)}
+                    {highlightText(formatPercent(store.YTD_SALES_COMP), search)}
                   </td>
                 </tr>
               );
@@ -404,25 +443,25 @@ export default function AllSalesTab({
             rows.push(
               <tr key={`${territoryName}-Total`} className="territory-row">
                 <td className="border-right">{highlightText(tTotal.STORE_NAME, search)}</td>
-                <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
+                <td>{highlightText(formatNumber(tTotal.DAY_SALES_LY), search)}</td>
+                <td>{highlightText(formatNumber(tTotal.DAY_SALES_CY), search)}</td>
                 <td className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                  {formatPercent(tTotal.DAY_SALES_COMP)}
+                  {highlightText(formatPercent(tTotal.DAY_SALES_COMP), search)}
                 </td>
-                <td>{formatNumber(tTotal.WTD_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.WTD_SALES_CY)}</td>
+                <td>{highlightText(formatNumber(tTotal.WTD_SALES_LY), search)}</td>
+                <td>{highlightText(formatNumber(tTotal.WTD_SALES_CY), search)}</td>
                 <td className={`border-right ${tTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                  {formatPercent(tTotal.WTD_SALES_COMP)}
+                  {highlightText(formatPercent(tTotal.WTD_SALES_COMP), search)}
                 </td>
-                <td>{formatNumber(tTotal.QTD_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.QTD_SALES_CY)}</td>
+                <td>{highlightText(formatNumber(tTotal.QTD_SALES_LY), search)}</td>
+                <td>{highlightText(formatNumber(tTotal.QTD_SALES_CY), search)}</td>
                 <td className={`border-right ${tTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                  {formatPercent(tTotal.QTD_SALES_COMP)}
+                  {highlightText(formatPercent(tTotal.QTD_SALES_COMP), search)}
                 </td>
-                <td>{formatNumber(tTotal.YTD_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.YTD_SALES_CY)}</td>
+                <td>{highlightText(formatNumber(tTotal.YTD_SALES_LY), search)}</td>
+                <td>{highlightText(formatNumber(tTotal.YTD_SALES_CY), search)}</td>
                 <td className={`border-right ${tTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                  {formatPercent(tTotal.YTD_SALES_COMP)}
+                  {highlightText(formatPercent(tTotal.YTD_SALES_COMP), search)}
                 </td>
               </tr>
             );
@@ -434,28 +473,28 @@ export default function AllSalesTab({
           <tfoot>
             <tr className="grand-total-row">
               <td className="border-right">
-                GRAND TOTAL
+                {highlightText('GRAND TOTAL', search)}
                 <span className="grand-total-sub">0 Locations yet to report day's sales</span>
               </td>
-              <td>{formatNumber(grandTotal.DAY_SALES_LY)}</td>
-              <td>{formatNumber(grandTotal.DAY_SALES_CY)}</td>
+              <td>{highlightText(formatNumber(grandTotal.DAY_SALES_LY), search)}</td>
+              <td>{highlightText(formatNumber(grandTotal.DAY_SALES_CY), search)}</td>
               <td className={`border-right ${grandTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {formatPercent(grandTotal.DAY_SALES_COMP)}
+                {highlightText(formatPercent(grandTotal.DAY_SALES_COMP), search)}
               </td>
-              <td>{formatNumber(grandTotal.WTD_SALES_LY)}</td>
-              <td>{formatNumber(grandTotal.WTD_SALES_CY)}</td>
+              <td>{highlightText(formatNumber(grandTotal.WTD_SALES_LY), search)}</td>
+              <td>{highlightText(formatNumber(grandTotal.WTD_SALES_CY), search)}</td>
               <td className={`border-right ${grandTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {formatPercent(grandTotal.WTD_SALES_COMP)}
+                {highlightText(formatPercent(grandTotal.WTD_SALES_COMP), search)}
               </td>
-              <td>{formatNumber(grandTotal.QTD_SALES_LY)}</td>
-              <td>{formatNumber(grandTotal.QTD_SALES_CY)}</td>
+              <td>{highlightText(formatNumber(grandTotal.QTD_SALES_LY), search)}</td>
+              <td>{highlightText(formatNumber(grandTotal.QTD_SALES_CY), search)}</td>
               <td className={`border-right ${grandTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {formatPercent(grandTotal.QTD_SALES_COMP)}
+                {highlightText(formatPercent(grandTotal.QTD_SALES_COMP), search)}
               </td>
-              <td>{formatNumber(grandTotal.YTD_SALES_LY)}</td>
-              <td>{formatNumber(grandTotal.YTD_SALES_CY)}</td>
+              <td>{highlightText(formatNumber(grandTotal.YTD_SALES_LY), search)}</td>
+              <td>{highlightText(formatNumber(grandTotal.YTD_SALES_CY), search)}</td>
               <td className={`border-right ${grandTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {formatPercent(grandTotal.YTD_SALES_COMP)}
+                {highlightText(formatPercent(grandTotal.YTD_SALES_COMP), search)}
               </td>
             </tr>
           </tfoot>

@@ -28,16 +28,28 @@ export function highlightText(text, search) {
 
   if (escapedTerms.length === 0) return textStr;
 
-  const regex = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+  const makeDigitFlexible = (term) => {
+    return term.split('').map((char, index, arr) => {
+      if (/\d/.test(char) && index < arr.length - 1 && /\d/.test(arr[index + 1])) {
+        return char + '[,\\s]?';
+      }
+      return char;
+    }).join('');
+  };
+
+  const flexibleTerms = escapedTerms.map(makeDigitFlexible);
+
+  const regex = new RegExp(`(${flexibleTerms.join('|')})`, 'gi');
   const parts = textStr.split(regex);
 
-  return parts.map((part, i) =>
-    regex.test(part) ? (
+  return parts.map((part, i) => {
+    regex.lastIndex = 0;
+    return regex.test(part) ? (
       <mark key={i} className="search-highlight">
         {part}
       </mark>
     ) : (
       part
-    )
-  );
+    );
+  });
 }

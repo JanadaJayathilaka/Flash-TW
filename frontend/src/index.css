@@ -1382,3 +1382,147 @@ body {
   font-size: 24px;
   color: #495057;
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .main-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .header-bar,
+  .footer-bar,
+  .tab-btn-group,
+  .search-container,
+  .action-buttons,
+  .custom-select-wrapper,
+  .select-arrow-icon {
+    display: none !important;
+  }
+
+  .page-title {
+    margin-bottom: 20px !important;
+    font-size: 20px !important;
+  }
+
+  .table-wrapper {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .sales-table {
+    display: table !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    border-collapse: collapse !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .sales-table thead {
+    display: table-header-group !important;
+  }
+
+  .sales-table tbody {
+    display: table-row-group !important;
+    height: auto !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+  }
+
+  .sales-table tfoot {
+    display: table-footer-group !important;
+  }
+
+  .sales-table tr {
+    display: table-row !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .sales-table th,
+  .sales-table td {
+    display: table-cell !important;
+    padding: 6px 4px !important;
+    font-size: 10px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Retain original backgrounds of cells but remove sticky positioning */
+  .sales-table th {
+    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+    border-bottom: 2px solid #94a3b8 !important;
+  }
+
+  .sales-table th:first-child {
+    position: static !important;
+    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+  }
+
+  .sales-table td:first-child {
+    position: static !important;
+    background-color: var(--surface-color) !important;
+  }
+
+  /* Territory row styling */
+  .sales-table tr.territory-row td {
+    background-color: #F7F9FD !important;
+  }
+
+  .sales-table tr.territory-row td:first-child {
+    position: static !important;
+    background-color: #F7F9FD !important;
+  }
+
+  /* Grand total row styling */
+  .sales-table tr.grand-total-row td {
+    position: static !important;
+    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+    border-top: 2px solid #cbd5e1 !important;
+  }
+
+  .sales-table tr.grand-total-row td:first-child {
+    position: static !important;
+    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+    border-top: 2px solid #cbd5e1 !important;
+  }
+
+  /* CY Data text color */
+  .sales-table td:nth-child(3),
+  .sales-table td:nth-child(6),
+  .sales-table td:nth-child(9),
+  .sales-table td:nth-child(12) {
+    color: #3A7785 !important;
+  }
+
+  .comp-pos {
+    color: var(--success-color) !important;
+  }
+
+  .comp-neg {
+    color: var(--danger-color) !important;
+  }
+}
