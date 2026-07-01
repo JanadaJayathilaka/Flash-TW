@@ -1389,6 +1389,10 @@ body {
   color: #495057;
 }
 
+.sales-table-print {
+  display: none !important;
+}
+
 @media print {
   @page {
     size: landscape;
@@ -1424,6 +1428,9 @@ body {
   .page-title {
     margin-bottom: 20px !important;
     font-size: 20px !important;
+    background: transparent !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .table-wrapper {
@@ -1437,6 +1444,10 @@ body {
   }
 
   .sales-table {
+    display: none !important;
+  }
+
+  .sales-table-print {
     display: table !important;
     width: 100% !important;
     min-width: 100% !important;
@@ -1445,82 +1456,104 @@ body {
     print-color-adjust: exact !important;
   }
 
-  .sales-table thead {
+  .sales-table-print thead {
     display: table-header-group !important;
   }
 
-  .sales-table tbody {
+  .sales-table-print tbody {
     display: table-row-group !important;
     height: auto !important;
     overflow: visible !important;
     overflow-y: visible !important;
   }
 
-  .sales-table tfoot {
+  .sales-table-print tfoot {
     display: table-footer-group !important;
   }
 
-  .sales-table tr {
+  .sales-table-print tr {
     display: table-row !important;
     page-break-inside: avoid !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .sales-table th,
-  .sales-table td {
+  .sales-table-print th,
+  .sales-table-print td {
     display: table-cell !important;
     padding: 6px 4px !important;
-    font-size: 10px !important;
+    font-size: 9px !important;
     border-bottom: 1px solid #cbd5e1 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    text-align: right !important;
   }
 
-  /* Retain original backgrounds of cells but remove sticky positioning */
-  .sales-table th {
-    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+  .sales-table-print th:nth-child(1),
+  .sales-table-print td:nth-child(1) {
+    text-align: left !important;
+  }
+
+  .sales-table-print th:nth-child(2),
+  .sales-table-print td:nth-child(2),
+  .sales-table-print th:nth-child(5),
+  .sales-table-print td:nth-child(5),
+  .sales-table-print th:nth-child(8),
+  .sales-table-print td:nth-child(8),
+  .sales-table-print th:nth-child(11),
+  .sales-table-print td:nth-child(11),
+  .sales-table-print th:nth-child(14),
+  .sales-table-print td:nth-child(14) {
+    text-align: center !important;
+  }
+
+  /* Retain original layouts but remove backgrounds for clean printing */
+  .sales-table-print th {
+    background: none !important;
     border-bottom: 2px solid #94a3b8 !important;
   }
 
-  .sales-table th:first-child {
+  .sales-table-print th:first-child {
     position: static !important;
-    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+    background: none !important;
   }
 
-  .sales-table td:first-child {
+  .sales-table-print td:first-child {
     position: static !important;
-    background-color: var(--surface-color) !important;
+    background: none !important;
+    background-color: transparent !important;
   }
 
   /* Territory row styling */
-  .sales-table tr.territory-row td {
-    background-color: #F7F9FD !important;
+  .sales-table-print tr.territory-row td {
+    background: none !important;
+    background-color: transparent !important;
   }
 
-  .sales-table tr.territory-row td:first-child {
+  .sales-table-print tr.territory-row td:first-child {
     position: static !important;
-    background-color: #F7F9FD !important;
+    background: none !important;
+    background-color: transparent !important;
   }
 
   /* Grand total row styling */
-  .sales-table tr.grand-total-row td {
+  .sales-table-print tr.grand-total-row td {
     position: static !important;
-    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+    background: none !important;
     border-top: 2px solid #cbd5e1 !important;
   }
 
-  .sales-table tr.grand-total-row td:first-child {
+  .sales-table-print tr.grand-total-row td:first-child {
     position: static !important;
-    background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
+    background: none !important;
     border-top: 2px solid #cbd5e1 !important;
   }
 
   /* CY Data text color */
-  .sales-table td:nth-child(3),
-  .sales-table td:nth-child(6),
-  .sales-table td:nth-child(9),
-  .sales-table td:nth-child(12) {
+  .sales-table-print td:nth-child(4),
+  .sales-table-print td:nth-child(7),
+  .sales-table-print td:nth-child(10),
+  .sales-table-print td:nth-child(13) {
     color: #3A7785 !important;
   }
 

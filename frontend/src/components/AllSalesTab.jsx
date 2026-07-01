@@ -177,36 +177,51 @@ export default function AllSalesTab({
   // Export CSV
   const handleExportCSV = useCallback(() => {
     const headers = [
-      'Store / Territory',
-      `${lyYear} Wk ${wk} Day ${dayDisplay} Net`,
-      `${cyYear} Wk ${wk} Day ${dayDisplay} Net`,
-      '1 Day Sales Comp',
-      `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`} ${isCalendar ? 'MTD' : 'WTD'} Net`,
-      `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`} ${isCalendar ? 'MTD' : 'WTD'} Net`,
-      `${isCalendar ? 'MTD' : 'WTD'} Sales Comp`,
-      `${lyYear} Q${q} QTD Net`,
-      `${cyYear} Q${q} QTD Net`,
-      'QTD Sales Comp',
-      `${lyYear} YTD Net`,
-      `${cyYear} YTD Net`,
-      'YTD Sales Comp',
+      'LOCATION/TERRITORY',
+      'First Sale',
+      `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
+      `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
+      `1 Day Comp ${lyYear} to ${cyYear}`,
+      `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`,
+      `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`,
+      `${isCalendar ? 'MTD' : 'WTD'} Comp ${lyYear} to ${cyYear}`,
+      `${lyYear} Q${q}, QTD Net $`,
+      `${cyYear} Q${q}, QTD Net $`,
+      `QTD Comp ${lyYear} to ${cyYear}`,
+      `${lyYear}, YTD Net $`,
+      `${cyYear}, YTD Net $`,
+      `YTD Comp ${lyYear} to ${cyYear}`,
     ];
 
-    const rows = displayRows.map((r) => [
-      r.IS_GRAND_TOTAL ? 'Grand Total' : r.STORE_NAME,
-      Math.round(r.DAY_SALES_LY ?? 0),
-      Math.round(r.DAY_SALES_CY ?? 0),
-      `${(r.DAY_SALES_COMP ?? 0).toFixed(2)}%`,
-      Math.round(r.WTD_SALES_LY ?? 0),
-      Math.round(r.WTD_SALES_CY ?? 0),
-      `${(r.WTD_SALES_COMP ?? 0).toFixed(2)}%`,
-      Math.round(r.QTD_SALES_LY ?? 0),
-      Math.round(r.QTD_SALES_CY ?? 0),
-      `${(r.QTD_SALES_COMP ?? 0).toFixed(2)}%`,
-      Math.round(r.YTD_SALES_LY ?? 0),
-      Math.round(r.YTD_SALES_CY ?? 0),
-      `${(r.YTD_SALES_COMP ?? 0).toFixed(2)}%`,
-    ]);
+    const rows = displayRows.map((r) => {
+      const isGt = !!r.IS_GRAND_TOTAL;
+      const isTerr = !!r.IS_TERRITORY_TOTAL;
+      const storeName = isGt 
+        ? 'GRAND TOTAL' 
+        : isTerr 
+          ? r.STORE_NAME 
+          : `${r.STORE_ID != null ? `${r.STORE_ID} ` : ''}${r.STORE_NAME || ''}`;
+      const firstSale = (isGt || isTerr)
+        ? ''
+        : r.DATE_OPENED ? (r.DATE_OPENED.length >= 10 ? r.DATE_OPENED.substring(2) : r.DATE_OPENED) : '';
+
+      return [
+        storeName,
+        firstSale,
+        Math.round(r.DAY_SALES_LY ?? 0),
+        Math.round(r.DAY_SALES_CY ?? 0),
+        `${(r.DAY_SALES_COMP ?? 0).toFixed(2)}%`,
+        Math.round(r.WTD_SALES_LY ?? 0),
+        Math.round(r.WTD_SALES_CY ?? 0),
+        `${(r.WTD_SALES_COMP ?? 0).toFixed(2)}%`,
+        Math.round(r.QTD_SALES_LY ?? 0),
+        Math.round(r.QTD_SALES_CY ?? 0),
+        `${(r.QTD_SALES_COMP ?? 0).toFixed(2)}%`,
+        Math.round(r.YTD_SALES_LY ?? 0),
+        Math.round(r.YTD_SALES_CY ?? 0),
+        `${(r.YTD_SALES_COMP ?? 0).toFixed(2)}%`,
+      ];
+    });
 
     const csvContent =
       '\uFEFF' +
@@ -229,22 +244,23 @@ export default function AllSalesTab({
   // Export Excel
   const handleExportExcel = useCallback(() => {
     const COLS = [
-      { header: 'Store / Territory', align: 'left', numFmt: null, isComp: false, isCY: false },
-      { header: `${lyYear} Wk ${wk} Day ${dayDisplay}\nNet Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear} Wk ${wk} Day ${dayDisplay}\nNet Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: '1 Day\nSales Comp', align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
-      { header: `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}\n${isCalendar ? 'MTD' : 'WTD'} Net Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}\n${isCalendar ? 'MTD' : 'WTD'} Net Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: `${isCalendar ? 'MTD' : 'WTD'}\nSales Comp`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
-      { header: `${lyYear} Q${q}\nQTD Net Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear} Q${q}\nQTD Net Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: 'QTD\nSales Comp', align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
-      { header: `${lyYear}\nYTD Net Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear}\nYTD Net Sales`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: 'YTD\nSales Comp', align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
+      { header: 'LOCATION/TERRITORY', align: 'left', numFmt: null, isComp: false, isCY: false },
+      { header: 'First Sale', align: 'center', numFmt: null, isComp: false, isCY: false },
+      { header: `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
+      { header: `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
+      { header: `1 Day Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
+      { header: `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
+      { header: `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
+      { header: `${isCalendar ? 'MTD' : 'WTD'} Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
+      { header: `${lyYear} Q${q}, QTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
+      { header: `${cyYear} Q${q}, QTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
+      { header: `QTD Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
+      { header: `${lyYear}, YTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
+      { header: `${cyYear}, YTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
+      { header: `YTD Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
     ];
 
-    const RIGHT_BORDER_COLS = new Set([0, 3, 6, 9, 12]);
+    const RIGHT_BORDER_COLS = new Set([1, 4, 7, 10, 13]);
     const BORDER_SIDE = { style: 'thin', color: { rgb: '808080' } };
 
     const makeBorder = (top, bottom, right) => {
@@ -257,8 +273,20 @@ export default function AllSalesTab({
 
     const aoa = [COLS.map((c) => c.header)];
     displayRows.forEach((row) => {
+      const isGt = !!row.IS_GRAND_TOTAL;
+      const isTerr = !!row.IS_TERRITORY_TOTAL;
+      const storeName = isGt 
+        ? 'GRAND TOTAL' 
+        : isTerr 
+          ? row.STORE_NAME 
+          : `${row.STORE_ID != null ? `${row.STORE_ID} ` : ''}${row.STORE_NAME || ''}`;
+      const firstSale = (isGt || isTerr)
+        ? ''
+        : row.DATE_OPENED ? (row.DATE_OPENED.length >= 10 ? row.DATE_OPENED.substring(2) : row.DATE_OPENED) : '';
+
       aoa.push([
-        row.IS_GRAND_TOTAL ? 'Grand Total' : row.STORE_NAME,
+        storeName,
+        firstSale,
         row.DAY_SALES_LY ?? 0,
         row.DAY_SALES_CY ?? 0,
         (row.DAY_SALES_COMP ?? 0) / 100,
@@ -293,14 +321,9 @@ export default function AllSalesTab({
 
         const border = makeBorder(
           isGrandTotal,
-          isHeader || isGrandTotal || isTerr,
+          isHeader || isGrandTotal,
           hasRightBdr
         );
-
-        let fill;
-        if (isHeader) fill = { fgColor: { rgb: 'D9E1F2' }, patternType: 'solid' };
-        else if (isGrandTotal) fill = { fgColor: { rgb: 'E4EAF2' }, patternType: 'solid' };
-        else if (isTerr) fill = { fgColor: { rgb: 'EBF3FB' }, patternType: 'solid' };
 
         let fontColor;
         if (!isHeader && col.isComp) {
@@ -317,12 +340,11 @@ export default function AllSalesTab({
             ...(fontColor ? { color: { rgb: fontColor } } : {}),
           },
           alignment: {
-            horizontal: col.align,
+            horizontal: isHeader ? 'left' : col.align,
             vertical: 'center',
-            wrapText: true,
+            wrapText: !isHeader,
           },
           border,
-          ...(fill ? { fill } : {}),
         };
 
         if (!isHeader && col.numFmt) {
@@ -336,18 +358,19 @@ export default function AllSalesTab({
 
     ws['!sheetViews'] = [{
       workbookViewId: 0,
-      pane: { ySplit: 1, topLeftCell: 'B2', activePane: 'bottomLeft', state: 'frozen' },
+      pane: { ySplit: 1, xSplit: 2, topLeftCell: 'C2', activePane: 'bottomRight', state: 'frozen' },
     }];
 
     ws['!cols'] = [
-      { wch: 30 }, // Store
-      { wch: 12 }, { wch: 12 }, { wch: 11 },
-      { wch: 12 }, { wch: 12 }, { wch: 11 },
-      { wch: 12 }, { wch: 12 }, { wch: 11 },
-      { wch: 12 }, { wch: 12 }, { wch: 11 },
+      { wch: 30 }, // LOCATION/TERRITORY
+      { wch: 12 }, // First Sale
+      { wch: 12 }, { wch: 12 }, { wch: 24 },
+      { wch: 12 }, { wch: 12 }, { wch: 24 },
+      { wch: 12 }, { wch: 12 }, { wch: 24 },
+      { wch: 12 }, { wch: 12 }, { wch: 24 },
     ];
 
-    ws['!rows'] = [{ hpt: 35 }];
+    ws['!rows'] = [{ hpt: 20 }];
 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Flash Sales');
@@ -378,6 +401,7 @@ export default function AllSalesTab({
 
   return (
     <div className="table-wrapper">
+      {/* Screen view table (13 columns, UI remains unchanged) */}
       <table className="sales-table">
         <thead>
           <tr>
@@ -495,6 +519,126 @@ export default function AllSalesTab({
               <td>{highlightText(formatNumber(grandTotal.YTD_SALES_CY), search)}</td>
               <td className={`border-right ${grandTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
                 {highlightText(formatPercent(grandTotal.YTD_SALES_COMP), search)}
+              </td>
+            </tr>
+          </tfoot>
+        )}
+      </table>
+
+      {/* Print/PDF only table (14 columns, active in print media query) */}
+      <table className="sales-table-print">
+        <thead>
+          <tr>
+            <th>LOCATION/TERRITORY</th>
+            <th>First Sale</th>
+            <th>{lyYear} Wk {wk}, Day {dayDisplay} Net $</th>
+            <th>{cyYear} Wk {wk}, Day {dayDisplay} Net $</th>
+            <th>1 Day Comp {lyYear} to {cyYear}</th>
+            <th>{lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, {isCalendar ? 'MTD' : 'WTD'} Net $</th>
+            <th>{cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, {isCalendar ? 'MTD' : 'WTD'} Net $</th>
+            <th>{isCalendar ? 'MTD' : 'WTD'} Comp {lyYear} to {cyYear}</th>
+            <th>{lyYear} Q{q}, QTD Net $</th>
+            <th>{cyYear} Q{q}, QTD Net $</th>
+            <th>QTD Comp {lyYear} to {cyYear}</th>
+            <th>{lyYear}, YTD Net $</th>
+            <th>{cyYear}, YTD Net $</th>
+            <th>YTD Comp {lyYear} to {cyYear}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedTerritories.map(([territoryName, stores]) => {
+            const rows = [];
+            
+            // Store rows
+            stores.forEach((store) => {
+              const storeName = `${store.STORE_ID != null ? `${store.STORE_ID} ` : ''}${store.STORE_NAME || ''}`;
+              const firstSale = store.DATE_OPENED 
+                ? (store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED) 
+                : '';
+              rows.push(
+                <tr key={store.STORE_ID}>
+                  <td>{storeName}</td>
+                  <td>{firstSale}</td>
+                  <td>{formatNumber(store.DAY_SALES_LY)}</td>
+                  <td>{formatNumber(store.DAY_SALES_CY)}</td>
+                  <td className={store.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                    {formatPercent(store.DAY_SALES_COMP)}
+                  </td>
+                  <td>{formatNumber(store.WTD_SALES_LY)}</td>
+                  <td>{formatNumber(store.WTD_SALES_CY)}</td>
+                  <td className={store.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                    {formatPercent(store.WTD_SALES_COMP)}
+                  </td>
+                  <td>{formatNumber(store.QTD_SALES_LY)}</td>
+                  <td>{formatNumber(store.QTD_SALES_CY)}</td>
+                  <td className={store.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                    {formatPercent(store.QTD_SALES_COMP)}
+                  </td>
+                  <td>{formatNumber(store.YTD_SALES_LY)}</td>
+                  <td>{formatNumber(store.YTD_SALES_CY)}</td>
+                  <td className={store.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                    {formatPercent(store.YTD_SALES_COMP)}
+                  </td>
+                </tr>
+              );
+            });
+
+            // Territory Total Row
+            const tTotal = computeTerritoryTotal(territoryName, stores);
+            rows.push(
+              <tr key={`${territoryName}-Total`} className="territory-row">
+                <td>{tTotal.STORE_NAME}</td>
+                <td></td>
+                <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
+                <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
+                <td className={tTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  {formatPercent(tTotal.DAY_SALES_COMP)}
+                </td>
+                <td>{formatNumber(tTotal.WTD_SALES_LY)}</td>
+                <td>{formatNumber(tTotal.WTD_SALES_CY)}</td>
+                <td className={tTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  {formatPercent(tTotal.WTD_SALES_COMP)}
+                </td>
+                <td>{formatNumber(tTotal.QTD_SALES_LY)}</td>
+                <td>{formatNumber(tTotal.QTD_SALES_CY)}</td>
+                <td className={tTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  {formatPercent(tTotal.QTD_SALES_COMP)}
+                </td>
+                <td>{formatNumber(tTotal.YTD_SALES_LY)}</td>
+                <td>{formatNumber(tTotal.YTD_SALES_CY)}</td>
+                <td className={tTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  {formatPercent(tTotal.YTD_SALES_COMP)}
+                </td>
+              </tr>
+            );
+
+            return rows;
+          })}
+        </tbody>
+        {grandTotal && (
+          <tfoot>
+            <tr className="grand-total-row">
+              <td>GRAND TOTAL</td>
+              <td></td>
+              <td>{formatNumber(grandTotal.DAY_SALES_LY)}</td>
+              <td>{formatNumber(grandTotal.DAY_SALES_CY)}</td>
+              <td className={grandTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                {formatPercent(grandTotal.DAY_SALES_COMP)}
+              </td>
+              <td>{formatNumber(grandTotal.WTD_SALES_LY)}</td>
+              <td>{formatNumber(grandTotal.WTD_SALES_CY)}</td>
+              <td className={grandTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                {formatPercent(grandTotal.WTD_SALES_COMP)}
+              </td>
+              <td>{formatNumber(grandTotal.QTD_SALES_LY)}</td>
+              <td>{formatNumber(grandTotal.QTD_SALES_CY)}</td>
+              <td className={grandTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                {formatPercent(grandTotal.QTD_SALES_COMP)}
+              </td>
+              <td>{formatNumber(grandTotal.YTD_SALES_LY)}</td>
+              <td>{formatNumber(grandTotal.YTD_SALES_CY)}</td>
+              <td className={grandTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                {formatPercent(grandTotal.YTD_SALES_COMP)}
               </td>
             </tr>
           </tfoot>
