@@ -304,10 +304,10 @@ export default function AnalyticsTab({
 }) {
   const [activeSubTab, setActiveSubTab] = useState('trends'); // trends | extrapolate | lifts
   const [compareMode, setCompareMode] = useState(calendarMode); // fiscal | calendar
-  const [compareYearLeft, setCompareYearLeft] = useState('Nothing'); // Nothing | 2022 | 2023 | 2024 | 2025 | 2026
+  const [compareYearLeft, setCompareYearLeft] = useState('2025'); // Nothing | 2022 | 2023 | 2024 | 2025 | 2026
   const [compareYearRight, setCompareYearRight] = useState('2026'); // 2026
   const [viewMode, setViewMode] = useState('D'); // D (Daily) | W (Weekly) | M (Quarterly) | Y (Yearly)
-  const [smaVisible, setSmaVisible] = useState(false);
+  const [smaVisible, setSmaVisible] = useState(true);
 
   const [chartDataByYear, setChartDataByYear] = useState({});
   const [loading, setLoading] = useState(false);
@@ -779,7 +779,7 @@ export default function AnalyticsTab({
 
             {/* Float centered swap button displayed when 2 charts are visible */}
             {showBoth && (
-              <span id="spnSwap" className="swap-btn" onClick={handleSwap} title="Swap comparative years">
+              <span id="spnSwap" className="swap-btn" onClick={handleSwap} title="Swap graphs">
                 <i className="material-icons">swap_horiz</i>
               </span>
             )}
