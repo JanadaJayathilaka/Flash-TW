@@ -215,7 +215,10 @@ export default function App() {
       {/* Top Header Pill Bar */}
       <header className="header-bar">
         <div className="header-pill">
-          Tailwind Frontend, NodeJS Backend
+          React / Tailwind Frontend
+        </div>
+        <div className="header-pill">
+          {activeTab === 'analytics' ? 'NodeJS GraphQL / IBM ODBC' : 'NodeJS REST API / IBM ODBC'}
         </div>
         <div className="header-pill">
           Servers: AWS Cloud and IBM iSeries

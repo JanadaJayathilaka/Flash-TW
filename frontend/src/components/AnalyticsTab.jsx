@@ -313,6 +313,9 @@ export default function AnalyticsTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Cache of fetched chart data to prevent double loading
+  const loadedMetadataRef = useRef({});
+
   // Years options available
   const availableYears = [2022, 2023, 2024, 2025, 2026];
 
@@ -378,23 +381,67 @@ export default function AnalyticsTab({
       return;
     }
 
+    // Determine which years need to be fetched
+    const yearsToFetch = years.filter(year => {
+      const range = yearRanges[year] || {
+        startDate: `${year}-01-01`,
+        endDate: `${year}-12-31`,
+      };
+      const cached = loadedMetadataRef.current[year];
+      if (
+        cached &&
+        cached.startDate === range.startDate &&
+        cached.endDate === range.endDate &&
+        cached.mode === mode
+      ) {
+        return false; // Already cached and matches criteria
+      }
+      return true;
+    });
+
+    if (yearsToFetch.length === 0) {
+      // All requested years are already cached, update state from cache immediately
+      const next = {};
+      years.forEach(year => {
+        if (loadedMetadataRef.current[year]) {
+          next[year] = loadedMetadataRef.current[year].data;
+        }
+      });
+      setChartDataByYear(next);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const pairs = await Promise.all(
-        years.map(async (year) => {
+      const fetchedPairs = await Promise.all(
+        yearsToFetch.map(async (year) => {
           const range = yearRanges[year] || {
             startDate: `${year}-01-01`,
             endDate: `${year}-12-31`,
           };
           const data = await fetchSalesChartByDateRange(range.startDate, range.endDate, mode, SMA_PERIOD);
-          return [year, data];
+          return { year, data, startDate: range.startDate, endDate: range.endDate };
         })
       );
+
+      // Save new results to cache
+      fetchedPairs.forEach(item => {
+        loadedMetadataRef.current[item.year] = {
+          startDate: item.startDate,
+          endDate: item.endDate,
+          mode: mode,
+          data: item.data,
+        };
+      });
+
+      // Construct output from cache for all selected years
       const next = {};
-      pairs.forEach(([year, data]) => {
-        next[year] = data;
+      years.forEach(year => {
+        if (loadedMetadataRef.current[year]) {
+          next[year] = loadedMetadataRef.current[year].data;
+        }
       });
       setChartDataByYear(next);
     } catch (err) {
