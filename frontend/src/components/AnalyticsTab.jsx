@@ -182,7 +182,7 @@ function AnalyticsChart({ id, year, title, labels, salesData, smaData, smaVisibl
  * Custom styled dropdown that supports colored strikethrough on disabled items.
  * Native <select>/<option> elements cannot reliably render text-decoration cross-browser.
  */
-function StyledSelect({ id, value, onChange, options }) {
+function StyledSelect({ id, value, onChange, options, noBorder }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -201,7 +201,11 @@ function StyledSelect({ id, value, onChange, options }) {
     <div
       ref={ref}
       id={id}
-      style={{ position: 'relative', display: 'inline-block' }}
+      style={{
+        position: 'relative',
+        display: noBorder ? 'block' : 'inline-block',
+        width: noBorder ? '100%' : 'auto'
+      }}
     >
       {/* Trigger button — mimics small-select look */}
       <button
@@ -210,11 +214,12 @@ function StyledSelect({ id, value, onChange, options }) {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
+          justifyContent: noBorder ? 'space-between' : 'center',
           gap: '3px',
           background: 'transparent',
-          border: '1px solid #cbd5e1',
+          border: noBorder ? 'none' : '1px solid #cbd5e1',
           borderRadius: '4px',
-          padding: '1px 5px 1px 6px',
+          padding: noBorder ? '1px 0' : '1px 5px 1px 6px',
           fontFamily: 'var(--font-family)',
           fontSize: '12px',
           fontWeight: 600,
@@ -222,10 +227,11 @@ function StyledSelect({ id, value, onChange, options }) {
           cursor: 'pointer',
           whiteSpace: 'nowrap',
           lineHeight: '18px',
+          width: noBorder ? '100%' : 'auto',
         }}
       >
-        {selected ? selected.label : value}
-        <span style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1 }}>▾</span>
+        <span>{selected ? selected.label : value}</span>
+        <span style={{ fontSize: '14px', color: '#94a3b8', lineHeight: 1, marginLeft: noBorder ? '8px' : '0' }}>▾</span>
       </button>
 
       {/* Dropdown panel */}
@@ -607,7 +613,17 @@ export default function AnalyticsTab({
               </span>
 
               {/* Vertical Stack: Year 2 Select, Mode Select, SMA Checkbox */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                alignItems: 'flex-start',
+                border: '1px solid #1C65D6',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                background: '#ffffff',
+                minWidth: '85px',
+              }}>
                 {/* Row 1: Year 2 Select */}
                 <StyledSelect
                   id="selCalType1"
@@ -622,6 +638,7 @@ export default function AnalyticsTab({
                       strikeColor: getSalesColor(year),
                     }))
                   ]}
+                  noBorder={true}
                 />
 
                 {/* Row 2: Mode/Granularity Select */}
@@ -635,6 +652,7 @@ export default function AnalyticsTab({
                     { value: 'Q', label: 'Quarterly', disabled: true, strikeColor: '#94a3b8' },
                     { value: 'Y', label: 'Yearly',    disabled: true, strikeColor: '#94a3b8' },
                   ]}
+                  noBorder={true}
                 />
 
                 {/* Row 3: SMA Checkbox */}
@@ -647,7 +665,8 @@ export default function AnalyticsTab({
                     gap: '6px',
                     userSelect: 'none',
                     margin: 0,
-                    padding: 0,
+                    padding: '2px 0 0 0',
+                    width: '100%',
                   }}
                 >
                   <input
