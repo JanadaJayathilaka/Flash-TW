@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'http://18.188.166.170:3001');
+const API_BASE_URL =  '';
 
 /**
  * Fetch the latest transaction date from the IBM i database.
