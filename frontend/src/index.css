@@ -227,7 +227,7 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 24px;
 }
 
 .toolbar-left {
@@ -246,6 +246,7 @@ body {
   white-space: nowrap;
   display: inline-flex;
   align-items: flex-start;
+  margin-top: -40px;
 }
 
 .title-arrow-icon {
