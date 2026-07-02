@@ -1,4 +1,4 @@
-const API_BASE_URL =  '';
+const API_BASE_URL = '';
 
 /**
  * Fetch the latest transaction date from the IBM i database.
