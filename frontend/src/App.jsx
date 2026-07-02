@@ -218,7 +218,7 @@ export default function App() {
           React / Tailwind Frontend
         </div>
         <div className="header-pill">
-          {activeTab === 'analytics' ? 'NodeJS GraphQL / IBM ODBC' : 'NodeJS REST API / IBM ODBC'}
+          {activeTab === 'analytics' ? 'Java Spring Boot GraphQL / IBM JDBC' : 'Java Spring Boot REST API / IBM JDBC'}
         </div>
         <div className="header-pill">
           Servers: AWS Cloud and IBM iSeries
