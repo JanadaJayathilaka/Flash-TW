@@ -313,7 +313,7 @@ export default function AnalyticsTab({
   const [compareYearLeft, setCompareYearLeft] = useState('2025'); // Nothing | 2022 | 2023 | 2024 | 2025 | 2026
   const [compareYearRight, setCompareYearRight] = useState('2026'); // 2026
   const [viewMode, setViewMode] = useState('D'); // D (Daily) | W (Weekly) | M (Quarterly) | Y (Yearly)
-  const [smaVisible, setSmaVisible] = useState(true);
+  const [smaVisible, setSmaVisible] = useState(false);
 
   const [chartDataByYear, setChartDataByYear] = useState({});
   const [loading, setLoading] = useState(false);
