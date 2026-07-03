@@ -1,0 +1,14 @@
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\config\CorsConfig.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\config\IbmDataSourceConfig.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\config\RequestLoggingFilter.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\config\SqlServerDataSourceConfig.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\controller\HealthController.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\controller\SalesController.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\FlashBackendApplication.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\graphql\SalesGraphqlController.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\model\AnalyticsPayload.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\model\SalesPivotRow.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\model\StoreDetail.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\service\IbmSalesService.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\service\SalesService.java
+D:\Projects\Flash-TW\java-backend\src\main\java\com\flash\service\SqlServerService.java

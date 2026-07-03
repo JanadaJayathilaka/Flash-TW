@@ -1,0 +1,14 @@
+type Query {
+    salesAnalytics(
+        startDate: String!,
+        endDate: String!,
+        mode: String!,
+        smaPeriod: Int
+    ): AnalyticsPayload!
+}
+
+type AnalyticsPayload {
+    Labels: [String!]!
+    Sales: [Float!]!
+    Sma: [Float]!
+}
