@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx-js-style';
 import { formatNumber, formatPercent } from '../utils/dateUtils';
 import { highlightText } from '../utils/highlightUtils';
@@ -391,6 +391,44 @@ export default function AllSalesTab({
     }
   }, [onBindExportActions, handleExportExcel, handleExportCSV]);
 
+  // Ref for the table element — used by the ResizeObserver
+  const tableRef = useRef(null);
+
+  // Dynamically adjust tbody height on zoom/resize so the table fills the viewport
+  useEffect(() => {
+    function adjustTbodyHeight() {
+      const table = tableRef.current;
+      if (!table) return;
+
+      const thead = table.querySelector('thead');
+      const tbody = table.querySelector('tbody');
+      const tfoot = table.querySelector('tfoot');
+      if (!thead || !tbody) return;
+
+      const viewportHeight = window.innerHeight;
+      const theadHeight = thead.offsetHeight || 0;
+      const tfootHeight = tfoot ? tfoot.offsetHeight : 0;
+      const tableTopOffset = table.getBoundingClientRect().top;
+
+      // Reserve space for footer bar + borders/padding
+      const footerReserve = 55;
+      const dynamicHeight = viewportHeight - tableTopOffset - theadHeight - tfootHeight - footerReserve;
+
+      tbody.style.height = Math.max(dynamicHeight, 200) + 'px';
+    }
+
+    adjustTbodyHeight();
+
+    const observer = new ResizeObserver(() => adjustTbodyHeight());
+    if (tableRef.current) observer.observe(tableRef.current);
+    window.addEventListener('resize', adjustTbodyHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', adjustTbodyHeight);
+    };
+  }, []);
+
   if (loading) {
     return <div className="loading-view">Loading sales data...</div>;
   }
@@ -402,7 +440,7 @@ export default function AllSalesTab({
   return (
     <div className="table-wrapper">
       {/* Screen view table (13 columns, UI remains unchanged) */}
-      <table className="sales-table">
+      <table className="sales-table" ref={tableRef}>
         <thead>
           <tr>
             <th className="border-right"><br />LOCATION/TERRITORY</th>

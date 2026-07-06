@@ -505,7 +505,7 @@ body {
 
 .sales-table tbody {
   overflow-y: scroll;
-  height: 590px;
+  /* height is set dynamically by ResizeObserver in AllSalesTab.jsx */
 }
 
 /* Custom scrollbar for tbody */
