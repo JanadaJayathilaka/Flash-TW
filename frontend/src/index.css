@@ -1619,3 +1619,39 @@ body {
     color: var(--danger-color) !important;
   }
 }
+
+.table-scroll-btn {
+  position: absolute;
+  right: 0; /* Align exactly inside the scrollbar track */
+  width: 8px; /* Match scrollbar width exactly */
+  height: 10px;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #000000;
+  font-size: 6px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  padding: 0;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+  outline: none;
+}
+
+.table-scroll-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.table-scroll-btn.scroll-up {
+  border-top: none;
+  border-right: none;
+}
+
+.table-scroll-btn.scroll-down {
+  border-bottom: none;
+  border-right: none;
+}

@@ -394,6 +394,27 @@ export default function AllSalesTab({
   // Ref for the table element — used by the ResizeObserver
   const tableRef = useRef(null);
 
+  // Scroll handlers for instant scroll-to-top and scroll-to-bottom
+  const handleScrollUp = () => {
+    const table = tableRef.current;
+    if (table) {
+      const tbody = table.querySelector('tbody');
+      if (tbody) {
+        tbody.scrollTo({ top: 0, behavior: 'instant' });
+      }
+    }
+  };
+
+  const handleScrollDown = () => {
+    const table = tableRef.current;
+    if (table) {
+      const tbody = table.querySelector('tbody');
+      if (tbody) {
+        tbody.scrollTo({ top: tbody.scrollHeight, behavior: 'instant' });
+      }
+    }
+  };
+
   // Dynamically adjust tbody height on zoom/resize so the table fills the viewport
   useEffect(() => {
     function adjustTbodyHeight() {
@@ -415,6 +436,19 @@ export default function AllSalesTab({
       const dynamicHeight = viewportHeight - tableTopOffset - theadHeight - tfootHeight - footerReserve;
 
       tbody.style.height = Math.max(dynamicHeight, 200) + 'px';
+
+      // Position the scroll-up and scroll-down buttons dynamically just inside the scrollable region
+      const wrapper = table.parentNode;
+      if (wrapper) {
+        const upBtn = wrapper.querySelector('.table-scroll-btn.scroll-up');
+        const downBtn = wrapper.querySelector('.table-scroll-btn.scroll-down');
+        if (upBtn) {
+          upBtn.style.top = theadHeight + 'px';
+        }
+        if (downBtn) {
+          downBtn.style.bottom = tfootHeight + 'px';
+        }
+      }
     }
 
     adjustTbodyHeight();
@@ -439,6 +473,12 @@ export default function AllSalesTab({
 
   return (
     <div className="table-wrapper">
+      <button className="table-scroll-btn scroll-up" onClick={handleScrollUp} title="Scroll to Top">
+        ▲
+      </button>
+      <button className="table-scroll-btn scroll-down" onClick={handleScrollDown} title="Scroll to Bottom">
+        ▼
+      </button>
       {/* Screen view table (13 columns, UI remains unchanged) */}
       <table className="sales-table" ref={tableRef}>
         <thead>
