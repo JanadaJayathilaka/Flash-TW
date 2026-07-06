@@ -427,7 +427,7 @@ export default function AllSalesTab({
       observer.disconnect();
       window.removeEventListener('resize', adjustTbodyHeight);
     };
-  }, []);
+  }, [loading, data]);
 
   if (loading) {
     return <div className="loading-view">Loading sales data...</div>;
