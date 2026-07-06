@@ -1622,14 +1622,11 @@ body {
 
 .table-scroll-btn {
   position: absolute;
-  right: 0; /* Align exactly inside the scrollbar track */
-  width: 8px; /* Match scrollbar width exactly */
-  height: 10px;
+  right: -2px; /* Centered over the 8px scrollbar track */
+  width: 12px; /* Keep button large for easy clicking */
+  height: 12px;
   background-color: #ffffff;
-  border: 1px solid #cbd5e1;
-  color: #000000;
-  font-size: 6px;
-  line-height: 1;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1647,11 +1644,20 @@ body {
 }
 
 .table-scroll-btn.scroll-up {
-  border-top: none;
-  border-right: none;
+  /* Dynamic top position */
 }
 
 .table-scroll-btn.scroll-down {
-  border-bottom: none;
-  border-right: none;
+  /* Dynamic bottom position */
+}
+
+.scroll-btn-img {
+  width: 10px; /* Kept large for visibility */
+  height: 10px; /* Kept large for visibility */
+  object-fit: contain;
+  display: block;
+}
+
+.scroll-btn-img.rotated {
+  transform: rotate(180deg);
 }

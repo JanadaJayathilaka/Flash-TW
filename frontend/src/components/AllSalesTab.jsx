@@ -474,10 +474,10 @@ export default function AllSalesTab({
   return (
     <div className="table-wrapper">
       <button className="table-scroll-btn scroll-up" onClick={handleScrollUp} title="Scroll to Top">
-        ▲
+        <img src="/uparrow.png" alt="Scroll Up" className="scroll-btn-img" />
       </button>
       <button className="table-scroll-btn scroll-down" onClick={handleScrollDown} title="Scroll to Bottom">
-        ▼
+        <img src="/uparrow.png" alt="Scroll Down" className="scroll-btn-img rotated" />
       </button>
       {/* Screen view table (13 columns, UI remains unchanged) */}
       <table className="sales-table" ref={tableRef}>
