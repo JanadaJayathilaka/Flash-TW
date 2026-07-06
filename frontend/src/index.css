@@ -561,6 +561,8 @@ body {
 .sales-table tbody::-webkit-scrollbar-track {
   background: transparent;
   border: none;
+  margin-top: 12px;
+  margin-bottom: 12px;
 }
 
 .sales-table tbody::-webkit-scrollbar-thumb {
