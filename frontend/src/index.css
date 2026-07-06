@@ -474,7 +474,7 @@ body {
   background-color: var(--surface-color);
   border-radius: 8px;
   box-shadow: var(--card-shadow);
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
   border: 1px solid var(--divider-color);
   position: relative;
@@ -549,6 +549,7 @@ body {
 
 .sales-table tbody {
   overflow-y: scroll;
+  overflow-x: hidden;
   /* height is set dynamically by ResizeObserver in AllSalesTab.jsx */
 }
 
