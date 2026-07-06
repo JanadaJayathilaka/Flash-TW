@@ -42,6 +42,20 @@ export default function App() {
   const [calYear, setCalYear] = useState(2026);
   const [calMonth, setCalMonth] = useState(1); // 0-based
 
+  // Custom dropdown state for calendar mode (Fiscal/Calendar)
+  const [showModeDropdown, setShowModeDropdown] = useState(false);
+
+  // Close custom dropdown on outside click
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setShowModeDropdown(false);
+    };
+    window.addEventListener('click', handleGlobalClick);
+    return () => {
+      window.removeEventListener('click', handleGlobalClick);
+    };
+  }, []);
+
   // Benchmark timing metrics
   const [timingMetrics, setTimingMetrics] = useState({
     rowCount: 0,
@@ -283,15 +297,41 @@ export default function App() {
             {/* Mode selection dropdown - below title */}
             {activeTab !== 'analytics' && (
               <div className="custom-select-wrapper">
-                <select
-                  className="mode-select"
-                  value={calendarMode}
-                  onChange={(e) => setCalendarMode(e.target.value)}
+                <span className="mode-text-label">
+                  {calendarMode === 'fiscal' ? 'Fiscal' : 'Calendar'}
+                </span>
+                <div
+                  className="select-arrow-wrapper"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowModeDropdown(!showModeDropdown);
+                  }}
                 >
-                  <option value="fiscal">Fiscal</option>
-                  <option value="calendar">Calendar</option>
-                </select>
-                <MdOutlineArrowDropDown className="select-arrow-icon" />
+                  <MdOutlineArrowDropDown className="select-arrow-icon" />
+                </div>
+
+                {showModeDropdown && (
+                  <div className="custom-mode-dropdown-menu" onClick={(e) => e.stopPropagation()}>
+                    <div
+                      className={`custom-mode-dropdown-item ${calendarMode === 'fiscal' ? 'active' : ''}`}
+                      onClick={() => {
+                        setCalendarMode('fiscal');
+                        setShowModeDropdown(false);
+                      }}
+                    >
+                      Fiscal
+                    </div>
+                    <div
+                      className={`custom-mode-dropdown-item ${calendarMode === 'calendar' ? 'active' : ''}`}
+                      onClick={() => {
+                        setCalendarMode('calendar');
+                        setShowModeDropdown(false);
+                      }}
+                    >
+                      Calendar
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
