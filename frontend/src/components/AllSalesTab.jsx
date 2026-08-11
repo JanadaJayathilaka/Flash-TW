@@ -1,20 +1,22 @@
-import React, { useMemo, useCallback, useEffect, useRef } from 'react';
-import * as XLSX from 'xlsx-js-style';
-import { formatNumber, formatPercent } from '../utils/dateUtils';
-import { highlightText } from '../utils/highlightUtils';
+import React, { useMemo, useCallback, useEffect, useRef } from "react";
+import * as XLSX from "xlsx-js-style";
+import { formatNumber, formatPercent } from "../utils/dateUtils";
+import { highlightText } from "../utils/highlightUtils";
 
 function getSearchableRowStrings(r) {
   const dateStr = r.DATE_OPENED
-    ? (r.DATE_OPENED.length >= 10 ? r.DATE_OPENED.substring(2) : r.DATE_OPENED)
-    : '';
-  const firstSaleStr = dateStr ? `First Sale ${dateStr}` : '';
+    ? r.DATE_OPENED.length >= 10
+      ? r.DATE_OPENED.substring(2)
+      : r.DATE_OPENED
+    : "";
+  const firstSaleStr = dateStr ? `First Sale ${dateStr}` : "";
   return [
-    r.STORE_ID != null ? String(r.STORE_ID) : '',
-    r.STORE_NAME || '',
+    r.STORE_ID != null ? String(r.STORE_ID) : "",
+    r.STORE_NAME || "",
     dateStr,
     firstSaleStr,
-    r.REGION_ID != null ? String(r.REGION_ID) : '',
-    r.TERRITORY || '',
+    r.REGION_ID != null ? String(r.REGION_ID) : "",
+    r.TERRITORY || "",
     // Formatted values (with commas)
     formatNumber(r.DAY_SALES_LY),
     formatNumber(r.DAY_SALES_CY),
@@ -29,14 +31,14 @@ function getSearchableRowStrings(r) {
     formatNumber(r.YTD_SALES_CY),
     formatPercent(r.YTD_SALES_COMP),
     // Unformatted values (without commas)
-    r.DAY_SALES_LY != null ? String(Math.round(r.DAY_SALES_LY)) : '',
-    r.DAY_SALES_CY != null ? String(Math.round(r.DAY_SALES_CY)) : '',
-    r.WTD_SALES_LY != null ? String(Math.round(r.WTD_SALES_LY)) : '',
-    r.WTD_SALES_CY != null ? String(Math.round(r.WTD_SALES_CY)) : '',
-    r.QTD_SALES_LY != null ? String(Math.round(r.QTD_SALES_LY)) : '',
-    r.QTD_SALES_CY != null ? String(Math.round(r.QTD_SALES_CY)) : '',
-    r.YTD_SALES_LY != null ? String(Math.round(r.YTD_SALES_LY)) : '',
-    r.YTD_SALES_CY != null ? String(Math.round(r.YTD_SALES_CY)) : '',
+    r.DAY_SALES_LY != null ? String(Math.round(r.DAY_SALES_LY)) : "",
+    r.DAY_SALES_CY != null ? String(Math.round(r.DAY_SALES_CY)) : "",
+    r.WTD_SALES_LY != null ? String(Math.round(r.WTD_SALES_LY)) : "",
+    r.WTD_SALES_CY != null ? String(Math.round(r.WTD_SALES_CY)) : "",
+    r.QTD_SALES_LY != null ? String(Math.round(r.QTD_SALES_LY)) : "",
+    r.QTD_SALES_CY != null ? String(Math.round(r.QTD_SALES_CY)) : "",
+    r.YTD_SALES_LY != null ? String(Math.round(r.YTD_SALES_LY)) : "",
+    r.YTD_SALES_CY != null ? String(Math.round(r.YTD_SALES_CY)) : "",
   ];
 }
 
@@ -49,20 +51,20 @@ export default function AllSalesTab({
   calendarDayOfMonth = 0,
   calendarMonthNumber = 0,
   calendarMode,
-  currencyMode = '1',
+  currencyMode = "1",
   search,
   zoomLevel = 100,
   onBindExportActions,
 }) {
-  
   // Parse variables
   const cyYear = new Date().getFullYear();
   const lyYear = cyYear - 1;
-  const wk = String(weekNumber).padStart(2, '0');
+  const wk = String(weekNumber).padStart(2, "0");
   const q = quarterNumber || Math.ceil((new Date().getMonth() + 1) / 3);
-  const isCalendar = calendarMode === 'calendar';
-  const dayDisplay = isCalendar && calendarDayOfMonth ? calendarDayOfMonth : dayNumber;
-  const monthStr = String(calendarMonthNumber).padStart(2, '0');
+  const isCalendar = calendarMode === "calendar";
+  const dayDisplay =
+    isCalendar && calendarDayOfMonth ? calendarDayOfMonth : dayNumber;
+  const monthStr = String(calendarMonthNumber).padStart(2, "0");
 
   // Parse data and groups
   const { territories, grandTotal } = useMemo(() => {
@@ -77,27 +79,35 @@ export default function AllSalesTab({
       if (r.IS_TERRITORY_TOTAL) {
         return; // We will recalculate territory totals based on filtered stores or show the pre-computed totals
       }
-      const t = r.TERRITORY || 'Unknown';
+      const t = r.TERRITORY || "Unknown";
       if (!territories[t]) territories[t] = [];
       territories[t].push(r);
     });
 
     Object.keys(territories).forEach((t) => {
-      territories[t].sort((a, b) => (a.STORE_NAME ?? '').localeCompare(b.STORE_NAME ?? ''));
+      territories[t].sort((a, b) =>
+        (a.STORE_NAME ?? "").localeCompare(b.STORE_NAME ?? ""),
+      );
     });
 
     // Apply search filter
-    const terms = search.toLowerCase().split('++').map((s) => s.trim()).filter(Boolean);
+    const terms = search
+      .toLowerCase()
+      .split("++")
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (terms.length > 0) {
       Object.keys(territories).forEach((t) => {
         const territoryMatched = terms.some((q) => t.toLowerCase().includes(q));
         if (territoryMatched) return; // Keep all stores in this territory
-        
+
         territories[t] = territories[t].filter((r) =>
           terms.some((q) => {
             const searchableStrings = getSearchableRowStrings(r);
-            return searchableStrings.some((str) => str.toLowerCase().includes(q));
-          })
+            return searchableStrings.some((str) =>
+              str.toLowerCase().includes(q),
+            );
+          }),
         );
       });
     }
@@ -121,21 +131,21 @@ export default function AllSalesTab({
   // Recalculate territory totals dynamically based on filtered stores (or just use precalculated if unfiltered)
   const computeTerritoryTotal = (territoryName, stores) => {
     const sum = (field) => stores.reduce((acc, s) => acc + (s[field] ?? 0), 0);
-    const cyDay = sum('DAY_SALES_CY');
-    const lyDay = sum('DAY_SALES_LY');
-    const cyWtd = sum('WTD_SALES_CY');
-    const lyWtd = sum('WTD_SALES_LY');
-    const cyQtd = sum('QTD_SALES_CY');
-    const lyQtd = sum('QTD_SALES_LY');
-    const cyYtd = sum('YTD_SALES_CY');
-    const lyYtd = sum('YTD_SALES_LY');
+    const cyDay = sum("DAY_SALES_CY");
+    const lyDay = sum("DAY_SALES_LY");
+    const cyWtd = sum("WTD_SALES_CY");
+    const lyWtd = sum("WTD_SALES_LY");
+    const cyQtd = sum("QTD_SALES_CY");
+    const lyQtd = sum("QTD_SALES_LY");
+    const cyYtd = sum("YTD_SALES_CY");
+    const lyYtd = sum("YTD_SALES_LY");
 
     const calcComp = (cy, ly) => {
       if (cy === 0 || ly === 0) return 0;
       return ((cy - ly) / ly) * 100;
     };
 
-    const regionPrefix = stores[0]?.REGION_ID ? `${stores[0].REGION_ID} ` : '';
+    const regionPrefix = stores[0]?.REGION_ID ? `${stores[0].REGION_ID} ` : "";
 
     return {
       STORE_NAME: `${regionPrefix}${territoryName} Total`,
@@ -170,28 +180,28 @@ export default function AllSalesTab({
 
   const DT_1_Str = useCallback(() => {
     if (data.length > 0) {
-      const cyRow = data.find(r => r.DAY_SALES_CY > 0 || r.WTD_SALES_CY > 0);
+      const cyRow = data.find((r) => r.DAY_SALES_CY > 0 || r.WTD_SALES_CY > 0);
       if (cyRow && cyRow.DATE_OPENED) return cyRow.DATE_OPENED;
     }
-    return new Date().toISOString().split('T')[0];
+    return new Date().toISOString().split("T")[0];
   }, [data]);
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
-    const curText = currencyMode === '2' ? 'NZ$' : 'AU$';
-    const calText = calendarMode === 'fiscal' ? 'Fiscal' : 'Calendar';
+    const curText = currencyMode === "2" ? "NZ$" : "AU$";
+    const calText = calendarMode === "fiscal" ? "Fiscal" : "Calendar";
     const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
     const timestampStr = `Generated: ${new Date().toISOString().slice(0, 10)} USA, Pacific`;
 
     const headers = [
-      'STORE / TERRITORY',
-      'FIRST SALE',
+      "STORE / TERRITORY",
+      "FIRST SALE",
       `${lyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
       `${cyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
       `1 DAY COMP ${lyYear} TO ${cyYear}`,
-      `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} NET $`,
-      `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} NET $`,
-      `${isCalendar ? 'MTD' : 'WTD'} COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
+      `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
+      `${isCalendar ? "MTD" : "WTD"} COMP ${lyYear} TO ${cyYear}`,
       `${lyYear} Q${q}, QTD NET $`,
       `${cyYear} Q${q}, QTD NET $`,
       `QTD COMP ${lyYear} TO ${cyYear}`,
@@ -200,13 +210,13 @@ export default function AllSalesTab({
       `YTD COMP ${lyYear} TO ${cyYear}`,
     ];
 
-    const titleRow = new Array(headers.length).fill('');
+    const titleRow = new Array(headers.length).fill("");
     titleRow[0] = titleStr;
     titleRow[headers.length - 1] = timestampStr;
 
     const filterRows = [];
-    if (search && search.trim() !== '') {
-      const filterRow = new Array(headers.length).fill('');
+    if (search && search.trim() !== "") {
+      const filterRow = new Array(headers.length).fill("");
       filterRow[0] = `Filter: ${search.trim()}`;
       filterRows.push(filterRow);
     }
@@ -214,14 +224,19 @@ export default function AllSalesTab({
     const dataRows = displayRows.map((r) => {
       const isGt = !!r.IS_GRAND_TOTAL;
       const isTerr = !!r.IS_TERRITORY_TOTAL;
-      const storeName = isGt 
-        ? 'GRAND TOTAL' 
-        : isTerr 
-          ? r.STORE_NAME 
-          : `${r.STORE_ID != null ? `${r.STORE_ID} ` : ''}${r.STORE_NAME || ''}`;
-      const firstSale = (isGt || isTerr)
-        ? ''
-        : r.DATE_OPENED ? (r.DATE_OPENED.length >= 10 ? r.DATE_OPENED.substring(2) : r.DATE_OPENED) : '';
+      const storeName = isGt
+        ? "GRAND TOTAL"
+        : isTerr
+          ? r.STORE_NAME
+          : `${r.STORE_ID != null ? `${r.STORE_ID} ` : ""}${r.STORE_NAME || ""}`;
+      const firstSale =
+        isGt || isTerr
+          ? ""
+          : r.DATE_OPENED
+            ? r.DATE_OPENED.length >= 10
+              ? r.DATE_OPENED.substring(2)
+              : r.DATE_OPENED
+            : "";
 
       return [
         storeName,
@@ -244,49 +259,153 @@ export default function AllSalesTab({
     const allRows = [titleRow, ...filterRows, [], headers, ...dataRows];
 
     const csvContent =
-      '\uFEFF' +
+      "\uFEFF" +
       allRows
-        .map((r) => r.map((val) => {
-          const s = String(val ?? '');
-          return /[,"\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-        }).join(','))
-        .join('\r\n');
+        .map((r) =>
+          r
+            .map((val) => {
+              const s = String(val ?? "");
+              return /[,"\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+            })
+            .join(","),
+        )
+        .join("\r\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `FlashSales_${calendarMode}_${DT_1_Str()}.csv`);
+    link.setAttribute(
+      "download",
+      `FlashSales_${calendarMode}_${DT_1_Str()}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [displayRows, lyYear, wk, dayDisplay, cyYear, isCalendar, monthStr, q, calendarMode, currencyMode, search, DT_1_Str]);
+  }, [
+    displayRows,
+    lyYear,
+    wk,
+    dayDisplay,
+    cyYear,
+    isCalendar,
+    monthStr,
+    q,
+    calendarMode,
+    currencyMode,
+    search,
+    DT_1_Str,
+  ]);
 
   // Export Excel
   const handleExportExcel = useCallback(() => {
-    const curText = currencyMode === '2' ? 'NZ$' : 'AU$';
-    const calText = calendarMode === 'fiscal' ? 'Fiscal' : 'Calendar';
+    const curText = currencyMode === "2" ? "NZ$" : "AU$";
+    const calText = calendarMode === "fiscal" ? "Fiscal" : "Calendar";
     const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
     const timestampStr = `Generated: ${new Date().toISOString().slice(0, 10)} USA, Pacific`;
 
     const COLS = [
-      { header: 'LOCATION/TERRITORY', align: 'left', numFmt: null, isComp: false, isCY: false },
-      { header: 'First Sale', align: 'center', numFmt: null, isComp: false, isCY: false },
-      { header: `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: `1 Day Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
-      { header: `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: `${isCalendar ? 'MTD' : 'WTD'} Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
-      { header: `${lyYear} Q${q}, QTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear} Q${q}, QTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: `QTD Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
-      { header: `${lyYear}, YTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: false },
-      { header: `${cyYear}, YTD Net $`, align: 'right', numFmt: '#,##0', isComp: false, isCY: true },
-      { header: `YTD Comp ${lyYear} to ${cyYear}`, align: 'center', numFmt: '0.00%', isComp: true, isCY: false },
+      {
+        header: "STORE/TERRITORY",
+        align: "left",
+        numFmt: null,
+        isComp: false,
+        isCY: false,
+      },
+      {
+        header: "First Sale",
+        align: "center",
+        numFmt: null,
+        isComp: false,
+        isCY: false,
+      },
+      {
+        header: `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: false,
+      },
+      {
+        header: `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: true,
+      },
+      {
+        header: `1 Day Comp ${lyYear} to ${cyYear}`,
+        align: "center",
+        numFmt: "0.00%",
+        isComp: true,
+        isCY: false,
+      },
+      {
+        header: `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? "MTD" : "WTD"} Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: false,
+      },
+      {
+        header: `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? "MTD" : "WTD"} Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: true,
+      },
+      {
+        header: `${isCalendar ? "MTD" : "WTD"} Comp ${lyYear} to ${cyYear}`,
+        align: "center",
+        numFmt: "0.00%",
+        isComp: true,
+        isCY: false,
+      },
+      {
+        header: `${lyYear} Q${q}, QTD Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: false,
+      },
+      {
+        header: `${cyYear} Q${q}, QTD Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: true,
+      },
+      {
+        header: `QTD Comp ${lyYear} to ${cyYear}`,
+        align: "center",
+        numFmt: "0.00%",
+        isComp: true,
+        isCY: false,
+      },
+      {
+        header: `${lyYear}, YTD Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: false,
+      },
+      {
+        header: `${cyYear}, YTD Net $`,
+        align: "right",
+        numFmt: "#,##0",
+        isComp: false,
+        isCY: true,
+      },
+      {
+        header: `YTD Comp ${lyYear} to ${cyYear}`,
+        align: "center",
+        numFmt: "0.00%",
+        isComp: true,
+        isCY: false,
+      },
     ];
 
     const RIGHT_BORDER_COLS = new Set([1, 4, 7, 10, 13]);
-    const BORDER_SIDE = { style: 'thin', color: { rgb: '808080' } };
+    const BORDER_SIDE = { style: "thin", color: { rgb: "808080" } };
 
     const makeBorder = (top, bottom, right) => {
       const b = {};
@@ -300,14 +419,19 @@ export default function AllSalesTab({
     displayRows.forEach((row) => {
       const isGt = !!row.IS_GRAND_TOTAL;
       const isTerr = !!row.IS_TERRITORY_TOTAL;
-      const storeName = isGt 
-        ? 'GRAND TOTAL' 
-        : isTerr 
-          ? row.STORE_NAME 
-          : `${row.STORE_ID != null ? `${row.STORE_ID} ` : ''}${row.STORE_NAME || ''}`;
-      const firstSale = (isGt || isTerr)
-        ? ''
-        : row.DATE_OPENED ? (row.DATE_OPENED.length >= 10 ? row.DATE_OPENED.substring(2) : row.DATE_OPENED) : '';
+      const storeName = isGt
+        ? "GRAND TOTAL"
+        : isTerr
+          ? row.STORE_NAME
+          : `${row.STORE_ID != null ? `${row.STORE_ID} ` : ""}${row.STORE_NAME || ""}`;
+      const firstSale =
+        isGt || isTerr
+          ? ""
+          : row.DATE_OPENED
+            ? row.DATE_OPENED.length >= 10
+              ? row.DATE_OPENED.substring(2)
+              : row.DATE_OPENED
+            : "";
 
       aoa.push([
         storeName,
@@ -339,7 +463,7 @@ export default function AllSalesTab({
 
       for (let c = 0; c < COLS.length; c++) {
         const addr = XLSX.utils.encode_cell({ r, c });
-        if (!ws[addr]) ws[addr] = { v: '', t: 's' };
+        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
 
         const col = COLS[c];
         const hasRightBdr = RIGHT_BORDER_COLS.has(c);
@@ -347,26 +471,26 @@ export default function AllSalesTab({
         const border = makeBorder(
           isGrandTotal,
           isHeader || isGrandTotal,
-          hasRightBdr
+          hasRightBdr,
         );
 
         let fontColor;
         if (!isHeader && col.isComp) {
           const v = aoa[r][c];
-          fontColor = v >= 0 ? '15803D' : 'DC2626';
+          fontColor = v >= 0 ? "15803D" : "DC2626";
         }
 
         const cellStyle = {
           font: {
-            name: 'Arial',
+            name: "Arial",
             sz: 9,
             bold: isBoldRow,
             italic: !isHeader && col.isCY,
             ...(fontColor ? { color: { rgb: fontColor } } : {}),
           },
           alignment: {
-            horizontal: isHeader ? 'left' : col.align,
-            vertical: 'center',
+            horizontal: isHeader ? "left" : col.align,
+            vertical: "center",
             wrapText: !isHeader,
           },
           border,
@@ -374,35 +498,62 @@ export default function AllSalesTab({
 
         if (!isHeader && col.numFmt) {
           cellStyle.numFmt = col.numFmt;
-          ws[addr].t = 'n';
+          ws[addr].t = "n";
         }
 
         ws[addr].s = cellStyle;
       }
     }
 
-    ws['!sheetViews'] = [{
-      workbookViewId: 0,
-      pane: { ySplit: 1, xSplit: 2, topLeftCell: 'C2', activePane: 'bottomRight', state: 'frozen' },
-    }];
-
-    ws['!cols'] = [
-      { wch: 30 }, // LOCATION/TERRITORY
-      { wch: 12 }, // First Sale
-      { wch: 12 }, { wch: 12 }, { wch: 24 },
-      { wch: 12 }, { wch: 12 }, { wch: 24 },
-      { wch: 12 }, { wch: 12 }, { wch: 24 },
-      { wch: 12 }, { wch: 12 }, { wch: 24 },
+    ws["!sheetViews"] = [
+      {
+        workbookViewId: 0,
+        pane: {
+          ySplit: 1,
+          xSplit: 2,
+          topLeftCell: "C2",
+          activePane: "bottomRight",
+          state: "frozen",
+        },
+      },
     ];
 
-    ws['!rows'] = [{ hpt: 20 }];
+    ws["!cols"] = [
+      { wch: 30 }, // LOCATION/TERRITORY
+      { wch: 12 }, // First Sale
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 24 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 24 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 24 },
+      { wch: 12 },
+      { wch: 12 },
+      { wch: 24 },
+    ];
+
+    ws["!rows"] = [{ hpt: 20 }];
 
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Flash Sales');
-    
+    XLSX.utils.book_append_sheet(wb, ws, "Flash Sales");
+
     // Write and trigger download
     XLSX.writeFile(wb, `FlashSales_${calendarMode}_${DT_1_Str()}.xlsx`);
-  }, [displayRows, lyYear, wk, dayDisplay, cyYear, isCalendar, monthStr, q, calendarMode, DT_1_Str]);
+  }, [
+    displayRows,
+    lyYear,
+    wk,
+    dayDisplay,
+    cyYear,
+    isCalendar,
+    monthStr,
+    q,
+    calendarMode,
+    DT_1_Str,
+  ]);
 
   // Bind export triggers to parent
   React.useEffect(() => {
@@ -423,9 +574,9 @@ export default function AllSalesTab({
   const handleScrollUp = () => {
     const table = tableRef.current;
     if (table) {
-      const tbody = table.querySelector('tbody');
+      const tbody = table.querySelector("tbody");
       if (tbody) {
-        tbody.scrollTo({ top: 0, behavior: 'instant' });
+        tbody.scrollTo({ top: 0, behavior: "instant" });
       }
     }
   };
@@ -433,9 +584,9 @@ export default function AllSalesTab({
   const handleScrollDown = () => {
     const table = tableRef.current;
     if (table) {
-      const tbody = table.querySelector('tbody');
+      const tbody = table.querySelector("tbody");
       if (tbody) {
-        tbody.scrollTo({ top: tbody.scrollHeight, behavior: 'instant' });
+        tbody.scrollTo({ top: tbody.scrollHeight, behavior: "instant" });
       }
     }
   };
@@ -446,9 +597,9 @@ export default function AllSalesTab({
       const table = tableRef.current;
       if (!table) return;
 
-      const thead = table.querySelector('thead');
-      const tbody = table.querySelector('tbody');
-      const tfoot = table.querySelector('tfoot');
+      const thead = table.querySelector("thead");
+      const tbody = table.querySelector("tbody");
+      const tfoot = table.querySelector("tfoot");
       if (!thead || !tbody) return;
 
       const zoomFactor = (zoomLevel || 100) / 100;
@@ -459,20 +610,25 @@ export default function AllSalesTab({
 
       // Reserve space for footer bar + borders/padding
       const footerReserve = 55 / zoomFactor;
-      const unscaledHeight = (viewportHeight / zoomFactor) - tableTopOffset - theadHeight - tfootHeight - footerReserve;
+      const unscaledHeight =
+        viewportHeight / zoomFactor -
+        tableTopOffset -
+        theadHeight -
+        tfootHeight -
+        footerReserve;
 
-      tbody.style.height = Math.max(unscaledHeight, 200) + 'px';
+      tbody.style.height = Math.max(unscaledHeight, 200) + "px";
 
       // Position the scroll-up and scroll-down buttons dynamically just inside the scrollable region
       const wrapper = table.parentNode;
       if (wrapper) {
-        const upBtn = wrapper.querySelector('.table-scroll-btn.scroll-up');
-        const downBtn = wrapper.querySelector('.table-scroll-btn.scroll-down');
+        const upBtn = wrapper.querySelector(".table-scroll-btn.scroll-up");
+        const downBtn = wrapper.querySelector(".table-scroll-btn.scroll-down");
         if (upBtn) {
-          upBtn.style.top = theadHeight + 'px';
+          upBtn.style.top = theadHeight + "px";
         }
         if (downBtn) {
-          downBtn.style.bottom = tfootHeight + 'px';
+          downBtn.style.bottom = tfootHeight + "px";
         }
       }
     }
@@ -481,11 +637,11 @@ export default function AllSalesTab({
 
     const observer = new ResizeObserver(() => adjustTbodyHeight());
     if (tableRef.current) observer.observe(tableRef.current);
-    window.addEventListener('resize', adjustTbodyHeight);
+    window.addEventListener("resize", adjustTbodyHeight);
 
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', adjustTbodyHeight);
+      window.removeEventListener("resize", adjustTbodyHeight);
     };
   }, [loading, data, zoomLevel]);
 
@@ -499,70 +655,153 @@ export default function AllSalesTab({
 
   return (
     <div className="table-wrapper">
-      <button className="table-scroll-btn scroll-up" onClick={handleScrollUp} title="Scroll to Top">
+      <button
+        className="table-scroll-btn scroll-up"
+        onClick={handleScrollUp}
+        title="Scroll to Top"
+      >
         <img src="/uparrow.png" alt="Scroll Up" className="scroll-btn-img" />
       </button>
-      <button className="table-scroll-btn scroll-down" onClick={handleScrollDown} title="Scroll to Bottom">
-        <img src="/uparrow.png" alt="Scroll Down" className="scroll-btn-img rotated" />
+      <button
+        className="table-scroll-btn scroll-down"
+        onClick={handleScrollDown}
+        title="Scroll to Bottom"
+      >
+        <img
+          src="/uparrow.png"
+          alt="Scroll Down"
+          className="scroll-btn-img rotated"
+        />
       </button>
       {/* Screen view table (13 columns, UI remains unchanged) */}
       <table className="sales-table" ref={tableRef}>
         <thead>
           <tr>
-            <th className="border-right"><br />LOCATION/TERRITORY</th>
-            <th>{lyYear} Wk {wk},<br />Day {dayDisplay} Net $</th>
-            <th>{cyYear} Wk {wk},<br />Day {dayDisplay} Net $</th>
-            <th className="border-right">1 Day Comp<br />{lyYear} to {cyYear}</th>
-            <th>{lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},<br />{isCalendar ? 'MTD' : 'WTD'} Net $</th>
-            <th>{cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},<br />{isCalendar ? 'MTD' : 'WTD'} Net $</th>
-            <th className="border-right">{isCalendar ? 'MTD' : 'WTD'} Comp<br />{lyYear} to {cyYear}</th>
-            <th>{lyYear} Q{q},<br />QTD Net $</th>
-            <th>{cyYear} Q{q},<br />QTD Net $</th>
-            <th className="border-right">QTD Comp<br />{lyYear} to {cyYear}</th>
-            <th>{lyYear},<br />YTD Net $</th>
-            <th>{cyYear},<br />YTD Net $</th>
-            <th className="border-right">YTD Comp<br />{lyYear} to {cyYear}</th>
+            <th className="border-right">
+              <br />
+              STORE/TERRITORY
+            </th>
+            <th>
+              {lyYear} Wk {wk},<br />
+              Day {dayDisplay} Net $
+            </th>
+            <th>
+              {cyYear} Wk {wk},<br />
+              Day {dayDisplay} Net $
+            </th>
+            <th className="border-right">
+              1 Day Comp
+              <br />
+              {lyYear} to {cyYear}
+            </th>
+            <th>
+              {lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},<br />
+              {isCalendar ? "MTD" : "WTD"} Net $
+            </th>
+            <th>
+              {cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},<br />
+              {isCalendar ? "MTD" : "WTD"} Net $
+            </th>
+            <th className="border-right">
+              {isCalendar ? "MTD" : "WTD"} Comp
+              <br />
+              {lyYear} to {cyYear}
+            </th>
+            <th>
+              {lyYear} Q{q},<br />
+              QTD Net $
+            </th>
+            <th>
+              {cyYear} Q{q},<br />
+              QTD Net $
+            </th>
+            <th className="border-right">
+              QTD Comp
+              <br />
+              {lyYear} to {cyYear}
+            </th>
+            <th>
+              {lyYear},<br />
+              YTD Net $
+            </th>
+            <th>
+              {cyYear},<br />
+              YTD Net $
+            </th>
+            <th className="border-right">
+              YTD Comp
+              <br />
+              {lyYear} to {cyYear}
+            </th>
           </tr>
         </thead>
         <tbody>
           {sortedTerritories.map(([territoryName, stores]) => {
             const rows = [];
-            
+
             // Store Rows
             stores.forEach((store) => {
               rows.push(
                 <tr key={store.STORE_ID}>
                   <td className="border-right store-name-cell">
                     <span className="store-name-text">
-                      <strong>{highlightText(store.STORE_ID, search)}</strong> {highlightText(store.STORE_NAME, search)}
+                      <strong>{highlightText(store.STORE_ID, search)}</strong>{" "}
+                      {highlightText(store.STORE_NAME, search)}
                     </span>
                     {store.DATE_OPENED && (
                       <span className="store-opened">
-                        {highlightText(`FIRST SALE '${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`, search)}
+                        {highlightText(
+                          `FIRST SALE '${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`,
+                          search,
+                        )}
                       </span>
                     )}
                   </td>
-                  <td>{highlightText(formatNumber(store.DAY_SALES_LY), search)}</td>
-                  <td>{highlightText(formatNumber(store.DAY_SALES_CY), search)}</td>
-                  <td className={`border-right ${store.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                  <td>
+                    {highlightText(formatNumber(store.DAY_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(store.DAY_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${store.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
                     {highlightText(formatPercent(store.DAY_SALES_COMP), search)}
                   </td>
-                  <td>{highlightText(formatNumber(store.WTD_SALES_LY), search)}</td>
-                  <td>{highlightText(formatNumber(store.WTD_SALES_CY), search)}</td>
-                  <td className={`border-right ${store.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                  <td>
+                    {highlightText(formatNumber(store.WTD_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(store.WTD_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${store.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
                     {highlightText(formatPercent(store.WTD_SALES_COMP), search)}
                   </td>
-                  <td>{highlightText(formatNumber(store.QTD_SALES_LY), search)}</td>
-                  <td>{highlightText(formatNumber(store.QTD_SALES_CY), search)}</td>
-                  <td className={`border-right ${store.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                  <td>
+                    {highlightText(formatNumber(store.QTD_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(store.QTD_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${store.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
                     {highlightText(formatPercent(store.QTD_SALES_COMP), search)}
                   </td>
-                  <td>{highlightText(formatNumber(store.YTD_SALES_LY), search)}</td>
-                  <td>{highlightText(formatNumber(store.YTD_SALES_CY), search)}</td>
-                  <td className={`border-right ${store.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                  <td>
+                    {highlightText(formatNumber(store.YTD_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(store.YTD_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${store.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
                     {highlightText(formatPercent(store.YTD_SALES_COMP), search)}
                   </td>
-                </tr>
+                </tr>,
               );
             });
 
@@ -570,28 +809,54 @@ export default function AllSalesTab({
             const tTotal = computeTerritoryTotal(territoryName, stores);
             rows.push(
               <tr key={`${territoryName}-Total`} className="territory-row">
-                <td className="border-right">{highlightText(tTotal.STORE_NAME, search)}</td>
-                <td>{highlightText(formatNumber(tTotal.DAY_SALES_LY), search)}</td>
-                <td>{highlightText(formatNumber(tTotal.DAY_SALES_CY), search)}</td>
-                <td className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                <td className="border-right">
+                  {highlightText(tTotal.STORE_NAME, search)}
+                </td>
+                <td>
+                  {highlightText(formatNumber(tTotal.DAY_SALES_LY), search)}
+                </td>
+                <td>
+                  {highlightText(formatNumber(tTotal.DAY_SALES_CY), search)}
+                </td>
+                <td
+                  className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                >
                   {highlightText(formatPercent(tTotal.DAY_SALES_COMP), search)}
                 </td>
-                <td>{highlightText(formatNumber(tTotal.WTD_SALES_LY), search)}</td>
-                <td>{highlightText(formatNumber(tTotal.WTD_SALES_CY), search)}</td>
-                <td className={`border-right ${tTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                <td>
+                  {highlightText(formatNumber(tTotal.WTD_SALES_LY), search)}
+                </td>
+                <td>
+                  {highlightText(formatNumber(tTotal.WTD_SALES_CY), search)}
+                </td>
+                <td
+                  className={`border-right ${tTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                >
                   {highlightText(formatPercent(tTotal.WTD_SALES_COMP), search)}
                 </td>
-                <td>{highlightText(formatNumber(tTotal.QTD_SALES_LY), search)}</td>
-                <td>{highlightText(formatNumber(tTotal.QTD_SALES_CY), search)}</td>
-                <td className={`border-right ${tTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                <td>
+                  {highlightText(formatNumber(tTotal.QTD_SALES_LY), search)}
+                </td>
+                <td>
+                  {highlightText(formatNumber(tTotal.QTD_SALES_CY), search)}
+                </td>
+                <td
+                  className={`border-right ${tTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                >
                   {highlightText(formatPercent(tTotal.QTD_SALES_COMP), search)}
                 </td>
-                <td>{highlightText(formatNumber(tTotal.YTD_SALES_LY), search)}</td>
-                <td>{highlightText(formatNumber(tTotal.YTD_SALES_CY), search)}</td>
-                <td className={`border-right ${tTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
+                <td>
+                  {highlightText(formatNumber(tTotal.YTD_SALES_LY), search)}
+                </td>
+                <td>
+                  {highlightText(formatNumber(tTotal.YTD_SALES_CY), search)}
+                </td>
+                <td
+                  className={`border-right ${tTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                >
                   {highlightText(formatPercent(tTotal.YTD_SALES_COMP), search)}
                 </td>
-              </tr>
+              </tr>,
             );
 
             return rows;
@@ -601,28 +866,66 @@ export default function AllSalesTab({
           <tfoot>
             <tr className="grand-total-row">
               <td className="border-right">
-                {highlightText('GRAND TOTAL', search)}
-                <span className="grand-total-sub">0 Locations yet to report day's sales</span>
+                {highlightText("GRAND TOTAL", search)}
+                <span className="grand-total-sub">
+                  0 Locations yet to report day's sales
+                </span>
               </td>
-              <td>{highlightText(formatNumber(grandTotal.DAY_SALES_LY), search)}</td>
-              <td>{highlightText(formatNumber(grandTotal.DAY_SALES_CY), search)}</td>
-              <td className={`border-right ${grandTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {highlightText(formatPercent(grandTotal.DAY_SALES_COMP), search)}
+              <td>
+                {highlightText(formatNumber(grandTotal.DAY_SALES_LY), search)}
               </td>
-              <td>{highlightText(formatNumber(grandTotal.WTD_SALES_LY), search)}</td>
-              <td>{highlightText(formatNumber(grandTotal.WTD_SALES_CY), search)}</td>
-              <td className={`border-right ${grandTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {highlightText(formatPercent(grandTotal.WTD_SALES_COMP), search)}
+              <td>
+                {highlightText(formatNumber(grandTotal.DAY_SALES_CY), search)}
               </td>
-              <td>{highlightText(formatNumber(grandTotal.QTD_SALES_LY), search)}</td>
-              <td>{highlightText(formatNumber(grandTotal.QTD_SALES_CY), search)}</td>
-              <td className={`border-right ${grandTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {highlightText(formatPercent(grandTotal.QTD_SALES_COMP), search)}
+              <td
+                className={`border-right ${grandTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+              >
+                {highlightText(
+                  formatPercent(grandTotal.DAY_SALES_COMP),
+                  search,
+                )}
               </td>
-              <td>{highlightText(formatNumber(grandTotal.YTD_SALES_LY), search)}</td>
-              <td>{highlightText(formatNumber(grandTotal.YTD_SALES_CY), search)}</td>
-              <td className={`border-right ${grandTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}`}>
-                {highlightText(formatPercent(grandTotal.YTD_SALES_COMP), search)}
+              <td>
+                {highlightText(formatNumber(grandTotal.WTD_SALES_LY), search)}
+              </td>
+              <td>
+                {highlightText(formatNumber(grandTotal.WTD_SALES_CY), search)}
+              </td>
+              <td
+                className={`border-right ${grandTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+              >
+                {highlightText(
+                  formatPercent(grandTotal.WTD_SALES_COMP),
+                  search,
+                )}
+              </td>
+              <td>
+                {highlightText(formatNumber(grandTotal.QTD_SALES_LY), search)}
+              </td>
+              <td>
+                {highlightText(formatNumber(grandTotal.QTD_SALES_CY), search)}
+              </td>
+              <td
+                className={`border-right ${grandTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+              >
+                {highlightText(
+                  formatPercent(grandTotal.QTD_SALES_COMP),
+                  search,
+                )}
+              </td>
+              <td>
+                {highlightText(formatNumber(grandTotal.YTD_SALES_LY), search)}
+              </td>
+              <td>
+                {highlightText(formatNumber(grandTotal.YTD_SALES_CY), search)}
+              </td>
+              <td
+                className={`border-right ${grandTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+              >
+                {highlightText(
+                  formatPercent(grandTotal.YTD_SALES_COMP),
+                  search,
+                )}
               </td>
             </tr>
           </tfoot>
@@ -633,57 +936,97 @@ export default function AllSalesTab({
       <table className="sales-table-print">
         <thead>
           <tr>
-            <th>LOCATION/TERRITORY</th>
+            <th>STORE/TERRITORY</th>
             <th>First Sale</th>
-            <th>{lyYear} Wk {wk}, Day {dayDisplay} Net $</th>
-            <th>{cyYear} Wk {wk}, Day {dayDisplay} Net $</th>
-            <th>1 Day Comp {lyYear} to {cyYear}</th>
-            <th>{lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, {isCalendar ? 'MTD' : 'WTD'} Net $</th>
-            <th>{cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, {isCalendar ? 'MTD' : 'WTD'} Net $</th>
-            <th>{isCalendar ? 'MTD' : 'WTD'} Comp {lyYear} to {cyYear}</th>
-            <th>{lyYear} Q{q}, QTD Net $</th>
-            <th>{cyYear} Q{q}, QTD Net $</th>
-            <th>QTD Comp {lyYear} to {cyYear}</th>
+            <th>
+              {lyYear} Wk {wk}, Day {dayDisplay} Net $
+            </th>
+            <th>
+              {cyYear} Wk {wk}, Day {dayDisplay} Net $
+            </th>
+            <th>
+              1 Day Comp {lyYear} to {cyYear}
+            </th>
+            <th>
+              {lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},{" "}
+              {isCalendar ? "MTD" : "WTD"} Net $
+            </th>
+            <th>
+              {cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},{" "}
+              {isCalendar ? "MTD" : "WTD"} Net $
+            </th>
+            <th>
+              {isCalendar ? "MTD" : "WTD"} Comp {lyYear} to {cyYear}
+            </th>
+            <th>
+              {lyYear} Q{q}, QTD Net $
+            </th>
+            <th>
+              {cyYear} Q{q}, QTD Net $
+            </th>
+            <th>
+              QTD Comp {lyYear} to {cyYear}
+            </th>
             <th>{lyYear}, YTD Net $</th>
             <th>{cyYear}, YTD Net $</th>
-            <th>YTD Comp {lyYear} to {cyYear}</th>
+            <th>
+              YTD Comp {lyYear} to {cyYear}
+            </th>
           </tr>
         </thead>
         <tbody>
           {sortedTerritories.map(([territoryName, stores]) => {
             const rows = [];
-            
+
             // Store rows
             stores.forEach((store) => {
-              const storeName = `${store.STORE_ID != null ? `${store.STORE_ID} ` : ''}${store.STORE_NAME || ''}`;
-              const firstSale = store.DATE_OPENED 
-                ? (store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED) 
-                : '';
+              const storeName = `${store.STORE_ID != null ? `${store.STORE_ID} ` : ""}${store.STORE_NAME || ""}`;
+              const firstSale = store.DATE_OPENED
+                ? store.DATE_OPENED.length >= 10
+                  ? store.DATE_OPENED.substring(2)
+                  : store.DATE_OPENED
+                : "";
               rows.push(
                 <tr key={store.STORE_ID}>
                   <td>{storeName}</td>
                   <td>{firstSale}</td>
                   <td>{formatNumber(store.DAY_SALES_LY)}</td>
                   <td>{formatNumber(store.DAY_SALES_CY)}</td>
-                  <td className={store.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  <td
+                    className={
+                      store.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
                     {formatPercent(store.DAY_SALES_COMP)}
                   </td>
                   <td>{formatNumber(store.WTD_SALES_LY)}</td>
                   <td>{formatNumber(store.WTD_SALES_CY)}</td>
-                  <td className={store.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  <td
+                    className={
+                      store.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
                     {formatPercent(store.WTD_SALES_COMP)}
                   </td>
                   <td>{formatNumber(store.QTD_SALES_LY)}</td>
                   <td>{formatNumber(store.QTD_SALES_CY)}</td>
-                  <td className={store.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  <td
+                    className={
+                      store.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
                     {formatPercent(store.QTD_SALES_COMP)}
                   </td>
                   <td>{formatNumber(store.YTD_SALES_LY)}</td>
                   <td>{formatNumber(store.YTD_SALES_CY)}</td>
-                  <td className={store.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                  <td
+                    className={
+                      store.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
                     {formatPercent(store.YTD_SALES_COMP)}
                   </td>
-                </tr>
+                </tr>,
               );
             });
 
@@ -695,25 +1038,41 @@ export default function AllSalesTab({
                 <td></td>
                 <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
                 <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
-                <td className={tTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                <td
+                  className={
+                    tTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                  }
+                >
                   {formatPercent(tTotal.DAY_SALES_COMP)}
                 </td>
                 <td>{formatNumber(tTotal.WTD_SALES_LY)}</td>
                 <td>{formatNumber(tTotal.WTD_SALES_CY)}</td>
-                <td className={tTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                <td
+                  className={
+                    tTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                  }
+                >
                   {formatPercent(tTotal.WTD_SALES_COMP)}
                 </td>
                 <td>{formatNumber(tTotal.QTD_SALES_LY)}</td>
                 <td>{formatNumber(tTotal.QTD_SALES_CY)}</td>
-                <td className={tTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                <td
+                  className={
+                    tTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                  }
+                >
                   {formatPercent(tTotal.QTD_SALES_COMP)}
                 </td>
                 <td>{formatNumber(tTotal.YTD_SALES_LY)}</td>
                 <td>{formatNumber(tTotal.YTD_SALES_CY)}</td>
-                <td className={tTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+                <td
+                  className={
+                    tTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                  }
+                >
                   {formatPercent(tTotal.YTD_SALES_COMP)}
                 </td>
-              </tr>
+              </tr>,
             );
 
             return rows;
@@ -726,22 +1085,38 @@ export default function AllSalesTab({
               <td></td>
               <td>{formatNumber(grandTotal.DAY_SALES_LY)}</td>
               <td>{formatNumber(grandTotal.DAY_SALES_CY)}</td>
-              <td className={grandTotal.DAY_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+              <td
+                className={
+                  grandTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                }
+              >
                 {formatPercent(grandTotal.DAY_SALES_COMP)}
               </td>
               <td>{formatNumber(grandTotal.WTD_SALES_LY)}</td>
               <td>{formatNumber(grandTotal.WTD_SALES_CY)}</td>
-              <td className={grandTotal.WTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+              <td
+                className={
+                  grandTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                }
+              >
                 {formatPercent(grandTotal.WTD_SALES_COMP)}
               </td>
               <td>{formatNumber(grandTotal.QTD_SALES_LY)}</td>
               <td>{formatNumber(grandTotal.QTD_SALES_CY)}</td>
-              <td className={grandTotal.QTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+              <td
+                className={
+                  grandTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                }
+              >
                 {formatPercent(grandTotal.QTD_SALES_COMP)}
               </td>
               <td>{formatNumber(grandTotal.YTD_SALES_LY)}</td>
               <td>{formatNumber(grandTotal.YTD_SALES_CY)}</td>
-              <td className={grandTotal.YTD_SALES_COMP >= 0 ? 'comp-pos' : 'comp-neg'}>
+              <td
+                className={
+                  grandTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                }
+              >
                 {formatPercent(grandTotal.YTD_SALES_COMP)}
               </td>
             </tr>
