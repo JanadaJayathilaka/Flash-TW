@@ -69,15 +69,10 @@ export default function AllSalesTab({
   // Parse data and groups
   const { territories, grandTotal } = useMemo(() => {
     const territories = {};
-    let grandTotal = null;
 
     data.forEach((r) => {
-      if (r.IS_GRAND_TOTAL) {
-        grandTotal = r;
+      if (r.IS_GRAND_TOTAL || r.IS_TERRITORY_TOTAL) {
         return;
-      }
-      if (r.IS_TERRITORY_TOTAL) {
-        return; // We will recalculate territory totals based on filtered stores or show the pre-computed totals
       }
       const t = r.TERRITORY || "Unknown";
       if (!territories[t]) territories[t] = [];
@@ -111,6 +106,40 @@ export default function AllSalesTab({
         );
       });
     }
+
+    // Dynamically compute Grand Total by summing store rows matching Dotnet
+    const activeStores = Object.values(territories).flat();
+    const sum = (field) => activeStores.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
+    const lyDay = sum("DAY_SALES_LY");
+    const cyDay = sum("DAY_SALES_CY");
+    const lyWtd = sum("WTD_SALES_LY");
+    const cyWtd = sum("WTD_SALES_CY");
+    const lyQtd = sum("QTD_SALES_LY");
+    const cyQtd = sum("QTD_SALES_CY");
+    const lyYtd = sum("YTD_SALES_LY");
+    const cyYtd = sum("YTD_SALES_CY");
+
+    const calcComp = (cy, ly) => {
+      if (cy === 0 || ly === 0) return 0;
+      return ((cy - ly) / ly) * 100;
+    };
+
+    const grandTotal = {
+      STORE_NAME: "GRAND TOTAL",
+      IS_GRAND_TOTAL: true,
+      DAY_SALES_LY: lyDay,
+      DAY_SALES_CY: cyDay,
+      DAY_SALES_COMP: calcComp(cyDay, lyDay),
+      WTD_SALES_LY: lyWtd,
+      WTD_SALES_CY: cyWtd,
+      WTD_SALES_COMP: calcComp(cyWtd, lyWtd),
+      QTD_SALES_LY: lyQtd,
+      QTD_SALES_CY: cyQtd,
+      QTD_SALES_COMP: calcComp(cyQtd, lyQtd),
+      YTD_SALES_LY: lyYtd,
+      YTD_SALES_CY: cyYtd,
+      YTD_SALES_COMP: calcComp(cyYtd, lyYtd),
+    };
 
     return { territories, grandTotal };
   }, [data, search]);

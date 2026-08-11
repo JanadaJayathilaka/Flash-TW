@@ -249,7 +249,7 @@ export default function App() {
     return computeCalendarDateParams(selectedDate);
   }, [selectedDate, calendarMode, fiscalIndexes]);
 
-  // Currency conversion mapping when NZ$ is active
+  // Currency conversion mapping when NZ$ is active matching Dotnet GetFlashData.js lines 709-736
   const processedPivotData = useMemo(() => {
     if (!pivotData || pivotData.length === 0) return [];
     if (
@@ -261,17 +261,36 @@ export default function App() {
       return pivotData;
     }
 
+    const normalizeDate = (dStr) => {
+      if (!dStr) return "";
+      const d = new Date(dStr);
+      if (!isNaN(d.getTime())) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      let s = String(dStr).trim();
+      if (s.includes("T")) s = s.split("T")[0];
+      if (s.includes(" ")) s = s.split(" ")[0];
+      return s;
+    };
+
     const rateMap = {};
     currencyRates.forEach((r) => {
       if (r.CDate) {
-        rateMap[r.CDate.trim()] = parseFloat(r.AuDEquiv) || 1;
+        const key = normalizeDate(r.CDate);
+        rateMap[key] = parseFloat(r.AuDEquiv) || 1;
       }
     });
 
-    const auEqStart =
-      rateMap[dateParams.DT_1] || rateMap[dateParams.P_WTD_1_S] || 1.1;
-    const auEqEnd =
-      rateMap[dateParams.DT_2] || rateMap[dateParams.P_WTD_2_S] || 1.1;
+    const dt1Key = normalizeDate(dateParams.DT_1);
+    const dt2Key = normalizeDate(dateParams.DT_2);
+
+    const defaultRate =
+      parseFloat(currencyRates[currencyRates.length - 1]?.AuDEquiv) || 1.0825;
+    const auEqStart = rateMap[dt1Key] || defaultRate;
+    const auEqEnd = rateMap[dt2Key] || defaultRate;
 
     const calcComp = (cy, ly) => {
       const cyNum = Number(cy) || 0;
@@ -283,12 +302,41 @@ export default function App() {
     return pivotData.map((row) => {
       if (row.IS_TERRITORY_TOTAL || row.IS_GRAND_TOTAL) return row;
 
-      const dayCY = Math.round((row.DAY_SALES_CY || 0) * auEqStart);
-      const dayLY = Math.round((row.DAY_SALES_LY || 0) * auEqEnd);
-      const wtdCY = Math.round((row.WTD_SALES_CY || 0) * auEqStart);
-      const wtdLY = Math.round((row.WTD_SALES_LY || 0) * auEqEnd);
-      const ytdCY = Math.round((row.YTD_SALES_CY || 0) * auEqStart);
-      const ytdLY = Math.round((row.YTD_SALES_LY || 0) * auEqEnd);
+      const dayCY =
+        row.DAY_SALES_CY > 0
+          ? Math.round(row.DAY_SALES_CY * auEqStart)
+          : row.DAY_SALES_CY;
+      const dayLY =
+        row.DAY_SALES_LY > 0
+          ? Math.round(row.DAY_SALES_LY * auEqEnd)
+          : row.DAY_SALES_LY;
+
+      const wtdCY =
+        row.WTD_SALES_CY > 0
+          ? Math.round(row.WTD_SALES_CY * auEqStart)
+          : row.WTD_SALES_CY;
+      const wtdLY =
+        row.WTD_SALES_LY > 0
+          ? Math.round(row.WTD_SALES_LY * auEqEnd)
+          : row.WTD_SALES_LY;
+
+      const qtdCY =
+        row.QTD_SALES_CY > 0
+          ? Math.round(row.QTD_SALES_CY * auEqStart)
+          : row.QTD_SALES_CY;
+      const qtdLY =
+        row.QTD_SALES_LY > 0
+          ? Math.round(row.QTD_SALES_LY * auEqEnd)
+          : row.QTD_SALES_LY;
+
+      const ytdCY =
+        row.YTD_SALES_CY > 0
+          ? Math.round(row.YTD_SALES_CY * auEqStart)
+          : row.YTD_SALES_CY;
+      const ytdLY =
+        row.YTD_SALES_LY > 0
+          ? Math.round(row.YTD_SALES_LY * auEqEnd)
+          : row.YTD_SALES_LY;
 
       return {
         ...row,
@@ -298,6 +346,9 @@ export default function App() {
         WTD_SALES_CY: wtdCY,
         WTD_SALES_LY: wtdLY,
         WTD_SALES_COMP: calcComp(wtdCY, wtdLY),
+        QTD_SALES_CY: qtdCY,
+        QTD_SALES_LY: qtdLY,
+        QTD_SALES_COMP: calcComp(qtdCY, qtdLY),
         YTD_SALES_CY: ytdCY,
         YTD_SALES_LY: ytdLY,
         YTD_SALES_COMP: calcComp(ytdCY, ytdLY),
