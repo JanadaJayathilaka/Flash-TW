@@ -443,9 +443,9 @@ export default function AnalyticsTab({
     return out;
   }, [compareMode, dateParams, fiscalIndexes]);
 
-  // Fetch chart data when selected years, date ranges or viewMode change
+  // Fetch chart data when selected years, date ranges, viewMode, or currencyMode change
   const loadChart = useCallback(
-    async (years, mode) => {
+    async (years, mode, curMode) => {
       if (years.length === 0) {
         setChartDataByYear({});
         return;
@@ -462,7 +462,8 @@ export default function AnalyticsTab({
           cached &&
           cached.startDate === range.startDate &&
           cached.endDate === range.endDate &&
-          cached.mode === mode
+          cached.mode === mode &&
+          cached.currencyMode === curMode
         ) {
           return false; // Already cached and matches criteria
         }
@@ -512,6 +513,7 @@ export default function AnalyticsTab({
             startDate: item.startDate,
             endDate: item.endDate,
             mode: mode,
+            currencyMode: curMode,
             data: item.data,
           };
         });
@@ -536,8 +538,8 @@ export default function AnalyticsTab({
   );
 
   useEffect(() => {
-    loadChart(selectedYears, viewMode);
-  }, [selectedYears, viewMode, loadChart]);
+    loadChart(selectedYears, viewMode, currencyMode);
+  }, [selectedYears, viewMode, currencyMode, loadChart]);
 
   const visibleCharts = useMemo(() => {
     const rows = [];
