@@ -107,9 +107,12 @@ export default function AllSalesTab({
       });
     }
 
-    // Dynamically compute Grand Total by summing store rows matching Dotnet
-    const activeStores = Object.values(territories).flat();
-    const sum = (field) => activeStores.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
+    // Dynamically compute Grand Total over ALL store rows (unaffected by search filter, matching Dotnet)
+    const allStoreRows = data.filter(
+      (r) => !r.IS_GRAND_TOTAL && !r.IS_TERRITORY_TOTAL,
+    );
+    const sum = (field) =>
+      allStoreRows.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
     const lyDay = sum("DAY_SALES_LY");
     const cyDay = sum("DAY_SALES_CY");
     const lyWtd = sum("WTD_SALES_LY");
@@ -194,18 +197,22 @@ export default function AllSalesTab({
     };
   };
 
+  const isSearching = Boolean(search && search.trim() !== "");
+
   // Build rows array representing current table display order
   const displayRows = useMemo(() => {
     const rows = [];
     sortedTerritories.forEach(([territoryName, stores]) => {
       rows.push(...stores);
-      rows.push(computeTerritoryTotal(territoryName, stores));
+      if (!isSearching) {
+        rows.push(computeTerritoryTotal(territoryName, stores));
+      }
     });
     if (grandTotal) {
       rows.push(grandTotal);
     }
     return rows;
-  }, [sortedTerritories, grandTotal]);
+  }, [sortedTerritories, grandTotal, isSearching]);
 
   const DT_1_Str = useCallback(() => {
     if (data.length > 0) {
@@ -834,59 +841,73 @@ export default function AllSalesTab({
               );
             });
 
-            // Territory Total Row
-            const tTotal = computeTerritoryTotal(territoryName, stores);
-            rows.push(
-              <tr key={`${territoryName}-Total`} className="territory-row">
-                <td className="border-right">
-                  {highlightText(tTotal.STORE_NAME, search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.DAY_SALES_LY), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.DAY_SALES_CY), search)}
-                </td>
-                <td
-                  className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
-                >
-                  {highlightText(formatPercent(tTotal.DAY_SALES_COMP), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.WTD_SALES_LY), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.WTD_SALES_CY), search)}
-                </td>
-                <td
-                  className={`border-right ${tTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
-                >
-                  {highlightText(formatPercent(tTotal.WTD_SALES_COMP), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.QTD_SALES_LY), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.QTD_SALES_CY), search)}
-                </td>
-                <td
-                  className={`border-right ${tTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
-                >
-                  {highlightText(formatPercent(tTotal.QTD_SALES_COMP), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.YTD_SALES_LY), search)}
-                </td>
-                <td>
-                  {highlightText(formatNumber(tTotal.YTD_SALES_CY), search)}
-                </td>
-                <td
-                  className={`border-right ${tTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
-                >
-                  {highlightText(formatPercent(tTotal.YTD_SALES_COMP), search)}
-                </td>
-              </tr>,
-            );
+            // Territory Total Row (only show when NOT searching, matching Dotnet)
+            if (!isSearching) {
+              const tTotal = computeTerritoryTotal(territoryName, stores);
+              rows.push(
+                <tr key={`${territoryName}-Total`} className="territory-row">
+                  <td className="border-right">
+                    {highlightText(tTotal.STORE_NAME, search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.DAY_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.DAY_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${tTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
+                    {highlightText(
+                      formatPercent(tTotal.DAY_SALES_COMP),
+                      search,
+                    )}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.WTD_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.WTD_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${tTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
+                    {highlightText(
+                      formatPercent(tTotal.WTD_SALES_COMP),
+                      search,
+                    )}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.QTD_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.QTD_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${tTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
+                    {highlightText(
+                      formatPercent(tTotal.QTD_SALES_COMP),
+                      search,
+                    )}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.YTD_SALES_LY), search)}
+                  </td>
+                  <td>
+                    {highlightText(formatNumber(tTotal.YTD_SALES_CY), search)}
+                  </td>
+                  <td
+                    className={`border-right ${tTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"}`}
+                  >
+                    {highlightText(
+                      formatPercent(tTotal.YTD_SALES_COMP),
+                      search,
+                    )}
+                  </td>
+                </tr>,
+              );
+            }
 
             return rows;
           })}
