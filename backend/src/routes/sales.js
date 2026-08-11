@@ -173,13 +173,13 @@ router.get('/latest-date', async (req, res) => {
   }
 });
 
-// GET /api/sales/dds — Store list + Fiscal Calendar from SQL Server
+// GET /api/sales/dds — Store list + Fiscal Calendar + Currency Rates from SQL Server
 router.get('/dds', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool
       .request()
-      .execute('GetRegionStoreDetailAndCalendar');
+      .execute('GetRegionStoreDetailAndCalendarAndRates');
 
     // Result set 0 — stores: A=Store_ID, B=ASGS_NAME, C=Store_Name, D=Date_Opened, E=Region_ID
     const subClass = (result.recordsets[0] || []).map((row) => ({
@@ -200,7 +200,13 @@ router.get('/dds', async (req, res) => {
       CalQuarter: (row.F ?? '').toString().trim(),
     }));
 
-    res.json({ SubClass: subClass, FiscalCalendar: fiscalCalendar });
+    // Result set 2 — currency rates: B=CDate, C=AuDEquiv
+    const currencyCal = (result.recordsets[2] || []).map((row) => ({
+      CDate: (row.B ?? '').toString().trim(),
+      AuDEquiv: (row.C ?? '').toString().trim(),
+    }));
+
+    res.json({ SubClass: subClass, FiscalCalendar: fiscalCalendar, Currency_Cal: currencyCal });
   } catch (err) {
     console.error('GET /api/sales/dds error:', err);
     res.status(500).json({ error: err.message });

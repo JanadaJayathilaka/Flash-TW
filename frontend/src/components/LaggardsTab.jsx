@@ -1,15 +1,35 @@
 import { useState, useMemo } from 'react';
-import { formatNumber, formatPercent, getBestMetric } from '../utils/dateUtils';
+import { formatNumber, getBestMetric } from '../utils/dateUtils';
 import { highlightText } from '../utils/highlightUtils';
-import BotSales_sel from '../assets/LaggardsIcons/BotSales_sel.png'
-import BotSales from '../assets/LaggardsIcons/BotSales.png'
-import BotSalesLift_sel from '../assets/LaggardsIcons/BotSalesLift_sel.png'
-import BotSalesLift from '../assets/LaggardsIcons/BotSalesLift.png'
-import TerSalesLag_sel from '../assets/LaggardsIcons/TerSalesLag_sel.png.png'
-import TerSalesLag from '../assets/LaggardsIcons/TerSalesLag.png'
-import TerSalesLagLift_sel from '../assets/LaggardsIcons/TerSalesLiftLag_sel.png'
-import TerSalesLagLift from '../assets/LaggardsIcons/TerSalesLiftLag.png'
-import { CARD_COLORS } from '../../constants'
+import BotSalesSelImg from '../assets/LaggardsIcons/BotSales_sel.png';
+import BotSalesImg from '../assets/LaggardsIcons/BotSales.png';
+import BotSalesLiftSelImg from '../assets/LaggardsIcons/BotSalesLift_sel.png';
+import BotSalesLiftImg from '../assets/LaggardsIcons/BotSalesLift.png';
+import TerSalesLagSelImg from '../assets/LaggardsIcons/TerSalesLag_sel.png.png';
+import TerSalesLagImg from '../assets/LaggardsIcons/TerSalesLag.png';
+import TerSalesLagLiftSelImg from '../assets/LaggardsIcons/TerSalesLiftLag_sel.png';
+import TerSalesLagLiftImg from '../assets/LaggardsIcons/TerSalesLiftLag.png';
+import { MdReportProblem } from 'react-icons/md';
+
+const MEDALS = {
+  1: { cls: 'medal-worstsales', icon: <MdReportProblem />, label: 'CRITICAL', title: 'Critical' },
+  2: { cls: 'medal-worstsales', icon: <MdReportProblem />, label: 'SEVERE', title: 'Severe' },
+  3: { cls: 'medal-worstsales', icon: <MdReportProblem />, label: 'POOR', title: 'Poor' },
+  4: { cls: 'medal-worstsales', icon: <MdReportProblem />, label: 'WEAK', title: 'Weak' },
+};
+
+const RANK_CLASSES = [
+  'rank-1_laggards',
+  'rank-2_laggards',
+  'rank-3_laggards',
+  'rank-4_laggards',
+  'rank-5_laggards',
+  'rank-6_laggards',
+  'rank-7_laggards',
+  'rank-8_laggards',
+  'rank-9_laggards',
+  'rank-10_laggards',
+];
 
 export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search }) {
   const [sortMode, setSortMode] = useState('lowestSales'); // lowestSales | highestLost | territoryLowestSales | territoryHighestLost
@@ -31,20 +51,27 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
     const storeRows = data.filter((r) => !r.IS_TERRITORY_TOTAL && !r.IS_GRAND_TOTAL);
     const territoryRows = data.filter((r) => r.IS_TERRITORY_TOTAL);
 
-    // Filter by negative comps
     const negativeStores = storeRows.filter((r) => getNormalizedLostSales(r) < 0);
     const negativeTerritories = territoryRows.filter((r) => getNormalizedLostSales(r) < 0);
 
     let sortedData = [];
     switch (sortMode) {
       case 'lowestSales':
-        sortedData = [...negativeStores].sort((a, b) => (a[m.cy] ?? 0) - (b[m.cy] ?? 0));
+        sortedData = [...negativeStores].sort((a, b) => {
+          const dropA = (a[m.ly] ?? 0) - (a[m.cy] ?? 0);
+          const dropB = (b[m.ly] ?? 0) - (b[m.cy] ?? 0);
+          return dropB - dropA;
+        });
         break;
       case 'highestLost':
         sortedData = [...negativeStores].sort((a, b) => getNormalizedLostSales(a) - getNormalizedLostSales(b));
         break;
       case 'territoryLowestSales':
-        sortedData = [...negativeTerritories].sort((a, b) => (a[m.cy] ?? 0) - (b[m.cy] ?? 0));
+        sortedData = [...negativeTerritories].sort((a, b) => {
+          const dropA = (a[m.ly] ?? 0) - (a[m.cy] ?? 0);
+          const dropB = (b[m.ly] ?? 0) - (b[m.cy] ?? 0);
+          return dropB - dropA;
+        });
         break;
       case 'territoryHighestLost':
         sortedData = [...negativeTerritories].sort((a, b) => getNormalizedLostSales(a) - getNormalizedLostSales(b));
@@ -56,10 +83,9 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
     let result = sortedData.map((row, index) => ({
       row,
       rank: index + 1,
-      color: CARD_COLORS[index % CARD_COLORS.length],
+      rankClass: RANK_CLASSES[index % RANK_CLASSES.length],
     })).slice(0, 10);
 
-    // Filter by search terms
     const terms = search.toLowerCase().split('++').map((s) => s.trim()).filter(Boolean);
     if (terms.length > 0) {
       result = result.filter(({ row }) => {
@@ -81,121 +107,135 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
 
   return (
     <div>
-      {/* Subtabs controls */}
-      <div className="flex justify-between w-full">
-        <div className='flex-row items-center align-center '>
-          <button
-            className={`subtab-option ${sortMode === 'lowestSales' ? 'active' : ''}`}
-            onClick={() => setSortMode('lowestSales')}
-          >
-            <img src={sortMode === 'lowestSales' ? BotSales_sel : BotSales} className="subtab-icon-wrap" />
-            <span>Bottom 10 Location by $ Sales Drop</span>
-          </button>
+      {/* Category Selection Bar with 4 Thin Curved Border Lines (.borderbar) */}
+      <div style={{ marginBottom: '20px', marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+        <div className="img-radio-group" style={{ display: 'flex', gap: '10px' }}>
+          <div className="borderbar top-left"></div>
+          <div className="borderbar top-right"></div>
+          <div className="borderbar bottom-left"></div>
+          <div className="borderbar bottom-right"></div>
+
+          <label className="img-radio" style={{ cursor: 'pointer', margin: 0 }}>
+            <input
+              id="rad_LagS_01"
+              type="radio"
+              name="top_laggards_group"
+              checked={sortMode === 'lowestSales'}
+              onChange={() => setSortMode('lowestSales')}
+              style={{ display: 'none' }}
+            />
+            <div className="radio-card" style={{ background: sortMode === 'lowestSales' ? '#e2f0fb' : '#fff' }}>
+              <img className="radio-icon" src={sortMode === 'lowestSales' ? BotSalesSelImg : BotSalesImg} alt="Bottom Stores Sales" />
+              <span>Bottom 10 Stores by<br />$ Sales Drop</span>
+            </div>
+          </label>
+
+          <label className="img-radio" style={{ cursor: 'pointer', margin: 0 }}>
+            <input
+              type="radio"
+              name="top_laggards_group"
+              checked={sortMode === 'highestLost'}
+              onChange={() => setSortMode('highestLost')}
+              style={{ display: 'none' }}
+            />
+            <div className="radio-card" style={{ background: sortMode === 'highestLost' ? '#e2f0fb' : '#fff' }}>
+              <img className="radio-icon" src={sortMode === 'highestLost' ? BotSalesLiftSelImg : BotSalesLiftImg} alt="Bottom Stores Drop %" />
+              <span>Bottom 10 Stores by<br />% Sales Drop</span>
+            </div>
+          </label>
+
+          <label className="img-radio" style={{ cursor: 'pointer', margin: 0 }}>
+            <input
+              type="radio"
+              name="top_laggards_group"
+              checked={sortMode === 'territoryLowestSales'}
+              onChange={() => setSortMode('territoryLowestSales')}
+              style={{ display: 'none' }}
+            />
+            <div className="radio-card" style={{ background: sortMode === 'territoryLowestSales' ? '#e2f0fb' : '#fff' }}>
+              <img className="radio-icon" src={sortMode === 'territoryLowestSales' ? TerSalesLagSelImg : TerSalesLagImg} alt="Territories Sales Drop" />
+              <span>Territories by<br />Total $ Sales Drop</span>
+            </div>
+          </label>
+
+          <label className="img-radio" style={{ cursor: 'pointer', margin: 0 }}>
+            <input
+              type="radio"
+              name="top_laggards_group"
+              checked={sortMode === 'territoryHighestLost'}
+              onChange={() => setSortMode('territoryHighestLost')}
+              style={{ display: 'none' }}
+            />
+            <div className="radio-card" style={{ background: sortMode === 'territoryHighestLost' ? '#e2f0fb' : '#fff' }}>
+              <img className="radio-icon" src={sortMode === 'territoryHighestLost' ? TerSalesLagLiftSelImg : TerSalesLagLiftImg} alt="Territories Drop %" />
+              <span>Territories by<br />Total % Sales Drop</span>
+            </div>
+          </label>
         </div>
-
-        <div className='flex-row items-center align-center '><button
-          className={`subtab-option ${sortMode === 'highestLost' ? 'active' : ''}`}
-          onClick={() => setSortMode('highestLost')}
-        >
-          <img src={sortMode === 'highestLost' ? BotSalesLift_sel : BotSalesLift} className="subtab-icon-wrap" />
-          <span>Bottom 10 Location by % Sales Drop</span>
-        </button></div>
-
-
-        <div className='flex-row items-center align-center '><button
-          className={`subtab-option ${sortMode === 'territoryLowestSales' ? 'active' : ''}`}
-          onClick={() => setSortMode('territoryLowestSales')}
-        >
-          <img src={sortMode === 'territoryLowestSales' ? TerSalesLag_sel : TerSalesLag} className="subtab-icon-wrap" />
-          <span>Locations by $ Sales Drop</span>
-        </button></div>
-
-
-        <div className='flex-row items-center align-center '> <button
-          className={`subtab-option ${sortMode === 'territoryHighestLost' ? 'active' : ''}`}
-          onClick={() => setSortMode('territoryHighestLost')}
-        >
-          <img src={sortMode === 'territoryHighestLost' ? TerSalesLagLift_sel : TerSalesLagLift} className="subtab-icon-wrap" />
-          <span>Locations by % Sales Drop</span>
-        </button></div>
-
       </div>
 
-      {/* Cards Grid */}
-      <div className="cards-grid" key={sortMode}>
-        {rankedData.map(({ row, rank, color }, index) => {
+      {/* Tiles Grid matching Dotnet logardsSales.js */}
+      <div className="tile-grid">
+        {rankedData.map(({ row, rank, rankClass }) => {
           const ly = Number(row[m.ly] ?? 0);
           const cy = Number(row[m.cy] ?? 0);
           const sTotal = ly + cy || 1;
-          const lyPct = (ly / sTotal) * 100;
-          const cyPct = (cy / sTotal) * 100;
-          const lift = getNormalizedLostSales(row);
-
+          const wPrev = (ly / sTotal) * 100;
+          const wSales = (cy / sTotal) * 100;
+          const dDrop = ly - cy;
           const isTerritory = sortMode.includes('territory');
+          const medal = MEDALS[rank];
 
           return (
-            <div
-              key={`${row.STORE_ID || row.TERRITORY}-${rank}`}
-              className="leader-card animated-card"
-              style={{
-                backgroundColor: color,
-                animationDelay: `${index * 50}ms`
-              }}
-            >
-              {/* Header */}
-              <div className="card-top">
-                <div className="card-rank">{rank}</div>
-              </div>
-
-              {/* Title Info */}
-              <div>
-                <div className="card-title">
-                  {isTerritory ? (
-                    <>Territory: {highlightText(row.TERRITORY, search)}</>
-                  ) : (
-                    <>{highlightText(row.STORE_ID, search)} {highlightText(row.STORE_NAME, search)}</>
-                  )}
+            <div key={`${row.STORE_ID || row.TERRITORY}-${rank}`} className={`tile ${rankClass}`}>
+              {medal && (
+                <div title={medal.title} className={`medal ${medal.cls}`}>
+                  <i className="material-icons">{medal.icon}</i>
+                  <span>{medal.label}</span>
                 </div>
-                {!isTerritory && row.TERRITORY && (
-                  <div className="card-subtitle">
-                    Location: <strong>{highlightText(row.REGION_ID, search)} {highlightText(row.TERRITORY, search)}</strong>
-                  </div>
+              )}
+
+              <div className="tile-body">
+                <div className="tile-title"></div>
+                <div className="tile-rank">{rank}</div>
+
+                {isTerritory ? (
+                  <div className="tile-store">Territory: {highlightText(row.REGION_ID, search)} {highlightText(row.TERRITORY, search)}</div>
+                ) : (
+                  <>
+                    <div className="tile-store">Store: {highlightText(row.STORE_ID, search)} {highlightText(row.STORE_NAME, search)}</div>
+                    <div className="tile-territory">
+                      Territory: <b>{highlightText(row.REGION_ID, search)} {highlightText(row.TERRITORY, search)}</b>
+                    </div>
+                  </>
                 )}
-              </div>
 
-              {/* Progress Bars */}
-              <div className="card-bars">
-                <div className="bar-row">
-                  <div className="bar-lbl">{boxDayLY}</div>
-                  <div className="bar-outer">
-                    <div className="bar-inner" style={{ width: `${Math.min(lyPct, 100)}%`, backgroundColor: 'rgba(250, 250, 250, 0.6)' }} />
+                <div className="mini-chart">
+                  <div className="mini-row">
+                    <div className="mini-label">{boxDayLY || 'Day 1'}</div>
+                    <div className="mini-track">
+                      <div className="mini-bar bar-prev" style={{ width: `${Math.min(Math.max(wPrev, 0), 100)}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="mini-row">
+                    <div className="mini-label">{boxDayCY || 'Day 2'}</div>
+                    <div className="mini-track">
+                      <div className="mini-bar bar-current" style={{ width: `${Math.min(Math.max(wSales, 0), 100)}%` }} />
+                    </div>
+                  </div>
+
+                  <div className="mini-values">
+                    <div>${formatNumber(ly)} / ${formatNumber(cy)}</div>
+                    <div className="delta" style={{ color: dDrop > 0 ? 'red' : 'green' }}>
+                      {dDrop > 0 ? `Drop $${formatNumber(dDrop)}` : `Lift $${formatNumber(Math.abs(dDrop))}`}
+                    </div>
                   </div>
                 </div>
-                <div className="bar-row">
-                  <div className="bar-lbl">{boxDayCY}</div>
-                  <div className="bar-outer">
-                    <div className="bar-inner" style={{ width: `${Math.min(cyPct, 100)}%`, backgroundColor: 'rgba(255, 255, 255, 0.9)' }} />
-                  </div>
-                </div>
-              </div>
 
-              {/* Stats info */}
-              <div className="card-stats">
-                <div className="stats-lbl border-b w-full">
-                  ${formatNumber(ly)} / ${formatNumber(cy)}
-                </div>
-                <div className="lift-pill" style={{ color: lift >= 0 ? '#15803d' : '#dc2626' }}>
-                  {formatPercent(lift)}
-                </div>
-              </div>
-
-              {/* Card Bottom */}
-              <div className="card-bottom">
-                <div className="bottom-lbl">
-                  {sortMode.includes('Lost') ? 'Sales Lost' : 'Sales'}
-                </div>
-                <div className="bottom-val">
-                  {sortMode.includes('Lost') ? formatPercent(lift) : `$${formatNumber(cy)}`}
+                <div className="tile-sales">
+                  <div className="lbl">Sales</div>
+                  <div className="val">${formatNumber(cy)}</div>
                 </div>
               </div>
             </div>

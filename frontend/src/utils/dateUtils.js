@@ -164,7 +164,7 @@ export function computeDateParamsFromFiscal(selectedDate, indexes) {
   const dateObj = parseIsoDateLocal(selectedDate);
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const displayDate = `${dateObj.getFullYear()} ${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dayNames[dateObj.getDay()]}`;
+  const displayDate = `${dateObj.getFullYear()} ${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dayNames[dateObj.getDay()]}`.toUpperCase();
 
   return {
     displayDate,
@@ -237,7 +237,7 @@ export function computeCalendarDateParams(selectedDate) {
   // Display date
   const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const displayDate = `${currentYear} ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${dayNames[currentDate.getDay()]}`;
+  const displayDate = `${currentYear} ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${dayNames[currentDate.getDay()]}`.toUpperCase();
 
   return {
     displayDate,

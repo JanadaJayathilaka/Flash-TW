@@ -49,6 +49,7 @@ export default function AllSalesTab({
   calendarDayOfMonth = 0,
   calendarMonthNumber = 0,
   calendarMode,
+  currencyMode = '1',
   search,
   onBindExportActions,
 }) {
@@ -176,24 +177,40 @@ export default function AllSalesTab({
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
+    const curText = currencyMode === '2' ? 'NZ$' : 'AU$';
+    const calText = calendarMode === 'fiscal' ? 'Fiscal' : 'Calendar';
+    const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
+    const timestampStr = `Generated: ${new Date().toISOString().slice(0, 10)} USA, Pacific`;
+
     const headers = [
-      'LOCATION/TERRITORY',
-      'First Sale',
-      `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
-      `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
-      `1 Day Comp ${lyYear} to ${cyYear}`,
-      `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`,
-      `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} Net $`,
-      `${isCalendar ? 'MTD' : 'WTD'} Comp ${lyYear} to ${cyYear}`,
-      `${lyYear} Q${q}, QTD Net $`,
-      `${cyYear} Q${q}, QTD Net $`,
-      `QTD Comp ${lyYear} to ${cyYear}`,
-      `${lyYear}, YTD Net $`,
-      `${cyYear}, YTD Net $`,
-      `YTD Comp ${lyYear} to ${cyYear}`,
+      'STORE / TERRITORY',
+      'FIRST SALE',
+      `${lyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
+      `${cyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
+      `1 DAY COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} NET $`,
+      `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? 'MTD' : 'WTD'} NET $`,
+      `${isCalendar ? 'MTD' : 'WTD'} COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear} Q${q}, QTD NET $`,
+      `${cyYear} Q${q}, QTD NET $`,
+      `QTD COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear}, YTD NET $`,
+      `${cyYear}, YTD NET $`,
+      `YTD COMP ${lyYear} TO ${cyYear}`,
     ];
 
-    const rows = displayRows.map((r) => {
+    const titleRow = new Array(headers.length).fill('');
+    titleRow[0] = titleStr;
+    titleRow[headers.length - 1] = timestampStr;
+
+    const filterRows = [];
+    if (search && search.trim() !== '') {
+      const filterRow = new Array(headers.length).fill('');
+      filterRow[0] = `Filter: ${search.trim()}`;
+      filterRows.push(filterRow);
+    }
+
+    const dataRows = displayRows.map((r) => {
       const isGt = !!r.IS_GRAND_TOTAL;
       const isTerr = !!r.IS_TERRITORY_TOTAL;
       const storeName = isGt 
@@ -223,9 +240,11 @@ export default function AllSalesTab({
       ];
     });
 
+    const allRows = [titleRow, ...filterRows, [], headers, ...dataRows];
+
     const csvContent =
       '\uFEFF' +
-      [headers, ...rows]
+      allRows
         .map((r) => r.map((val) => {
           const s = String(val ?? '');
           return /[,"\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -239,10 +258,15 @@ export default function AllSalesTab({
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [displayRows, lyYear, wk, dayDisplay, cyYear, isCalendar, monthStr, q, calendarMode, DT_1_Str]);
+  }, [displayRows, lyYear, wk, dayDisplay, cyYear, isCalendar, monthStr, q, calendarMode, currencyMode, search, DT_1_Str]);
 
   // Export Excel
   const handleExportExcel = useCallback(() => {
+    const curText = currencyMode === '2' ? 'NZ$' : 'AU$';
+    const calText = calendarMode === 'fiscal' ? 'Fiscal' : 'Calendar';
+    const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
+    const timestampStr = `Generated: ${new Date().toISOString().slice(0, 10)} USA, Pacific`;
+
     const COLS = [
       { header: 'LOCATION/TERRITORY', align: 'left', numFmt: null, isComp: false, isCY: false },
       { header: 'First Sale', align: 'center', numFmt: null, isComp: false, isCY: false },
@@ -512,7 +536,7 @@ export default function AllSalesTab({
                     </span>
                     {store.DATE_OPENED && (
                       <span className="store-opened">
-                        {highlightText(`First Sale ${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`, search)}
+                        {highlightText(`FIRST SALE '${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`, search)}
                       </span>
                     )}
                   </td>

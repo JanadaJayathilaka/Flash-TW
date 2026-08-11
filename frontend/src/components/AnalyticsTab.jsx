@@ -304,6 +304,8 @@ function StyledSelect({ id, value, onChange, options, noBorder }) {
 
 export default function AnalyticsTab({
   calendarMode = 'fiscal',
+  currencyMode = '1',
+  onCurrencyChange,
   dateParams,
   fiscalIndexes,
   onBindExportActions,
@@ -616,13 +618,8 @@ export default function AnalyticsTab({
               <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '8px',
+                gap: '2px',
                 alignItems: 'flex-start',
-                border: '1px solid #1C65D6',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                background: '#ffffff',
-                minWidth: '85px',
               }}>
                 {/* Row 1: Year 2 Select */}
                 <StyledSelect
@@ -655,29 +652,42 @@ export default function AnalyticsTab({
                   noBorder={true}
                 />
 
-                {/* Row 3: SMA Checkbox */}
-                <label
-                  id="lblchkSma"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    gap: '6px',
-                    userSelect: 'none',
-                    margin: 0,
-                    padding: '2px 0 0 0',
-                    width: '100%',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    id="chkSma"
-                    checked={smaVisible}
-                    onChange={() => setSmaVisible(!smaVisible)}
-                    style={{ cursor: 'pointer', margin: 0 }}
+                {/* Row 3: SMA Checkbox & SMA Period Select */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', marginTop: '2px' }}>
+                  <label
+                    id="lblchkSma"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      cursor: 'pointer',
+                      gap: '4px',
+                      userSelect: 'none',
+                      margin: 0,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      id="chkSma"
+                      checked={smaVisible}
+                      onChange={() => setSmaVisible(!smaVisible)}
+                      style={{ cursor: 'pointer', margin: 0 }}
+                    />
+                  </label>
+                  <StyledSelect
+                    id="selSmaPeriod"
+                    value="7"
+                    onChange={() => {}}
+                    options={[
+                      { value: '7', label: '7 Day' },
+                      { value: '28', label: '28 Day', disabled: true, strikeColor: '#94a3b8' },
+                      { value: '30', label: '30 Day', disabled: true, strikeColor: '#94a3b8' },
+                      { value: '91', label: '91 Day', disabled: true, strikeColor: '#94a3b8' },
+                      { value: '364', label: '364 Day', disabled: true, strikeColor: '#94a3b8' },
+                    ]}
+                    noBorder={true}
                   />
                   <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>SMA</span>
-                </label>
+                </div>
               </div>
             </div>
           </div>
@@ -685,6 +695,11 @@ export default function AnalyticsTab({
           {/* Column 2 (Center Section): Segment Selectors (Trends, Extrapolate, LBP) */}
           <div style={{ flex: '1 1 0%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div className="img-radio-group" style={{ display: 'flex', gap: '10px' }}>
+              <div className="borderbar top-left"></div>
+              <div className="borderbar top-right"></div>
+              <div className="borderbar bottom-left"></div>
+              <div className="borderbar bottom-right"></div>
+
               {/* Trends subtab */}
               <label className="img-radio" style={{ margin: 0 }}>
                 <input
