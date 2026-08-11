@@ -1117,16 +1117,16 @@ body {
 }
 
 .radio-card {
-  width: 128px;
+  width: 140px;
   text-align: center;
   cursor: pointer;
   transition: all .2s;
-  padding: 8px 6px;
+  padding: 20px 6px 10px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 6px;
   border-radius: 4px;
   position: relative;
   background: transparent;
@@ -1134,10 +1134,23 @@ body {
 
 .radio-card img,
 .radio-card .radio-icon {
-  width: 29px;
-  height: 29px;
+  width: 33px;
+  height: 33px;
+  max-width: 33px;
+  max-height: 33px;
+  object-fit: contain;
   margin-bottom: 3px;
   display: block;
+  flex-shrink: 0;
+}
+
+.icon-wrapper {
+  width: 33px;
+  height: 33px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .radio-card span {
