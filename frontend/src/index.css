@@ -240,7 +240,7 @@ body {
   margin-bottom: 28px;
   display: flex;
   justify-content: space-between;
-  padding: 0 4px !important;
+  padding: 0 !important;
 }
 
 .header-left {
@@ -262,6 +262,9 @@ body {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  margin-left: auto;
+  margin-right: 0;
   gap: 8px;
 }
 

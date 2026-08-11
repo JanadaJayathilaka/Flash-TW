@@ -601,7 +601,16 @@ export default function App() {
           </div>
 
           {/* Right section: Search & Actions - matching Dotnet clsHideWhenNotInAllSales header-right */}
-          <div className="header-right" style={{ opacity: 0.7 }}>
+          <div
+            className="header-right"
+            style={{
+              opacity: 0.7,
+              marginLeft: "auto",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+            }}
+          >
             {activeTab === "allSales" && (
               <div
                 id="spSearchSales"
@@ -702,7 +711,13 @@ export default function App() {
             {/* Export Actions buttons */}
             <div
               className="action-buttons"
-              style={{ display: "flex", alignItems: "center" }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginLeft: "auto",
+                justifyContent: "flex-end",
+                marginRight: "-16px",
+              }}
             >
               {activeTab === "allSales" && (
                 <>
@@ -768,7 +783,10 @@ export default function App() {
                   border: "none",
                   cursor: "pointer",
                   padding: "3px",
+                  marginRight: "10px",
                   marginBottom: "7px",
+                  display: "inline-flex",
+                  alignItems: "center",
                 }}
                 onClick={() =>
                   exportActions?.printPDF
