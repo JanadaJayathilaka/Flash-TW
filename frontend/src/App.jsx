@@ -858,6 +858,7 @@ export default function App() {
             <AllSalesTab
               data={processedPivotData}
               loading={pivotLoading}
+              selectedDate={selectedDate}
               weekNumber={dateParams?.weekNumber ?? 1}
               dayNumber={dateParams?.dayNumber ?? 1}
               quarterNumber={dateParams?.quarterNumber ?? 1}

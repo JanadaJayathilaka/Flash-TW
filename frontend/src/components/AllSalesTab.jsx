@@ -45,6 +45,7 @@ function getSearchableRowStrings(r) {
 export default function AllSalesTab({
   data,
   loading,
+  selectedDate,
   weekNumber,
   dayNumber,
   quarterNumber,
@@ -215,19 +216,74 @@ export default function AllSalesTab({
   }, [sortedTerritories, grandTotal, isSearching]);
 
   const DT_1_Str = useCallback(() => {
-    if (data.length > 0) {
-      const cyRow = data.find((r) => r.DAY_SALES_CY > 0 || r.WTD_SALES_CY > 0);
-      if (cyRow && cyRow.DATE_OPENED) return cyRow.DATE_OPENED;
+    if (selectedDate) {
+      const parts = String(selectedDate).split("T")[0].split("-");
+      if (parts.length === 3) {
+        const yyyy = parseInt(parts[0], 10);
+        const mm = parseInt(parts[1], 10) - 1;
+        const dd = parseInt(parts[2], 10);
+        const d = new Date(yyyy, mm, dd);
+        const monthNames = [
+          "January",
+          "February",
+          "March",
+          "April",
+          "May",
+          "June",
+          "July",
+          "August",
+          "September",
+          "October",
+          "November",
+          "December",
+        ];
+        const dayNames = [
+          "Sunday",
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+        ];
+        const monthStr = monthNames[d.getMonth()];
+        const dayNum = String(d.getDate()).padStart(2, "0");
+        const weekdayStr = dayNames[d.getDay()];
+        return `${yyyy} ${monthStr} ${dayNum}, ${weekdayStr}`;
+      }
+      return String(selectedDate);
     }
     return new Date().toISOString().split("T")[0];
-  }, [data]);
+  }, [selectedDate]);
 
   // Export CSV
   const handleExportCSV = useCallback(() => {
     const curText = currencyMode === "2" ? "NZ$" : "AU$";
     const calText = calendarMode === "fiscal" ? "Fiscal" : "Calendar";
     const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
-    const timestampStr = `Generated: ${new Date().toISOString().slice(0, 10)} USA, Pacific`;
+    const now = new Date();
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const yy = String(now.getFullYear()).slice(-2);
+    const mmm = months[now.getMonth()];
+    const dd = String(now.getDate()).padStart(2, "0");
+    let hours = now.getHours();
+    const mins = String(now.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    const timestampStr = `Generated: '${yy} ${mmm} ${dd} | ${hours}:${mins} ${ampm} USA, Pacific`;
 
     const headers = [
       "STORE / TERRITORY",
@@ -332,115 +388,118 @@ export default function AllSalesTab({
     DT_1_Str,
   ]);
 
-  // Export Excel
+  // Export Excel matching Dotnet toExcelAndCSV.js exactly
   const handleExportExcel = useCallback(() => {
     const curText = currencyMode === "2" ? "NZ$" : "AU$";
     const calText = calendarMode === "fiscal" ? "Fiscal" : "Calendar";
-    const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
-    const timestampStr = `Generated: ${new Date().toISOString().slice(0, 10)} USA, Pacific`;
+
+    const formattedTitle = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
+
+    const now = new Date();
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const yy = String(now.getFullYear()).slice(-2);
+    const mmm = months[now.getMonth()];
+    const dd = String(now.getDate()).padStart(2, "0");
+    let hours = now.getHours();
+    const mins = String(now.getMinutes()).padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
+    const timestampStr = `Generated: '${yy} ${mmm} ${dd} | ${hours}:${mins} ${ampm} USA, Pacific`;
+
+    const searchFilterText =
+      search && search.trim() !== "" ? `Filter: ${search.trim()}` : "";
 
     const COLS = [
+      { header: "STORE/TERRITORY", align: "left", numFmt: null, isComp: false },
+      { header: "FIRST SALE", align: "center", numFmt: null, isComp: false },
       {
-        header: "STORE/TERRITORY",
-        align: "left",
-        numFmt: null,
-        isComp: false,
-        isCY: false,
-      },
-      {
-        header: "First Sale",
-        align: "center",
-        numFmt: null,
-        isComp: false,
-        isCY: false,
-      },
-      {
-        header: `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
+        header: `${lyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: false,
       },
       {
-        header: `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
+        header: `${cyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: true,
       },
       {
-        header: `1 Day Comp ${lyYear} to ${cyYear}`,
+        header: `1 DAY COMP ${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
-        isCY: false,
       },
       {
-        header: `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? "MTD" : "WTD"} Net $`,
+        header: `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: false,
       },
       {
-        header: `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? "MTD" : "WTD"} Net $`,
+        header: `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: true,
       },
       {
-        header: `${isCalendar ? "MTD" : "WTD"} Comp ${lyYear} to ${cyYear}`,
+        header: `${isCalendar ? "MTD" : "WTD"} COMP ${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
-        isCY: false,
       },
       {
-        header: `${lyYear} Q${q}, QTD Net $`,
+        header: `${lyYear} Q${q}, QTD NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: false,
       },
       {
-        header: `${cyYear} Q${q}, QTD Net $`,
+        header: `${cyYear} Q${q}, QTD NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: true,
       },
       {
-        header: `QTD Comp ${lyYear} to ${cyYear}`,
+        header: `QTD COMP ${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
-        isCY: false,
       },
       {
-        header: `${lyYear}, YTD Net $`,
+        header: `${lyYear}, YTD NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: false,
       },
       {
-        header: `${cyYear}, YTD Net $`,
+        header: `${cyYear}, YTD NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
-        isCY: true,
       },
       {
-        header: `YTD Comp ${lyYear} to ${cyYear}`,
+        header: `YTD COMP ${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
-        isCY: false,
       },
     ];
 
-    const RIGHT_BORDER_COLS = new Set([1, 4, 7, 10, 13]);
+    const RIGHT_BORDER_COLS = new Set([0, 1, 4, 7, 10, 13]);
     const BORDER_SIDE = { style: "thin", color: { rgb: "808080" } };
 
     const makeBorder = (top, bottom, right) => {
@@ -451,88 +510,188 @@ export default function AllSalesTab({
       return b;
     };
 
-    const aoa = [COLS.map((c) => c.header)];
-    displayRows.forEach((row) => {
-      const isGt = !!row.IS_GRAND_TOTAL;
-      const isTerr = !!row.IS_TERRITORY_TOTAL;
-      const storeName = isGt
-        ? "GRAND TOTAL"
-        : isTerr
-          ? row.STORE_NAME
-          : `${row.STORE_ID != null ? `${row.STORE_ID} ` : ""}${row.STORE_NAME || ""}`;
-      const firstSale =
-        isGt || isTerr
-          ? ""
-          : row.DATE_OPENED
-            ? row.DATE_OPENED.length >= 10
-              ? row.DATE_OPENED.substring(2)
-              : row.DATE_OPENED
-            : "";
+    const excelRows = [];
 
-      aoa.push([
+    // Row 1: Title & Timestamp (populate G1:N1 merge range)
+    const row1 = new Array(14).fill("");
+    row1[0] = formattedTitle;
+    row1[6] = timestampStr;
+    row1[13] = timestampStr;
+    excelRows.push(row1);
+
+    // Row 2: Filter (if active)
+    const row2 = new Array(14).fill("");
+    if (searchFilterText) {
+      row2[0] = searchFilterText;
+    }
+    excelRows.push(row2);
+
+    // Row 3: Spacer
+    excelRows.push(new Array(14).fill(""));
+
+    // Row 4: Header
+    excelRows.push(COLS.map((c) => c.header));
+
+    // Data rows
+    const tableDataRows = displayRows.filter((r) => !r.IS_GRAND_TOTAL);
+    const grandTotalRow = displayRows.find((r) => r.IS_GRAND_TOTAL);
+
+    tableDataRows.forEach((row) => {
+      const isTerr = !!row.IS_TERRITORY_TOTAL;
+      const storeName = isTerr
+        ? row.STORE_NAME
+        : `${row.STORE_ID != null ? `${row.STORE_ID} ` : ""}${row.STORE_NAME || ""}`;
+      const firstSale = isTerr
+        ? ""
+        : row.DATE_OPENED
+          ? row.DATE_OPENED.length >= 10
+            ? row.DATE_OPENED.substring(2)
+            : row.DATE_OPENED
+          : "";
+
+      excelRows.push([
         storeName,
         firstSale,
-        row.DAY_SALES_LY ?? 0,
-        row.DAY_SALES_CY ?? 0,
+        Math.round(row.DAY_SALES_LY ?? 0),
+        Math.round(row.DAY_SALES_CY ?? 0),
         (row.DAY_SALES_COMP ?? 0) / 100,
-        row.WTD_SALES_LY ?? 0,
-        row.WTD_SALES_CY ?? 0,
+        Math.round(row.WTD_SALES_LY ?? 0),
+        Math.round(row.WTD_SALES_CY ?? 0),
         (row.WTD_SALES_COMP ?? 0) / 100,
-        row.QTD_SALES_LY ?? 0,
-        row.QTD_SALES_CY ?? 0,
+        Math.round(row.QTD_SALES_LY ?? 0),
+        Math.round(row.QTD_SALES_CY ?? 0),
         (row.QTD_SALES_COMP ?? 0) / 100,
-        row.YTD_SALES_LY ?? 0,
-        row.YTD_SALES_CY ?? 0,
+        Math.round(row.YTD_SALES_LY ?? 0),
+        Math.round(row.YTD_SALES_CY ?? 0),
         (row.YTD_SALES_COMP ?? 0) / 100,
       ]);
     });
 
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    const totalRowsCount = aoa.length;
+    // Grand Total rows (2 rows matching Dotnet)
+    if (grandTotalRow) {
+      excelRows.push([
+        "GRAND TOTAL",
+        "",
+        Math.round(grandTotalRow.DAY_SALES_LY ?? 0),
+        Math.round(grandTotalRow.DAY_SALES_CY ?? 0),
+        (grandTotalRow.DAY_SALES_COMP ?? 0) / 100,
+        Math.round(grandTotalRow.WTD_SALES_LY ?? 0),
+        Math.round(grandTotalRow.WTD_SALES_CY ?? 0),
+        (grandTotalRow.WTD_SALES_COMP ?? 0) / 100,
+        Math.round(grandTotalRow.QTD_SALES_LY ?? 0),
+        Math.round(grandTotalRow.QTD_SALES_CY ?? 0),
+        (grandTotalRow.QTD_SALES_COMP ?? 0) / 100,
+        Math.round(grandTotalRow.YTD_SALES_LY ?? 0),
+        Math.round(grandTotalRow.YTD_SALES_CY ?? 0),
+        (grandTotalRow.YTD_SALES_COMP ?? 0) / 100,
+      ]);
 
-    for (let r = 0; r < totalRowsCount; r++) {
-      const isHeader = r === 0;
-      const dataRow = displayRows[r - 1];
-      const isGrandTotal = !isHeader && !!dataRow?.IS_GRAND_TOTAL;
-      const isTerr = !isHeader && !!dataRow?.IS_TERRITORY_TOTAL;
-      const isBoldRow = isHeader || isGrandTotal || isTerr;
+      excelRows.push([
+        "0 Locations yet to report day's sales",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+      ]);
+    }
+
+    const ws = XLSX.utils.aoa_to_sheet(excelRows);
+
+    // Style Title Row (A1 and G1:N1 merge range)
+    if (ws["A1"]) {
+      ws["A1"].s = {
+        font: { name: "Arial", sz: 14, bold: true, color: { rgb: "000000" } },
+        alignment: { horizontal: "left", vertical: "center" },
+      };
+    }
+    const timestampStyle = {
+      font: { name: "Arial", sz: 8, color: { rgb: "000000" } },
+      alignment: { horizontal: "right", vertical: "center" },
+    };
+    ["G1", "H1", "I1", "J1", "K1", "L1", "M1", "N1"].forEach((cellKey) => {
+      if (ws[cellKey]) {
+        ws[cellKey].v = timestampStr;
+        ws[cellKey].t = "s";
+        ws[cellKey].s = timestampStyle;
+      }
+    });
+
+    // Style Filter Row (A2)
+    if (searchFilterText && ws["A2"]) {
+      ws["A2"].s = {
+        font: { name: "Arial", sz: 8, bold: false, color: { rgb: "000000" } },
+        alignment: { horizontal: "left", vertical: "center" },
+      };
+    }
+
+    const headerRowIndex = 3; // Row 4 (0-indexed 3)
+    const dataStartRowIndex = 4;
+    const footer1RowIndex = grandTotalRow ? excelRows.length - 2 : -1;
+    const footer2RowIndex = grandTotalRow ? excelRows.length - 1 : -1;
+
+    // Style Table Header (Row 4)
+    for (let c = 0; c < COLS.length; c++) {
+      const addr = XLSX.utils.encode_cell({ r: headerRowIndex, c });
+      if (!ws[addr]) continue;
+      const col = COLS[c];
+      ws[addr].s = {
+        font: { name: "Arial", sz: 9, bold: true, color: { rgb: "000000" } },
+        alignment: {
+          horizontal: col.align,
+          vertical: "center",
+          wrapText: true,
+        },
+        border: makeBorder(true, true, RIGHT_BORDER_COLS.has(c)),
+      };
+    }
+
+    // Style Data Rows
+    let tableDataIdx = 0;
+    const lastDataRowIndex =
+      footer1RowIndex !== -1 ? footer1RowIndex : excelRows.length;
+    for (let r = dataStartRowIndex; r < lastDataRowIndex; r++) {
+      const dataRow = tableDataRows[tableDataIdx++];
+      const isTerr = !!dataRow?.IS_TERRITORY_TOTAL;
 
       for (let c = 0; c < COLS.length; c++) {
         const addr = XLSX.utils.encode_cell({ r, c });
         if (!ws[addr]) ws[addr] = { v: "", t: "s" };
 
         const col = COLS[c];
-        const hasRightBdr = RIGHT_BORDER_COLS.has(c);
-
-        const border = makeBorder(
-          isGrandTotal,
-          isHeader || isGrandTotal,
-          hasRightBdr,
-        );
+        const val = excelRows[r][c];
 
         let fontColor;
-        if (!isHeader && col.isComp) {
-          const v = aoa[r][c];
-          fontColor = v >= 0 ? "15803D" : "DC2626";
+        if (col.isComp && typeof val === "number") {
+          fontColor = val >= 0 ? "008000" : "FF0000";
         }
+
+        const border = makeBorder(false, false, RIGHT_BORDER_COLS.has(c));
 
         const cellStyle = {
           font: {
             name: "Arial",
             sz: 9,
-            bold: isBoldRow,
-            italic: !isHeader && col.isCY,
+            bold: isTerr,
             ...(fontColor ? { color: { rgb: fontColor } } : {}),
           },
           alignment: {
-            horizontal: isHeader ? "left" : col.align,
+            horizontal: col.align,
             vertical: "center",
-            wrapText: !isHeader,
+            wrapText: true,
           },
           border,
         };
 
-        if (!isHeader && col.numFmt) {
+        if (col.numFmt && typeof val === "number") {
           cellStyle.numFmt = col.numFmt;
           ws[addr].t = "n";
         }
@@ -541,43 +700,105 @@ export default function AllSalesTab({
       }
     }
 
+    // Style Footer Row 1 (Grand Total numbers)
+    if (footer1RowIndex !== -1) {
+      for (let c = 0; c < COLS.length; c++) {
+        const addr = XLSX.utils.encode_cell({ r: footer1RowIndex, c });
+        if (!ws[addr]) continue;
+        const col = COLS[c];
+        const val = excelRows[footer1RowIndex][c];
+
+        let fontColor;
+        if (col.isComp && typeof val === "number") {
+          fontColor = val >= 0 ? "008000" : "FF0000";
+        }
+
+        const cellStyle = {
+          font: {
+            name: "Arial",
+            sz: 9,
+            bold: true,
+            ...(fontColor ? { color: { rgb: fontColor } } : {}),
+          },
+          alignment: { horizontal: col.align, vertical: "center" },
+          border: makeBorder(true, true, RIGHT_BORDER_COLS.has(c)),
+        };
+
+        if (col.numFmt && typeof val === "number") {
+          cellStyle.numFmt = col.numFmt;
+          ws[addr].t = "n";
+        }
+
+        ws[addr].s = cellStyle;
+      }
+    }
+
+    // Style Footer Row 2 (Subtext)
+    if (footer2RowIndex !== -1) {
+      const f2Addr = XLSX.utils.encode_cell({ r: footer2RowIndex, c: 0 });
+      if (ws[f2Addr]) {
+        ws[f2Addr].s = {
+          font: { name: "Arial", sz: 8, bold: false, color: { rgb: "000000" } },
+          alignment: { horizontal: "left", vertical: "center" },
+        };
+      }
+    }
+
+    // Merges: A1:F1 for title (ensures TUESDAY is never truncated), G1:N1 for timestamp (prevents left-border clipping)
+    ws["!merges"] = [
+      XLSX.utils.decode_range("A1:F1"),
+      XLSX.utils.decode_range("G1:N1"),
+    ];
+    if (searchFilterText) {
+      ws["!merges"].push(XLSX.utils.decode_range("A2:F2"));
+    }
+
+    // Column widths matching Dotnet toExcelAndCSV.js exactly
+    ws["!cols"] = [
+      { wch: 35.0 },
+      { wch: 10.33 },
+      { wch: 12.22 },
+      { wch: 13.33 },
+      { wch: 14.89 },
+      { wch: 12.33 },
+      { wch: 12.22 },
+      { wch: 11.56 },
+      { wch: 11.33 },
+      { wch: 13.56 },
+      { wch: 13.33 },
+      { wch: 10.33 },
+      { wch: 10.11 },
+      { wch: 13.5 },
+    ];
+
+    // Row heights matching Dotnet
+    ws["!rows"] = [];
+    ws["!rows"][0] = { hpt: 20 };
+    if (searchFilterText) {
+      ws["!rows"][1] = { hpt: 12 };
+    }
+
+    // Freeze panes matching Dotnet toExcelAndCSV.js (ySplit: 4)
     ws["!sheetViews"] = [
       {
         workbookViewId: 0,
         pane: {
-          ySplit: 1,
-          xSplit: 2,
-          topLeftCell: "C2",
-          activePane: "bottomRight",
+          ySplit: 4,
+          topLeftCell: "A5",
+          activePane: "bottomLeft",
           state: "frozen",
         },
       },
     ];
 
-    ws["!cols"] = [
-      { wch: 30 }, // LOCATION/TERRITORY
-      { wch: 12 }, // First Sale
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 24 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 24 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 24 },
-      { wch: 12 },
-      { wch: 12 },
-      { wch: 24 },
-    ];
-
-    ws["!rows"] = [{ hpt: 20 }];
-
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Flash Sales");
+    XLSX.utils.book_append_sheet(wb, ws, "Customers");
 
-    // Write and trigger download
-    XLSX.writeFile(wb, `FlashSales_${calendarMode}_${DT_1_Str()}.xlsx`);
+    // Filename timestamp YYYYMMDDHHMMSS matching Dotnet
+    const pad2 = (n) => String(n).padStart(2, "0");
+    const fnTs = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
+
+    XLSX.writeFile(wb, `FlashSales_${fnTs}.xlsx`);
   }, [
     displayRows,
     lyYear,
@@ -588,6 +809,8 @@ export default function AllSalesTab({
     monthStr,
     q,
     calendarMode,
+    currencyMode,
+    search,
     DT_1_Str,
   ]);
 
