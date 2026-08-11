@@ -27,6 +27,7 @@ function AnalyticsChart({
   yMin,
   yMax,
   salesColor,
+  currencyMode = "1",
 }) {
   const canvasRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -46,9 +47,11 @@ function AnalyticsChart({
       }
     }
 
+    const curLabel = currencyMode === "2" ? "Sales NZ$" : "Sales AU$";
+
     const datasets = [
       {
-        label: "Sales",
+        label: curLabel,
         data: salesData || [],
         borderColor: salesColor,
         backgroundColor: salesColor,
@@ -62,17 +65,21 @@ function AnalyticsChart({
 
     if (smaData && smaData.length > 0) {
       datasets.push({
-        label: "SMA",
+        label: "7 Day SMA",
         data: smaData,
         borderColor: smaColor,
         backgroundColor: smaColor,
-        borderWidth: 1.2,
+        borderWidth: 1.5,
         pointRadius: 0,
-        pointHoverRadius: 0,
+        pointHoverRadius: 4,
         tension: 0,
         fill: false,
         hidden: !smaVisible,
       });
+    }
+
+    if (chartInstanceRef.current) {
+      chartInstanceRef.current.destroy();
     }
 
     chartInstanceRef.current = new Chart(ctx, {
@@ -100,6 +107,14 @@ function AnalyticsChart({
                 family: "Montserrat",
                 size: 12,
                 weight: "600",
+              },
+              generateLabels: function (chart) {
+                const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                const legendItems = original.call(this, chart);
+                legendItems.forEach((item) => {
+                  item.hidden = false;
+                });
+                return legendItems;
               },
             },
           },
@@ -150,7 +165,7 @@ function AnalyticsChart({
             },
             title: {
               display: true,
-              text: "Sales $",
+              text: curLabel,
               font: {
                 family: "Montserrat",
                 size: 10,
@@ -191,8 +206,9 @@ function AnalyticsChart({
           fontSize: "14px",
           fontWeight: 500,
           color: "#475569",
-          textAlign: "center",
+          textAlign: "left",
           marginBottom: "10px",
+          marginLeft: "30px",
         }}
       >
         {title}
@@ -208,7 +224,7 @@ function AnalyticsChart({
  * Custom styled dropdown that supports colored strikethrough on disabled items.
  * Native <select>/<option> elements cannot reliably render text-decoration cross-browser.
  */
-function StyledSelect({ id, value, onChange, options, noBorder }) {
+function StyledSelect({ id, value, onChange, options, noBorder, noStrike }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -323,7 +339,7 @@ function StyledSelect({ id, value, onChange, options, noBorder }) {
               >
                 {opt.label}
                 {/* Colored strikethrough line overlay */}
-                {isDisabled && (
+                {isDisabled && !noStrike && (
                   <span
                     style={{
                       position: "absolute",
@@ -357,8 +373,8 @@ export default function AnalyticsTab({
 }) {
   const [activeSubTab, setActiveSubTab] = useState("trends"); // trends | extrapolate | lifts
   const [compareMode, setCompareMode] = useState(calendarMode); // fiscal | calendar
-  const [compareYearLeft, setCompareYearLeft] = useState("2026"); // 2026
-  const [compareYearRight, setCompareYearRight] = useState("2025"); // 2025
+  const [compareYearLeft, setCompareYearLeft] = useState("2025"); // 2025
+  const [compareYearRight, setCompareYearRight] = useState("2026"); // 2026
   const [viewMode, setViewMode] = useState("D"); // D (Daily) | W (Weekly) | M (Quarterly) | Y (Yearly)
   const [smaVisible, setSmaVisible] = useState(false);
 
@@ -607,6 +623,22 @@ export default function AnalyticsTab({
 
   return (
     <div>
+      {/* Currency Dropdown matching Dotnet #hTopCurType2 / #selCurType2 */}
+      <div style={{ padding: "0 0 6px 0", marginTop: "-22px" }}>
+        <div style={{ display: "inline-block" }}>
+          <StyledSelect
+            id="selCurType2"
+            value={currencyMode}
+            onChange={(val) => onCurrencyChange && onCurrencyChange(val)}
+            options={[
+              { value: "1", label: "AU$" },
+              { value: "2", label: "NZ$" },
+            ]}
+            noBorder={true}
+          />
+        </div>
+      </div>
+
       {/* Filters & Control bar matching .chart-containerTop .chart-filtersMain */}
       <div className="chart-containerTop">
         <div
@@ -844,6 +876,7 @@ export default function AnalyticsTab({
                         },
                       ]}
                       noBorder={true}
+                      noStrike={true}
                     />
                   </div>
                   <span
@@ -1014,6 +1047,7 @@ export default function AnalyticsTab({
                     yMin={yMin}
                     yMax={yMax}
                     salesColor={color}
+                    currencyMode={currencyMode}
                   />
                 </div>
               );
