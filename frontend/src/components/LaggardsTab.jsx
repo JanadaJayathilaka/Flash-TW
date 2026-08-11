@@ -124,7 +124,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
               onChange={() => setSortMode('lowestSales')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'lowestSales' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img className="radio-icon" src={sortMode === 'lowestSales' ? BotSalesSelImg : BotSalesImg} alt="Bottom Stores Sales" />
               <span>Bottom 10 Stores by<br />$ Sales Drop</span>
             </div>
@@ -138,7 +138,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
               onChange={() => setSortMode('highestLost')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'highestLost' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img className="radio-icon" src={sortMode === 'highestLost' ? BotSalesLiftSelImg : BotSalesLiftImg} alt="Bottom Stores Drop %" />
               <span>Bottom 10 Stores by<br />% Sales Drop</span>
             </div>
@@ -152,7 +152,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
               onChange={() => setSortMode('territoryLowestSales')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'territoryLowestSales' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img className="radio-icon" src={sortMode === 'territoryLowestSales' ? TerSalesLagSelImg : TerSalesLagImg} alt="Territories Sales Drop" />
               <span>Territories by<br />Total $ Sales Drop</span>
             </div>
@@ -166,7 +166,7 @@ export default function LaggardsTab({ data, loading, boxDayCY, boxDayLY, search 
               onChange={() => setSortMode('territoryHighestLost')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'territoryHighestLost' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img className="radio-icon" src={sortMode === 'territoryHighestLost' ? TerSalesLagLiftSelImg : TerSalesLagLiftImg} alt="Territories Drop %" />
               <span>Territories by<br />Total % Sales Drop</span>
             </div>

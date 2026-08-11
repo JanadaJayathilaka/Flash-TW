@@ -1117,28 +1117,26 @@ body {
 }
 
 .radio-card {
-  width: 142px;
+  width: 128px;
   text-align: center;
   cursor: pointer;
   transition: all .2s;
-  padding-top: 14px;
-  padding-bottom: 10px;
-  padding-left: 14px;
-  padding-right: 14px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
   border-radius: 4px;
   position: relative;
-  background: #fff;
+  background: transparent;
 }
 
-.radio-card img {
-  width: 33px;
-  height: 33px;
-  margin-bottom: 5px;
+.radio-card img,
+.radio-card .radio-icon {
+  width: 29px;
+  height: 29px;
+  margin-bottom: 3px;
   display: block;
 }
 
@@ -1148,6 +1146,7 @@ body {
   display: block;
   color: #495057;
   margin: 0;
+  line-height: 1.25;
 }
 
 .img-radio input:checked+.radio-card {
@@ -1211,19 +1210,19 @@ body {
 
 .img-radio-group {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   position: relative;
-  padding: 6px;
+  padding: 5px;
   --tl-w: 40%;
-  --tl-h: 15px;
-  --tr-w: 15px;
+  --tl-h: 14px;
+  --tr-w: 14px;
   --tr-h: 33%;
-  --bl-w: 15px;
+  --bl-w: 14px;
   --bl-h: 40%;
   --br-w: 40%;
-  --br-h: 15px;
-  --thickness: 2px;
-  --radius: 8px;
+  --br-h: 14px;
+  --thickness: 1.5px;
+  --radius: 7px;
   --color: #2b54b0;
 }
 

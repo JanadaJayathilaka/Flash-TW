@@ -124,7 +124,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
               onChange={() => setSortMode('storesBySales')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'storesBySales' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img
                 className="radio-icon"
                 src={sortMode === 'storesBySales' ? TopSalesSelImg : TopSalesImg}
@@ -142,7 +142,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
               onChange={() => setSortMode('storesByLift')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'storesByLift' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img
                 className="radio-icon"
                 src={sortMode === 'storesByLift' ? TopSalesLiftSelImg : TopSalesLiftImg}
@@ -160,7 +160,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
               onChange={() => setSortMode('territoryBySales')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'territoryBySales' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img
                 className="radio-icon"
                 src={sortMode === 'territoryBySales' ? TerSalesSelImg : TerSalesImg}
@@ -178,7 +178,7 @@ export default function LeadersTab({ data, loading, boxDayCY, boxDayLY, search }
               onChange={() => setSortMode('territoryByLift')}
               style={{ display: 'none' }}
             />
-            <div className="radio-card" style={{ background: sortMode === 'territoryByLift' ? '#e2f0fb' : '#fff' }}>
+            <div className="radio-card">
               <img
                 className="radio-icon"
                 src={sortMode === 'territoryByLift' ? TerSalesLiftSelImg : TerSalesLiftImg}
