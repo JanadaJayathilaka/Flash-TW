@@ -814,6 +814,7 @@ export default function App() {
               calendarMode={calendarMode}
               currencyMode={currencyMode}
               search={search}
+              zoomLevel={zoomLevel}
               onBindExportActions={handleBindActions}
             />
           )}

@@ -51,6 +51,7 @@ export default function AllSalesTab({
   calendarMode,
   currencyMode = '1',
   search,
+  zoomLevel = 100,
   onBindExportActions,
 }) {
   
@@ -450,16 +451,17 @@ export default function AllSalesTab({
       const tfoot = table.querySelector('tfoot');
       if (!thead || !tbody) return;
 
+      const zoomFactor = (zoomLevel || 100) / 100;
       const viewportHeight = window.innerHeight;
       const theadHeight = thead.offsetHeight || 0;
       const tfootHeight = tfoot ? tfoot.offsetHeight : 0;
-      const tableTopOffset = table.getBoundingClientRect().top;
+      const tableTopOffset = table.getBoundingClientRect().top / zoomFactor;
 
       // Reserve space for footer bar + borders/padding
-      const footerReserve = 55;
-      const dynamicHeight = viewportHeight - tableTopOffset - theadHeight - tfootHeight - footerReserve;
+      const footerReserve = 55 / zoomFactor;
+      const unscaledHeight = (viewportHeight / zoomFactor) - tableTopOffset - theadHeight - tfootHeight - footerReserve;
 
-      tbody.style.height = Math.max(dynamicHeight, 200) + 'px';
+      tbody.style.height = Math.max(unscaledHeight, 200) + 'px';
 
       // Position the scroll-up and scroll-down buttons dynamically just inside the scrollable region
       const wrapper = table.parentNode;
@@ -485,7 +487,7 @@ export default function AllSalesTab({
       observer.disconnect();
       window.removeEventListener('resize', adjustTbodyHeight);
     };
-  }, [loading, data]);
+  }, [loading, data, zoomLevel]);
 
   if (loading) {
     return <div className="loading-view">Loading sales data...</div>;
