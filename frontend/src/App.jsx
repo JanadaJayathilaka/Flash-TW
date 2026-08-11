@@ -311,8 +311,9 @@ export default function App() {
 
     async function loadSalesPivot() {
       const formatTime = (d) => {
-        const pad = (n) => String(n).padStart(2, "0");
-        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        const pad = (n, len = 2) => String(n).padStart(len, "0");
+        const ms = pad(d.getMilliseconds(), 3);
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${ms}`;
       };
 
       const startTime = new Date();
