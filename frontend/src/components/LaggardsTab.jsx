@@ -57,10 +57,28 @@ function formatSelectedDate(selectedDate) {
   const d = new Date(selectedDate);
   if (isNaN(d.getTime())) return String(selectedDate);
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const days = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
   return `${d.getFullYear()} ${months[d.getMonth()]} ${d.getDate()}, ${days[d.getDay()]}`;
 }
 
@@ -78,7 +96,9 @@ export default function LaggardsTab({
 
   const getHeaderTitles = useCallback(() => {
     const isCal =
-      String(calendarMode || "").toLowerCase().includes("calendar") ||
+      String(calendarMode || "")
+        .toLowerCase()
+        .includes("calendar") ||
       String(calendarMode || "").toUpperCase() === "C";
     const calText = isCal ? "Calendar" : "Fiscal";
     const dateStr = formatSelectedDate(selectedDate);
@@ -116,8 +136,22 @@ export default function LaggardsTab({
     if (onBindExportActions) {
       const { mainTitle, subtitleStr } = getHeaderTitles();
       onBindExportActions({
-        exportPDF: () => generateTilesPDF("topLaggards_Grid", mainTitle, subtitleStr, search, false),
-        printPDF: () => generateTilesPDF("topLaggards_Grid", mainTitle, subtitleStr, search, true),
+        exportPDF: () =>
+          generateTilesPDF(
+            "topLaggards_Grid",
+            mainTitle,
+            subtitleStr,
+            search,
+            false,
+          ),
+        printPDF: () =>
+          generateTilesPDF(
+            "topLaggards_Grid",
+            mainTitle,
+            subtitleStr,
+            search,
+            true,
+          ),
       });
     }
   }, [onBindExportActions, search, getHeaderTitles]);

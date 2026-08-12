@@ -647,6 +647,11 @@ export async function generateTilesPDF(
     row.style.marginBottom = "10px";
   });
 
+  // Apply print-only padding-bottom to delta pill to fix vertical alignment in html2canvas
+  clone.querySelectorAll(".mini-values .delta").forEach((el) => {
+    el.style.paddingBottom = "12px";
+  });
+
   try {
     const canvas = await html2canvas(clone, {
       backgroundColor: "#ffffff",
