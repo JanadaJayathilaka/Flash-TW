@@ -2,6 +2,7 @@ import React, { useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx-js-style";
 import { formatNumber, formatPercent } from "../utils/dateUtils";
 import { highlightText } from "../utils/highlightUtils";
+import { generateSalesPDF } from "../utils/pdfExportUtils";
 
 function getSearchableRowStrings(r) {
   const dateStr = r.DATE_OPENED
@@ -814,17 +815,49 @@ export default function AllSalesTab({
     DT_1_Str,
   ]);
 
+  const handleExportPDF = useCallback(
+    (isPrint = false) => {
+      generateSalesPDF({
+        data,
+        selectedDate,
+        weekNumber,
+        dayNumber,
+        quarterNumber,
+        calendarDayOfMonth,
+        calendarMonthNumber,
+        calendarMode,
+        currencyMode,
+        search,
+        isPrint,
+        displayDateStr: typeof DT_1_Str === "function" ? DT_1_Str() : String(DT_1_Str || ""),
+      });
+    },
+    [
+      data,
+      selectedDate,
+      weekNumber,
+      dayNumber,
+      quarterNumber,
+      calendarDayOfMonth,
+      calendarMonthNumber,
+      calendarMode,
+      currencyMode,
+      search,
+      DT_1_Str,
+    ]
+  );
+
   // Bind export triggers to parent
   React.useEffect(() => {
     if (onBindExportActions) {
       onBindExportActions({
         exportExcel: handleExportExcel,
         exportCSV: handleExportCSV,
-        exportPDF: () => window.print(),
-        printPDF: () => window.print(),
+        exportPDF: () => handleExportPDF(false),
+        printPDF: () => handleExportPDF(true),
       });
     }
-  }, [onBindExportActions, handleExportExcel, handleExportCSV]);
+  }, [onBindExportActions, handleExportExcel, handleExportCSV, handleExportPDF]);
 
   // Ref for the table element — used by the ResizeObserver
   const tableRef = useRef(null);

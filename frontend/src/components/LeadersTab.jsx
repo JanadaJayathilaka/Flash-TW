@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { formatNumber, getBestMetric } from "../utils/dateUtils";
 import { highlightText } from "../utils/highlightUtils";
+import { generateTilesPDF } from "../utils/pdfExportUtils";
 import TopSalesImg from "../assets/TopsalesIcons/TopSales.png";
 import TopSalesSelImg from "../assets/TopsalesIcons/TopSales_sel.png";
 import TopSalesLiftImg from "../assets/TopsalesIcons/TopSalesLift.png";
@@ -52,8 +53,18 @@ export default function LeadersTab({
   boxDayCY,
   boxDayLY,
   search,
+  onBindExportActions,
 }) {
   const [sortMode, setSortMode] = useState("storesBySales"); // storesBySales | storesByLift | territoryBySales | territoryByLift
+
+  useEffect(() => {
+    if (onBindExportActions) {
+      onBindExportActions({
+        exportPDF: () => generateTilesPDF("topSales_Grid", "TOP SALES", search, false),
+        printPDF: () => generateTilesPDF("topSales_Grid", "TOP SALES", search, true),
+      });
+    }
+  }, [onBindExportActions, search]);
 
   const m = useMemo(() => getBestMetric(data), [data]);
 
@@ -265,7 +276,7 @@ export default function LeadersTab({
       </div>
 
       {/* Tiles Grid matching Dotnet topworstsales.js */}
-      <div className="tile-grid">
+      <div id="topSales_Grid" className="tile-grid">
         {rankedData.map(({ row, rank, rankClass }) => {
           const ly = Number(row[m.ly] ?? 0);
           const cy = Number(row[m.cy] ?? 0);

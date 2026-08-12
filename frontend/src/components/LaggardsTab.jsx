@@ -1,6 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { formatNumber, getBestMetric } from "../utils/dateUtils";
 import { highlightText } from "../utils/highlightUtils";
+import { generateTilesPDF } from "../utils/pdfExportUtils";
 import BotSalesSelImg from "../assets/LaggardsIcons/BotSales_sel.png";
 import BotSalesImg from "../assets/LaggardsIcons/BotSales.png";
 import BotSalesLiftSelImg from "../assets/LaggardsIcons/BotSalesLift_sel.png";
@@ -57,8 +58,18 @@ export default function LaggardsTab({
   boxDayCY,
   boxDayLY,
   search,
+  onBindExportActions,
 }) {
   const [sortMode, setSortMode] = useState("lowestSales"); // lowestSales | highestLost | territoryLowestSales | territoryHighestLost
+
+  useEffect(() => {
+    if (onBindExportActions) {
+      onBindExportActions({
+        exportPDF: () => generateTilesPDF("topLaggards_Grid", "LAGGARDS", search, false),
+        printPDF: () => generateTilesPDF("topLaggards_Grid", "LAGGARDS", search, true),
+      });
+    }
+  }, [onBindExportActions, search]);
 
   const m = useMemo(() => getBestMetric(data), [data]);
 
@@ -270,7 +281,7 @@ export default function LaggardsTab({
       </div>
 
       {/* Tiles Grid matching Dotnet logardsSales.js */}
-      <div className="tile-grid">
+      <div id="topLaggards_Grid" className="tile-grid">
         {rankedData.map(({ row, rank, rankClass }) => {
           const ly = Number(row[m.ly] ?? 0);
           const cy = Number(row[m.cy] ?? 0);

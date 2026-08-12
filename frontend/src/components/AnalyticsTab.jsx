@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chart, registerables } from "chart.js";
 import { fetchSalesChartByDateRange } from "../services/api";
+import { generateAnalyticsPDF } from "../utils/pdfExportUtils";
 
 // Import local icons for the segment cards
 import TrendsIcon from "../assets/Trends.png";
@@ -607,24 +608,20 @@ export default function AnalyticsTab({
     setCompareYearRight(leftVal);
   };
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
-
   useEffect(() => {
     if (onBindExportActions) {
       onBindExportActions({
-        exportPDF: handlePrint,
-        printPDF: handlePrint,
+        exportPDF: () => generateAnalyticsPDF("dAnltcsCharts", false),
+        printPDF: () => generateAnalyticsPDF("dAnltcsCharts", true),
       });
     }
-  }, [onBindExportActions, handlePrint]);
+  }, [onBindExportActions]);
 
   const showBoth =
     compareYearLeft !== "Nothing" && compareYearRight !== "Nothing";
 
   return (
-    <div>
+    <div id="dAnltcsCharts">
       {/* Currency Dropdown matching Dotnet #hTopCurType2 / #selCurType2 */}
       <div style={{ padding: "0 0 6px 0", marginTop: "-22px" }}>
         <div style={{ display: "inline-block" }}>

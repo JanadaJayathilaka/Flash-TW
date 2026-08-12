@@ -880,6 +880,7 @@ export default function App() {
               boxDayLY={dateParams?.boxDayLY ?? ""}
               search={search}
               currencyMode={currencyMode}
+              onBindExportActions={handleBindActions}
             />
           )}
 
@@ -891,6 +892,7 @@ export default function App() {
               boxDayLY={dateParams?.boxDayLY ?? ""}
               search={search}
               currencyMode={currencyMode}
+              onBindExportActions={handleBindActions}
             />
           )}
 
