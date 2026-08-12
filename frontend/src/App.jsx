@@ -462,7 +462,11 @@ export default function App() {
       {/* Top Header Bar */}
       <header className="header-bar">
         <div className="header-pill">React / Tailwind Frontend</div>
-        <div className="header-pill">NodeJS REST API / IBM ODBC</div>
+        <div className="header-pill">
+          {activeTab === "analytics"
+            ? "NodeJS GraphQL / IBM ODBC"
+            : "NodeJS REST API / IBM ODBC"}
+        </div>
         <div className="header-pill">Servers: AWS Cloud and IBM iSeries</div>
       </header>
 
