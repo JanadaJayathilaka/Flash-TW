@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { formatNumber, getBestMetric } from "../utils/dateUtils";
 import { highlightText } from "../utils/highlightUtils";
 import { generateTilesPDF } from "../utils/pdfExportUtils";
@@ -52,40 +52,75 @@ const RANK_CLASSES = [
   "rank-10_laggards",
 ];
 
+function formatSelectedDate(selectedDate) {
+  if (!selectedDate) return "2026 February 10, Tuesday";
+  const d = new Date(selectedDate);
+  if (isNaN(d.getTime())) return String(selectedDate);
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return `${d.getFullYear()} ${months[d.getMonth()]} ${d.getDate()}, ${days[d.getDay()]}`;
+}
+
 export default function LaggardsTab({
   data,
   loading,
   boxDayCY,
   boxDayLY,
   search,
+  calendarMode,
+  selectedDate,
   onBindExportActions,
 }) {
   const [sortMode, setSortMode] = useState("lowestSales"); // lowestSales | highestLost | territoryLowestSales | territoryHighestLost
 
-  const getSubTitle = () => {
+  const getHeaderTitles = useCallback(() => {
+    const isCal =
+      String(calendarMode || "").toLowerCase().includes("calendar") ||
+      String(calendarMode || "").toUpperCase() === "C";
+    const calText = isCal ? "Calendar" : "Fiscal";
+    const dateStr = formatSelectedDate(selectedDate);
+
     switch (sortMode) {
       case "lowestSales":
-        return "Lowest Sales Performers (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "BOTTOM 10 STORES",
+          subtitleStr: `$ Sales Drop (${calText}) on ${dateStr}`,
+        };
       case "highestLost":
-        return "Highest Sales Drop (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "BOTTOM 10 STORES",
+          subtitleStr: `% Sales Drop (${calText}) on ${dateStr}`,
+        };
       case "territoryLowestSales":
-        return "Lowest Performing Territories (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TERRITORIES",
+          subtitleStr: `Total $ Sales Drop (${calText}) on ${dateStr}`,
+        };
       case "territoryHighestLost":
-        return "Territories with Highest Sales Drop (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TERRITORIES",
+          subtitleStr: `Total % Sales Drop (${calText}) on ${dateStr}`,
+        };
       default:
-        return "Laggard Performers (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "BOTTOM 10 STORES",
+          subtitleStr: `$ Sales Drop (${calText}) on ${dateStr}`,
+        };
     }
-  };
+  }, [sortMode, calendarMode, selectedDate]);
 
   useEffect(() => {
     if (onBindExportActions) {
-      const sub = getSubTitle();
+      const { mainTitle, subtitleStr } = getHeaderTitles();
       onBindExportActions({
-        exportPDF: () => generateTilesPDF("topLaggards_Grid", "TOP 10 LAGGARD STORES", sub, search, false),
-        printPDF: () => generateTilesPDF("topLaggards_Grid", "TOP 10 LAGGARD STORES", sub, search, true),
+        exportPDF: () => generateTilesPDF("topLaggards_Grid", mainTitle, subtitleStr, search, false),
+        printPDF: () => generateTilesPDF("topLaggards_Grid", mainTitle, subtitleStr, search, true),
       });
     }
-  }, [onBindExportActions, search, sortMode]);
+  }, [onBindExportActions, search, getHeaderTitles]);
 
   const m = useMemo(() => getBestMetric(data), [data]);
 
@@ -313,13 +348,6 @@ export default function LaggardsTab({
               key={`${row.STORE_ID || row.TERRITORY}-${rank}`}
               className={`tile ${rankClass}`}
             >
-              {medal && (
-                <div title={medal.title} className={`medal ${medal.cls}`}>
-                  <i className="material-icons">{medal.icon}</i>
-                  <span>{medal.label}</span>
-                </div>
-              )}
-
               <div className="tile-body">
                 <div className="tile-title"></div>
                 <div className="tile-rank">{rank}</div>

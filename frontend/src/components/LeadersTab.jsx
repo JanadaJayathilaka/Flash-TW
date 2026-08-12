@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { formatNumber, getBestMetric } from "../utils/dateUtils";
 import { highlightText } from "../utils/highlightUtils";
 import { generateTilesPDF } from "../utils/pdfExportUtils";
@@ -47,40 +47,75 @@ const RANK_CLASSES = [
   "rank-10_topSales",
 ];
 
+function formatSelectedDate(selectedDate) {
+  if (!selectedDate) return "2026 February 10, Tuesday";
+  const d = new Date(selectedDate);
+  if (isNaN(d.getTime())) return String(selectedDate);
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  return `${d.getFullYear()} ${months[d.getMonth()]} ${d.getDate()}, ${days[d.getDay()]}`;
+}
+
 export default function LeadersTab({
   data,
   loading,
   boxDayCY,
   boxDayLY,
   search,
+  calendarMode,
+  selectedDate,
   onBindExportActions,
 }) {
   const [sortMode, setSortMode] = useState("storesBySales"); // storesBySales | storesByLift | territoryBySales | territoryByLift
 
-  const getSubTitle = () => {
+  const getHeaderTitles = useCallback(() => {
+    const isCal =
+      String(calendarMode || "").toLowerCase().includes("calendar") ||
+      String(calendarMode || "").toUpperCase() === "C";
+    const calText = isCal ? "Calendar" : "Fiscal";
+    const dateStr = formatSelectedDate(selectedDate);
+
     switch (sortMode) {
       case "storesBySales":
-        return "$ Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TOP 10 STORES",
+          subtitleStr: `$ Sales Lift (${calText}) on ${dateStr}`,
+        };
       case "storesByLift":
-        return "% Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TOP 10 STORES",
+          subtitleStr: `% Sales Lift (${calText}) on ${dateStr}`,
+        };
       case "territoryBySales":
-        return "Top 10 Territories by $ Sales (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TERRITORIES",
+          subtitleStr: `Total $ Sales Lift (${calText}) on ${dateStr}`,
+        };
       case "territoryByLift":
-        return "Top 10 Territories by % Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TERRITORIES",
+          subtitleStr: `Total % Sales Lift (${calText}) on ${dateStr}`,
+        };
       default:
-        return "$ Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+        return {
+          mainTitle: "TOP 10 STORES",
+          subtitleStr: `$ Sales Lift (${calText}) on ${dateStr}`,
+        };
     }
-  };
+  }, [sortMode, calendarMode, selectedDate]);
 
   useEffect(() => {
     if (onBindExportActions) {
-      const sub = getSubTitle();
+      const { mainTitle, subtitleStr } = getHeaderTitles();
       onBindExportActions({
-        exportPDF: () => generateTilesPDF("topSales_Grid", "TOP 10 STORES", sub, search, false),
-        printPDF: () => generateTilesPDF("topSales_Grid", "TOP 10 STORES", sub, search, true),
+        exportPDF: () => generateTilesPDF("topSales_Grid", mainTitle, subtitleStr, search, false),
+        printPDF: () => generateTilesPDF("topSales_Grid", mainTitle, subtitleStr, search, true),
       });
     }
-  }, [onBindExportActions, search, sortMode]);
+  }, [onBindExportActions, search, getHeaderTitles]);
 
   const m = useMemo(() => getBestMetric(data), [data]);
 
