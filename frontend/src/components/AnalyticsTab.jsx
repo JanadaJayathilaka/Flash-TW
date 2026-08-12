@@ -621,7 +621,7 @@ export default function AnalyticsTab({
     compareYearLeft !== "Nothing" && compareYearRight !== "Nothing";
 
   return (
-    <div id="dAnltcsCharts">
+    <div className="analytics-tab-wrapper">
       {/* Currency Dropdown matching Dotnet #hTopCurType2 / #selCurType2 */}
       <div style={{ padding: "0 0 6px 0", marginTop: "-22px" }}>
         <div style={{ display: "inline-block" }}>
@@ -979,6 +979,7 @@ export default function AnalyticsTab({
 
       {/* Main Charts card */}
       <div
+        id="dAnltcsCharts"
         className="allAnltcCharts"
         style={{
           display: "flex",

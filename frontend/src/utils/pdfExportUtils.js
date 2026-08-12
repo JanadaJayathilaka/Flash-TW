@@ -7,7 +7,7 @@ import { formatNumber, formatPercent } from "./dateUtils";
  * Format timestamp matching salesapp formatDateTimeToYYMMDD:
  * "'YY MMM DD | HH:MM AM USA, Pacific"
  */
-export function formatPDFTimestamp(date = new Date()) {
+export function formatPDFTimestamp(date = new Date(), includeTZ = false) {
   const months = [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
     "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -22,7 +22,8 @@ export function formatPDFTimestamp(date = new Date()) {
   hours = hours % 12;
   hours = hours ? hours : 12;
 
-  return `'${year} ${month} ${day} | ${hours}:${minutes} ${realAmpm} USA, Pacific`;
+  const tzStr = includeTZ ? " USA, Pacific" : "";
+  return `'${year} ${month} ${day} | ${hours}:${minutes} ${realAmpm}${tzStr}`;
 }
 
 /**
@@ -307,7 +308,7 @@ export function generateSalesPDF({
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text(
-      `Generated: ${formatPDFTimestamp(new Date())}`,
+      `Generated: ${formatPDFTimestamp(new Date(), true)}`,
       pageWidth - 14.2,
       10,
       { align: "right" }
@@ -530,14 +531,73 @@ function openPDFOutput(doc, isPrint) {
 /**
  * Generates PDF for Analytics charts matching salesapp's DownloadSalesAnalytics()
  */
-export async function generateAnalyticsPDF(containerId = "analytics-container", isPrint = false) {
+export async function generateAnalyticsPDF(containerId = "dAnltcsCharts", isPrint = false) {
   const container = document.getElementById(containerId) || document.body;
-  
+  if (!container) return;
+
   try {
+    const swapBtn = document.getElementById("spnSwap");
+    const oldSwapDisplay = swapBtn ? swapBtn.style.display : null;
+    if (swapBtn) {
+      swapBtn.style.display = "none";
+    }
+
+    // Direct chart children divs (excluding swapBtn)
+    const chartDivs = Array.from(container.children).filter(
+      (child) => child.id !== "spnSwap" && child.nodeType === 1
+    );
+
+    // Save original styles for layout restoration
+    const origContainerFlexDirection = container.style.flexDirection;
+    const origContainerDisplay = container.style.display;
+    const origContainerWidth = container.style.width;
+
+    const origChildStyles = chartDivs.map((child) => ({
+      el: child,
+      flex: child.style.flex,
+      width: child.style.width,
+      minWidth: child.style.minWidth,
+      marginBottom: child.style.marginBottom,
+    }));
+
+    // Temporarily stack visible charts vertically at 100% width matching salesapp DownloadSalesAnalytics
+    container.style.display = "flex";
+    container.style.flexDirection = "column";
+    container.style.width = "100%";
+
+    chartDivs.forEach((child, idx) => {
+      child.style.flex = "1 1 100%";
+      child.style.width = "100%";
+      child.style.minWidth = "100%";
+      if (chartDivs.length > 1 && idx === 0) {
+        child.style.marginBottom = "20px";
+      }
+    });
+
+    // Pause briefly for DOM layout update
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
     const canvas = await html2canvas(container, {
       backgroundColor: "#ffffff",
       scale: 2,
+      useCORS: true,
     });
+
+    // Instantly restore original layout styles
+    container.style.flexDirection = origContainerFlexDirection;
+    container.style.display = origContainerDisplay;
+    container.style.width = origContainerWidth;
+
+    origChildStyles.forEach(({ el, flex, width, minWidth, marginBottom }) => {
+      el.style.flex = flex;
+      el.style.width = width;
+      el.style.minWidth = minWidth;
+      el.style.marginBottom = marginBottom;
+    });
+
+    if (swapBtn && oldSwapDisplay !== null) {
+      swapBtn.style.display = oldSwapDisplay;
+    }
 
     const imgData = canvas.toDataURL("image/png", 1.0);
     const doc = new jsPDF({
@@ -556,16 +616,28 @@ export async function generateAnalyticsPDF(containerId = "analytics-container", 
       finalHeight = pageHeight - 40;
     }
 
+    // Header Title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text("SALES - ANALYTICS", pageWidth / 2, 12, { align: "center" });
 
+    // Top-Right Timestamp
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text(`Generated: ${formatPDFTimestamp(new Date())}`, pageWidth - margin, 12, { align: "right" });
+    doc.text(`Generated: ${formatPDFTimestamp(new Date(), false)}`, pageWidth - margin, 12, { align: "right" });
 
-    const imgX = margin;
-    const imgY = 20;
+    let imgX = margin;
+    let imgY = 20;
+
+    // Centre vertically when only one chart is visible
+    if (chartDivs.length === 1) {
+      const topMargin = 20;
+      const bottomMargin = 12;
+      const availableHeight = pageHeight - topMargin - bottomMargin;
+      imgY = topMargin + (availableHeight - finalHeight) / 2;
+      imgY = Math.max(20, imgY);
+    }
+
     doc.addImage(imgData, "PNG", imgX, imgY, imgWidth, finalHeight);
 
     doc.setFontSize(8);
