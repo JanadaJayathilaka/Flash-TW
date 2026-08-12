@@ -57,14 +57,30 @@ export default function LeadersTab({
 }) {
   const [sortMode, setSortMode] = useState("storesBySales"); // storesBySales | storesByLift | territoryBySales | territoryByLift
 
+  const getSubTitle = () => {
+    switch (sortMode) {
+      case "storesBySales":
+        return "$ Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+      case "storesByLift":
+        return "% Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+      case "territoryBySales":
+        return "Top 10 Territories by $ Sales (Fiscal) on 2026 February 10, Tuesday";
+      case "territoryByLift":
+        return "Top 10 Territories by % Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+      default:
+        return "$ Sales Lift (Fiscal) on 2026 February 10, Tuesday";
+    }
+  };
+
   useEffect(() => {
     if (onBindExportActions) {
+      const sub = getSubTitle();
       onBindExportActions({
-        exportPDF: () => generateTilesPDF("topSales_Grid", "TOP SALES", search, false),
-        printPDF: () => generateTilesPDF("topSales_Grid", "TOP SALES", search, true),
+        exportPDF: () => generateTilesPDF("topSales_Grid", "TOP 10 STORES", sub, search, false),
+        printPDF: () => generateTilesPDF("topSales_Grid", "TOP 10 STORES", sub, search, true),
       });
     }
-  }, [onBindExportActions, search]);
+  }, [onBindExportActions, search, sortMode]);
 
   const m = useMemo(() => getBestMetric(data), [data]);
 

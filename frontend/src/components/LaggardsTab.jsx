@@ -62,14 +62,30 @@ export default function LaggardsTab({
 }) {
   const [sortMode, setSortMode] = useState("lowestSales"); // lowestSales | highestLost | territoryLowestSales | territoryHighestLost
 
+  const getSubTitle = () => {
+    switch (sortMode) {
+      case "lowestSales":
+        return "Lowest Sales Performers (Fiscal) on 2026 February 10, Tuesday";
+      case "highestLost":
+        return "Highest Sales Drop (Fiscal) on 2026 February 10, Tuesday";
+      case "territoryLowestSales":
+        return "Lowest Performing Territories (Fiscal) on 2026 February 10, Tuesday";
+      case "territoryHighestLost":
+        return "Territories with Highest Sales Drop (Fiscal) on 2026 February 10, Tuesday";
+      default:
+        return "Laggard Performers (Fiscal) on 2026 February 10, Tuesday";
+    }
+  };
+
   useEffect(() => {
     if (onBindExportActions) {
+      const sub = getSubTitle();
       onBindExportActions({
-        exportPDF: () => generateTilesPDF("topLaggards_Grid", "LAGGARDS", search, false),
-        printPDF: () => generateTilesPDF("topLaggards_Grid", "LAGGARDS", search, true),
+        exportPDF: () => generateTilesPDF("topLaggards_Grid", "TOP 10 LAGGARD STORES", sub, search, false),
+        printPDF: () => generateTilesPDF("topLaggards_Grid", "TOP 10 LAGGARD STORES", sub, search, true),
       });
     }
-  }, [onBindExportActions, search]);
+  }, [onBindExportActions, search, sortMode]);
 
   const m = useMemo(() => getBestMetric(data), [data]);
 

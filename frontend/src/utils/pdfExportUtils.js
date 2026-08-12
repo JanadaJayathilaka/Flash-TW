@@ -580,13 +580,78 @@ export async function generateAnalyticsPDF(containerId = "analytics-container", 
 /**
  * Generates PDF for Top Sales / Laggards Tiles matching salesapp's DownloadSalesTiles()
  */
-export async function generateTilesPDF(containerId, title = "TOP SALES", search = "", isPrint = false) {
-  const container = document.getElementById(containerId) || document.body;
+export async function generateTilesPDF(
+  containerId,
+  mainTitle = "TOP 10 STORES",
+  subtitleStr = "",
+  search = "",
+  isPrint = false
+) {
+  const originalElement = document.getElementById(containerId);
+  if (!originalElement) return;
+
+  // 1. Create off-screen clone with 1400px width for unclipped 2-column print layout matching salesapp
+  const clone = originalElement.cloneNode(true);
+  clone.id = `${containerId}_PrintClone`;
+  clone.style.position = "absolute";
+  clone.style.left = "-10000px";
+  clone.style.top = "0";
+  clone.style.width = "1400px";
+  clone.style.background = "#ffffff";
+  clone.style.display = "grid";
+  clone.style.gridTemplateColumns = "1fr 1fr";
+  clone.style.gap = "28px";
+  clone.style.padding = "20px";
+  clone.style.boxSizing = "border-box";
+  document.body.appendChild(clone);
+
+  // Hide headers inside clone if any
+  clone
+    .querySelectorAll("h1,h2,h3,h4,.header,.title,.grid-header,.section-title,.top-title")
+    .forEach((el) => {
+      el.style.display = "none";
+    });
+
+  // Scale tile typography matching salesapp DownloadSalesTiles
+  const bump = (selector, size) => {
+    clone.querySelectorAll(selector).forEach((el) => {
+      el.style.fontSize = size;
+    });
+  };
+
+  bump(".tile-rank", "54px");
+  bump(".tile-store", "28px");
+  bump(".tile-territory", "18px");
+  bump(".mini-label", "15px");
+  bump(".mini-values", "15px");
+  bump(".tile-sales .lbl", "22px");
+  bump(".tile-sales .val", "26px");
+
+  clone.querySelectorAll(".tile").forEach((tile) => {
+    tile.style.padding = "24px";
+    tile.style.boxSizing = "border-box";
+  });
+
+  clone.querySelectorAll(".mini-label").forEach((label) => {
+    label.style.width = "130px";
+    label.style.minWidth = "130px";
+  });
+
+  clone.querySelectorAll(".mini-track").forEach((track) => {
+    track.style.height = "16px";
+  });
+  clone.querySelectorAll(".mini-bar").forEach((bar) => {
+    bar.style.height = "100%";
+  });
+  clone.querySelectorAll(".mini-row").forEach((row) => {
+    row.style.marginBottom = "10px";
+  });
 
   try {
-    const canvas = await html2canvas(container, {
+    const canvas = await html2canvas(clone, {
       backgroundColor: "#ffffff",
       scale: 2,
+      useCORS: true,
     });
 
     const imgData = canvas.toDataURL("image/png", 1.0);
@@ -602,25 +667,35 @@ export async function generateTilesPDF(containerId, title = "TOP SALES", search 
 
     const imgWidth = pageWidth - margin * 2;
     let finalHeight = (canvas.height * imgWidth) / canvas.width;
-    if (finalHeight > pageHeight - 40) {
-      finalHeight = pageHeight - 40;
+    if (finalHeight > pageHeight - 35) {
+      finalHeight = pageHeight - 35;
     }
 
-    doc.setFontSize(12);
+    // Centered Title
+    doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text(title.toUpperCase(), margin, 12);
+    doc.setTextColor(0, 0, 0);
+    doc.text(mainTitle.toUpperCase(), pageWidth / 2, 12, { align: "center" });
+
+    // Subtitle under title
+    if (subtitleStr) {
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(subtitleStr, margin, 18);
+    }
 
     if (search) {
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
-      doc.text(`Filter: ${search}`, margin, 16);
+      doc.text(`Filter: ${search}`, margin, subtitleStr ? 23 : 18);
     }
 
+    // Top-Right Timestamp
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.text(`Generated: ${formatPDFTimestamp(new Date())}`, pageWidth - margin, 12, { align: "right" });
 
-    const imgY = search ? 20 : 16;
+    const imgY = subtitleStr ? (search ? 25 : 21) : (search ? 21 : 16);
     doc.addImage(imgData, "PNG", margin, imgY, imgWidth, finalHeight);
 
     doc.setFontSize(8);
@@ -629,5 +704,9 @@ export async function generateTilesPDF(containerId, title = "TOP SALES", search 
     openPDFOutput(doc, isPrint);
   } catch (err) {
     console.error("Error generating tiles PDF:", err);
+  } finally {
+    if (clone.parentNode) {
+      document.body.removeChild(clone);
+    }
   }
 }
