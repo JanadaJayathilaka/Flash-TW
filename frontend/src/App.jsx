@@ -20,6 +20,7 @@ import { LiaBroomSolid } from "react-icons/lia";
 import excelImg from "./assets/excel.png";
 import csvImg from "./assets/csv.png";
 import clearSearchImg from "./assets/clearsearc4.png";
+import loader3Img from "./assets/loader3.gif";
 import { BsDownload, BsPrinter, BsSearch } from "react-icons/bs";
 
 function CustomHeaderDropdown({ id, value, options, onChange, style }) {
@@ -443,7 +444,27 @@ export default function App() {
     setCalMonth(nextMonth);
   };
 
+  const handleCurrencyChange = (val) => {
+    setPivotLoading(true);
+    setCurrencyMode(val);
+    setTimeout(() => setPivotLoading(false), 400);
+  };
+
+  const handleCalendarModeChange = (val) => {
+    setPivotLoading(true);
+    const mode = val === "1" ? "fiscal" : "calendar";
+    setCalendarMode(mode);
+    setTimeout(() => setPivotLoading(false), 400);
+  };
+
+  const handleTabChange = (tab) => {
+    setPivotLoading(true);
+    setActiveTab(tab);
+    setTimeout(() => setPivotLoading(false), 300);
+  };
+
   const handleDateSelect = (day) => {
+    setPivotLoading(true);
     const formatted = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     setSelectedDate(formatted);
     setShowDatePicker(false);
@@ -547,7 +568,7 @@ export default function App() {
                       { value: "1", label: "AU$" },
                       { value: "2", label: "NZ$" },
                     ]}
-                    onChange={(val) => setCurrencyMode(val)}
+                    onChange={(val) => handleCurrencyChange(val)}
                     style={{ marginLeft: "102px" }}
                   />
 
@@ -558,9 +579,7 @@ export default function App() {
                       { value: "1", label: "Fiscal" },
                       { value: "2", label: "Calendar" },
                     ]}
-                    onChange={(val) =>
-                      setCalendarMode(val === "1" ? "fiscal" : "calendar")
-                    }
+                    onChange={(val) => handleCalendarModeChange(val)}
                     style={{ marginLeft: "68px" }}
                   />
                 </div>
@@ -630,28 +649,28 @@ export default function App() {
                 type="button"
                 value="All Sales"
                 className={activeTab === "allSales" ? "active" : ""}
-                onClick={() => setActiveTab("allSales")}
+                onClick={() => handleTabChange("allSales")}
               />
               <input
                 data-sel="T"
                 type="button"
                 value="Top Sales"
                 className={activeTab === "topSales" ? "active" : ""}
-                onClick={() => setActiveTab("topSales")}
+                onClick={() => handleTabChange("topSales")}
               />
               <input
                 data-sel="L"
                 type="button"
                 value="Laggards"
                 className={activeTab === "laggards" ? "active" : ""}
-                onClick={() => setActiveTab("laggards")}
+                onClick={() => handleTabChange("laggards")}
               />
               <input
                 data-sel="N"
                 type="button"
                 value="Analytics"
                 className={activeTab === "analytics" ? "active" : ""}
-                onClick={() => setActiveTab("analytics")}
+                onClick={() => handleTabChange("analytics")}
               />
             </div>
           </div>
@@ -760,6 +779,29 @@ export default function App() {
                     opacity: search ? 1 : 0.75,
                   }}
                   onClick={() => search && setSearch("")}
+                />
+              </div>
+            )}
+
+            {/* Loading Effect matching Dotnet #dLoader */}
+            {pivotLoading && (
+              <div
+                id="dLoader"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginLeft: activeTab === "allSales" ? "-65px" : "15px",
+                  marginRight: activeTab === "allSales" ? "20px" : "15px",
+                  position: "relative",
+                  top: "10px",
+                  zIndex: 99999,
+                }}
+              >
+                <img
+                  src={loader3Img}
+                  alt="Loading..."
+                  style={{ width: "65px", height: "65px" }}
                 />
               </div>
             )}
@@ -908,7 +950,7 @@ export default function App() {
             <AnalyticsTab
               calendarMode={calendarMode}
               currencyMode={currencyMode}
-              onCurrencyChange={setCurrencyMode}
+              onCurrencyChange={handleCurrencyChange}
               dateParams={dateParams}
               fiscalIndexes={fiscalIndexes}
               onBindExportActions={handleBindActions}
