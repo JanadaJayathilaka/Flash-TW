@@ -569,7 +569,7 @@ export default function App() {
                       { value: "2", label: "NZ$" },
                     ]}
                     onChange={(val) => handleCurrencyChange(val)}
-                    style={{ marginLeft: "102px" }}
+                    style={{ marginLeft: "88px" }}
                   />
 
                   <CustomHeaderDropdown
@@ -580,7 +580,7 @@ export default function App() {
                       { value: "2", label: "Calendar" },
                     ]}
                     onChange={(val) => handleCalendarModeChange(val)}
-                    style={{ marginLeft: "68px" }}
+                    style={{ marginLeft: "52px" }}
                   />
                 </div>
               )}

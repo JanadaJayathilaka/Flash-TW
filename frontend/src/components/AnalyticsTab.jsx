@@ -110,7 +110,8 @@ function AnalyticsChart({
                 weight: "600",
               },
               generateLabels: function (chart) {
-                const original = Chart.defaults.plugins.legend.labels.generateLabels;
+                const original =
+                  Chart.defaults.plugins.legend.labels.generateLabels;
                 const legendItems = original.call(this, chart);
                 legendItems.forEach((item) => {
                   item.hidden = false;
@@ -373,6 +374,7 @@ export default function AnalyticsTab({
   onBindExportActions,
 }) {
   const [activeSubTab, setActiveSubTab] = useState("trends"); // trends | extrapolate | lifts
+  const [activeDisabledCrossline, setActiveDisabledCrossline] = useState(null); // null | 'extrapolate' | 'lifts'
   const [compareMode, setCompareMode] = useState(calendarMode); // fiscal | calendar
   const [compareYearLeft, setCompareYearLeft] = useState("2025"); // 2025
   const [compareYearRight, setCompareYearRight] = useState("2026"); // 2026
@@ -393,6 +395,17 @@ export default function AnalyticsTab({
   useEffect(() => {
     setCompareMode(calendarMode);
   }, [calendarMode]);
+
+  // Hide red crosslines when clicking anywhere outside
+  useEffect(() => {
+    const handleDocumentClick = () => {
+      setActiveDisabledCrossline(null);
+    };
+    document.addEventListener("click", handleDocumentClick);
+    return () => {
+      document.removeEventListener("click", handleDocumentClick);
+    };
+  }, []);
 
   // Compute selected comparative years
   const selectedYears = useMemo(() => {
@@ -846,7 +859,11 @@ export default function AnalyticsTab({
                     <StyledSelect
                       id="selSmaPeriod"
                       value="7"
-                      onChange={() => {}}
+                      onChange={(val) => {
+                        if (val === "7") {
+                          setSmaVisible(true);
+                        }
+                      }}
                       options={[
                         { value: "7", label: "7 Day" },
                         {
@@ -875,7 +892,6 @@ export default function AnalyticsTab({
                         },
                       ]}
                       noBorder={true}
-                      noStrike={true}
                     />
                   </div>
                   <span
@@ -935,36 +951,56 @@ export default function AnalyticsTab({
               </label>
 
               {/* Extrapolate (disabled) */}
-              <label className="img-radio" style={{ margin: 0 }}>
+              <label
+                className="img-radio"
+                style={{ margin: 0, cursor: "pointer" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveDisabledCrossline("extrapolate");
+                }}
+              >
                 <input type="radio" name="top_analytics_group" disabled />
-                <div className="radio-card disabled-card">
+                <div className="radio-card" style={{ cursor: "pointer" }}>
                   <div className="icon-wrapper">
                     <img
                       className="radio-icon"
                       src={ExtrapolateIcon}
                       alt="Extrapolate"
-                      style={{ opacity: 0.6 }}
                     />
-                    <div className="red-cross-line line1" />
-                    <div className="red-cross-line line2" />
+                    {activeDisabledCrossline === "extrapolate" && (
+                      <>
+                        <div className="red-cross-line line1" />
+                        <div className="red-cross-line line2" />
+                      </>
+                    )}
                   </div>
                   <span>Extrapolate</span>
                 </div>
               </label>
 
               {/* Lift by Promotion (disabled) */}
-              <label className="img-radio" style={{ margin: 0 }}>
+              <label
+                className="img-radio"
+                style={{ margin: 0, cursor: "pointer" }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveDisabledCrossline("lifts");
+                }}
+              >
                 <input type="radio" name="top_analytics_group" disabled />
-                <div className="radio-card disabled-card">
+                <div className="radio-card" style={{ cursor: "pointer" }}>
                   <div className="icon-wrapper">
                     <img
                       className="radio-icon"
                       src={LbpIcon}
                       alt="Lift by Promotion"
-                      style={{ opacity: 0.6 }}
                     />
-                    <div className="red-cross-line line1" />
-                    <div className="red-cross-line line2" />
+                    {activeDisabledCrossline === "lifts" && (
+                      <>
+                        <div className="red-cross-line line1" />
+                        <div className="red-cross-line line2" />
+                      </>
+                    )}
                   </div>
                   <span>Lift by Promotion</span>
                 </div>
