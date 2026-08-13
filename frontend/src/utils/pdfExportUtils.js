@@ -121,7 +121,65 @@ export function generateSalesPDF({
   const territoryGroups = {};
   const territoryMeta = {};
 
-  const storeRows = data.filter((r) => !r.IS_GRAND_TOTAL && !r.IS_TERRITORY_TOTAL);
+  const allStoreRows = data.filter((r) => !r.IS_GRAND_TOTAL && !r.IS_TERRITORY_TOTAL);
+  let storeRows = allStoreRows;
+
+  const isSearching = Boolean(search && search.trim() !== "");
+  if (isSearching) {
+    const getSearchableRowStrings = (r) => {
+      const dateStr = r.DATE_OPENED
+        ? r.DATE_OPENED.length >= 10
+          ? r.DATE_OPENED.substring(2)
+          : r.DATE_OPENED
+        : "";
+      const firstSaleStr = dateStr ? `First Sale ${dateStr}` : "";
+      return [
+        r.STORE_ID != null ? String(r.STORE_ID) : "",
+        r.STORE_NAME || "",
+        dateStr,
+        firstSaleStr,
+        r.REGION_ID != null ? String(r.REGION_ID) : "",
+        r.TERRITORY || "",
+        formatNumber(r.DAY_SALES_LY),
+        formatNumber(r.DAY_SALES_CY),
+        formatPercent(r.DAY_SALES_COMP),
+        formatNumber(r.WTD_SALES_LY),
+        formatNumber(r.WTD_SALES_CY),
+        formatPercent(r.WTD_SALES_COMP),
+        formatNumber(r.QTD_SALES_LY),
+        formatNumber(r.QTD_SALES_CY),
+        formatPercent(r.QTD_SALES_COMP),
+        formatNumber(r.YTD_SALES_LY),
+        formatNumber(r.YTD_SALES_CY),
+        formatPercent(r.YTD_SALES_COMP),
+        r.DAY_SALES_LY != null ? String(Math.round(r.DAY_SALES_LY)) : "",
+        r.DAY_SALES_CY != null ? String(Math.round(r.DAY_SALES_CY)) : "",
+        r.WTD_SALES_LY != null ? String(Math.round(r.WTD_SALES_LY)) : "",
+        r.WTD_SALES_CY != null ? String(Math.round(r.WTD_SALES_CY)) : "",
+        r.QTD_SALES_LY != null ? String(Math.round(r.QTD_SALES_LY)) : "",
+        r.QTD_SALES_CY != null ? String(Math.round(r.QTD_SALES_CY)) : "",
+        r.YTD_SALES_LY != null ? String(Math.round(r.YTD_SALES_LY)) : "",
+        r.YTD_SALES_CY != null ? String(Math.round(r.YTD_SALES_CY)) : "",
+      ];
+    };
+
+    const terms = (
+      search.includes("++")
+        ? search.toLowerCase().split("++")
+        : search.toLowerCase().split(/\s+/)
+    )
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (terms.length > 0) {
+      storeRows = storeRows.filter((r) => {
+        const searchableStrings = getSearchableRowStrings(r);
+        return terms.some((q) =>
+          searchableStrings.some((str) => str.toLowerCase().includes(q))
+        );
+      });
+    }
+  }
 
   storeRows.forEach((r) => {
     const tName = r.TERRITORY || "Unknown";
@@ -214,40 +272,42 @@ export function generateSalesPDF({
       });
     });
 
-    // Add Territory Subtotal row
-    const meta = territoryMeta[tName];
-    const tLabel = `${meta.id} ${tName} Total`;
-    const tDayComp = calcComp(tCyDay, tLyDay);
-    const tWtdComp = calcComp(tCyWtd, tLyWtd);
-    const tQtdComp = calcComp(tCyQtd, tLyQtd);
-    const tYtdComp = calcComp(tCyYtd, tLyYtd);
+    // Add Territory Subtotal row (only when NOT searching)
+    if (!isSearching) {
+      const meta = territoryMeta[tName];
+      const tLabel = `${meta.id} ${tName} Total`;
+      const tDayComp = calcComp(tCyDay, tLyDay);
+      const tWtdComp = calcComp(tCyWtd, tLyWtd);
+      const tQtdComp = calcComp(tCyQtd, tLyQtd);
+      const tYtdComp = calcComp(tCyYtd, tLyYtd);
 
-    body.push([
-      tLabel,
-      "",
-      formatNumber(tLyDay),
-      formatNumber(tCyDay),
-      formatPercent(tDayComp),
-      formatNumber(tLyWtd),
-      formatNumber(tCyWtd),
-      formatPercent(tWtdComp),
-      formatNumber(tLyQtd),
-      formatNumber(tCyQtd),
-      formatPercent(tQtdComp),
-      formatNumber(tLyYtd),
-      formatNumber(tCyYtd),
-      formatPercent(tYtdComp),
-    ]);
+      body.push([
+        tLabel,
+        "",
+        formatNumber(tLyDay),
+        formatNumber(tCyDay),
+        formatPercent(tDayComp),
+        formatNumber(tLyWtd),
+        formatNumber(tCyWtd),
+        formatPercent(tWtdComp),
+        formatNumber(tLyQtd),
+        formatNumber(tCyQtd),
+        formatPercent(tQtdComp),
+        formatNumber(tLyYtd),
+        formatNumber(tCyYtd),
+        formatPercent(tYtdComp),
+      ]);
 
-    rowMeta.push({
-      isTerritoryTotal: true,
-      isGrandTotal: false,
-      comps: [tDayComp, tWtdComp, tQtdComp, tYtdComp],
-    });
+      rowMeta.push({
+        isTerritoryTotal: true,
+        isGrandTotal: false,
+        comps: [tDayComp, tWtdComp, tQtdComp, tYtdComp],
+      });
+    }
   });
 
   // Calculate Grand Total across all store rows
-  const sum = (field) => storeRows.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
+  const sum = (field) => allStoreRows.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
   const gLyDay = sum("DAY_SALES_LY");
   const gCyDay = sum("DAY_SALES_CY");
   const gLyWtd = sum("WTD_SALES_LY");

@@ -220,9 +220,11 @@ export default function LaggardsTab({
       }))
       .slice(0, 10);
 
-    const terms = search
-      .toLowerCase()
-      .split("++")
+    const terms = (
+      search.includes("++")
+        ? search.toLowerCase().split("++")
+        : search.toLowerCase().split(/\s+/)
+    )
       .map((s) => s.trim())
       .filter(Boolean);
     if (terms.length > 0) {

@@ -13,9 +13,11 @@ export function highlightText(text, search) {
   const textStr = String(text);
   if (!search || !search.trim()) return textStr;
 
-  const terms = search
-    .toLowerCase()
-    .split('++')
+  const terms = (
+    search.includes("++")
+      ? search.toLowerCase().split("++")
+      : search.toLowerCase().split(/\s+/)
+  )
     .map((s) => s.trim())
     .filter(Boolean);
 

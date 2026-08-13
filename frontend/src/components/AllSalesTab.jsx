@@ -88,16 +88,15 @@ export default function AllSalesTab({
     });
 
     // Apply search filter
-    const terms = search
-      .toLowerCase()
-      .split("++")
+    const terms = (
+      search.includes("++")
+        ? search.toLowerCase().split("++")
+        : search.toLowerCase().split(/\s+/)
+    )
       .map((s) => s.trim())
       .filter(Boolean);
     if (terms.length > 0) {
       Object.keys(territories).forEach((t) => {
-        const territoryMatched = terms.some((q) => t.toLowerCase().includes(q));
-        if (territoryMatched) return; // Keep all stores in this territory
-
         territories[t] = territories[t].filter((r) =>
           terms.some((q) => {
             const searchableStrings = getSearchableRowStrings(r);
