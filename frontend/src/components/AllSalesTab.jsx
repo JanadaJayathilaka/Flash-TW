@@ -10,11 +10,12 @@ function getSearchableRowStrings(r) {
       ? r.DATE_OPENED.substring(2)
       : r.DATE_OPENED
     : "";
-  const firstSaleStr = dateStr ? `First Sale ${dateStr}` : "";
+  const firstSaleStr = dateStr ? `First Sale '${dateStr}` : "";
   return [
     r.STORE_ID != null ? String(r.STORE_ID) : "",
     r.STORE_NAME || "",
     dateStr,
+    `'${dateStr}`,
     firstSaleStr,
     r.REGION_ID != null ? String(r.REGION_ID) : "",
     r.TERRITORY || "",
@@ -325,9 +326,9 @@ export default function AllSalesTab({
         isGt || isTerr
           ? ""
           : r.DATE_OPENED
-            ? r.DATE_OPENED.length >= 10
-              ? r.DATE_OPENED.substring(2)
-              : r.DATE_OPENED
+            ? r.DATE_OPENED.startsWith("'")
+              ? r.DATE_OPENED
+              : `'${r.DATE_OPENED.length >= 10 ? r.DATE_OPENED.substring(2) : r.DATE_OPENED}`
             : "";
 
       return [
@@ -423,79 +424,91 @@ export default function AllSalesTab({
       search && search.trim() !== "" ? `Filter: ${search.trim()}` : "";
 
     const COLS = [
-      { header: "STORE/TERRITORY", align: "left", numFmt: null, isComp: false },
-      { header: "FIRST SALE", align: "center", numFmt: null, isComp: false },
+      { header: "STORE / TERRITORY", align: "left", numFmt: null, isComp: false, isCY: false },
+      { header: "FIRST SALE", align: "center", numFmt: null, isComp: false, isCY: false },
       {
-        header: `${lyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
+        header: `${lyYear} WK ${wk},\nDAY ${dayDisplay} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: false,
       },
       {
-        header: `${cyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
+        header: `${cyYear} WK ${wk},\nDAY ${dayDisplay} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: true,
       },
       {
-        header: `1 DAY COMP ${lyYear} TO ${cyYear}`,
+        header: `1 DAY COMP\n${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
+        isCY: false,
       },
       {
-        header: `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
+        header: `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`},\n${isCalendar ? "MTD" : "WTD"} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: false,
       },
       {
-        header: `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
+        header: `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`},\n${isCalendar ? "MTD" : "WTD"} NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: true,
       },
       {
-        header: `${isCalendar ? "MTD" : "WTD"} COMP ${lyYear} TO ${cyYear}`,
+        header: `${isCalendar ? "MTD" : "WTD"} COMP\n${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
+        isCY: false,
       },
       {
-        header: `${lyYear} Q${q}, QTD NET $`,
+        header: `${lyYear} Q${q},\nQTD NET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: false,
       },
       {
-        header: `${cyYear} Q${q}, QTD NET $`,
+        header: `${cyYear} Q${q}, QTD\nNET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: true,
       },
       {
-        header: `QTD COMP ${lyYear} TO ${cyYear}`,
+        header: `QTD COMP\n${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
+        isCY: false,
       },
       {
-        header: `${lyYear}, YTD NET $`,
+        header: `${lyYear} YTD\nNET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: false,
       },
       {
-        header: `${cyYear}, YTD NET $`,
+        header: `${cyYear} YTD\nNET $`,
         align: "right",
         numFmt: "#,##0",
         isComp: false,
+        isCY: true,
       },
       {
-        header: `YTD COMP ${lyYear} TO ${cyYear}`,
+        header: `YTD COMP\n${lyYear} TO ${cyYear}`,
         align: "center",
         numFmt: "0.00%",
         isComp: true,
+        isCY: false,
       },
     ];
 
@@ -544,9 +557,9 @@ export default function AllSalesTab({
       const firstSale = isTerr
         ? ""
         : row.DATE_OPENED
-          ? row.DATE_OPENED.length >= 10
-            ? row.DATE_OPENED.substring(2)
-            : row.DATE_OPENED
+          ? row.DATE_OPENED.startsWith("'")
+            ? row.DATE_OPENED
+            : `'${row.DATE_OPENED.length >= 10 ? row.DATE_OPENED.substring(2) : row.DATE_OPENED}`
           : "";
 
       excelRows.push([
@@ -609,12 +622,12 @@ export default function AllSalesTab({
     // Style Title Row (A1 and G1:N1 merge range)
     if (ws["A1"]) {
       ws["A1"].s = {
-        font: { name: "Arial", sz: 14, bold: true, color: { rgb: "000000" } },
+        font: { name: "Arial", sz: 11, bold: true, color: { rgb: "000000" } },
         alignment: { horizontal: "left", vertical: "center" },
       };
     }
     const timestampStyle = {
-      font: { name: "Arial", sz: 8, color: { rgb: "000000" } },
+      font: { name: "Arial", sz: 7, color: { rgb: "000000" } },
       alignment: { horizontal: "right", vertical: "center" },
     };
     ["G1", "H1", "I1", "J1", "K1", "L1", "M1", "N1"].forEach((cellKey) => {
@@ -628,7 +641,7 @@ export default function AllSalesTab({
     // Style Filter Row (A2)
     if (searchFilterText && ws["A2"]) {
       ws["A2"].s = {
-        font: { name: "Arial", sz: 8, bold: false, color: { rgb: "000000" } },
+        font: { name: "Arial", sz: 7, bold: false, color: { rgb: "000000" } },
         alignment: { horizontal: "left", vertical: "center" },
       };
     }
@@ -672,6 +685,8 @@ export default function AllSalesTab({
         let fontColor;
         if (col.isComp && typeof val === "number") {
           fontColor = val >= 0 ? "008000" : "FF0000";
+        } else if (col.isCY) {
+          fontColor = "3A7785";
         }
 
         const border = makeBorder(false, false, RIGHT_BORDER_COLS.has(c));
@@ -708,17 +723,12 @@ export default function AllSalesTab({
         const col = COLS[c];
         const val = excelRows[footer1RowIndex][c];
 
-        let fontColor;
-        if (col.isComp && typeof val === "number") {
-          fontColor = val >= 0 ? "008000" : "FF0000";
-        }
-
         const cellStyle = {
           font: {
             name: "Arial",
             sz: 9,
             bold: true,
-            ...(fontColor ? { color: { rgb: fontColor } } : {}),
+            color: { rgb: "000000" },
           },
           alignment: { horizontal: col.align, vertical: "center" },
           border: makeBorder(true, true, RIGHT_BORDER_COLS.has(c)),
@@ -753,30 +763,31 @@ export default function AllSalesTab({
       ws["!merges"].push(XLSX.utils.decode_range("A2:F2"));
     }
 
-    // Column widths matching Dotnet toExcelAndCSV.js exactly
+    // Column widths matching exact word breakdowns
     ws["!cols"] = [
       { wch: 35.0 },
       { wch: 10.33 },
-      { wch: 12.22 },
-      { wch: 13.33 },
-      { wch: 14.89 },
-      { wch: 12.33 },
-      { wch: 12.22 },
-      { wch: 11.56 },
-      { wch: 11.33 },
-      { wch: 13.56 },
-      { wch: 13.33 },
-      { wch: 10.33 },
-      { wch: 10.11 },
       { wch: 13.5 },
+      { wch: 13.5 },
+      { wch: 12.5 },
+      { wch: 13.5 },
+      { wch: 13.5 },
+      { wch: 12.5 },
+      { wch: 12.0 },
+      { wch: 14.0 },
+      { wch: 12.5 },
+      { wch: 10.5 },
+      { wch: 10.5 },
+      { wch: 12.5 },
     ];
 
-    // Row heights matching Dotnet
+    // Row heights
     ws["!rows"] = [];
     ws["!rows"][0] = { hpt: 20 };
     if (searchFilterText) {
       ws["!rows"][1] = { hpt: 12 };
     }
+    ws["!rows"][headerRowIndex] = { hpt: 26 };
 
     // Freeze panes matching Dotnet toExcelAndCSV.js (ySplit: 4)
     ws["!sheetViews"] = [
@@ -828,7 +839,8 @@ export default function AllSalesTab({
         currencyMode,
         search,
         isPrint,
-        displayDateStr: typeof DT_1_Str === "function" ? DT_1_Str() : String(DT_1_Str || ""),
+        displayDateStr:
+          typeof DT_1_Str === "function" ? DT_1_Str() : String(DT_1_Str || ""),
       });
     },
     [
@@ -843,7 +855,7 @@ export default function AllSalesTab({
       currencyMode,
       search,
       DT_1_Str,
-    ]
+    ],
   );
 
   // Bind export triggers to parent
@@ -856,7 +868,12 @@ export default function AllSalesTab({
         printPDF: () => handleExportPDF(true),
       });
     }
-  }, [onBindExportActions, handleExportExcel, handleExportCSV, handleExportPDF]);
+  }, [
+    onBindExportActions,
+    handleExportExcel,
+    handleExportCSV,
+    handleExportPDF,
+  ]);
 
   // Ref for the table element — used by the ResizeObserver
   const tableRef = useRef(null);
@@ -1287,9 +1304,9 @@ export default function AllSalesTab({
             stores.forEach((store) => {
               const storeName = `${store.STORE_ID != null ? `${store.STORE_ID} ` : ""}${store.STORE_NAME || ""}`;
               const firstSale = store.DATE_OPENED
-                ? store.DATE_OPENED.length >= 10
-                  ? store.DATE_OPENED.substring(2)
-                  : store.DATE_OPENED
+                ? store.DATE_OPENED.startsWith("'")
+                  ? store.DATE_OPENED
+                  : `'${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`
                 : "";
               rows.push(
                 <tr key={store.STORE_ID}>
