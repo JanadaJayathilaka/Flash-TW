@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { formatNumber, getBestMetric } from "../utils/dateUtils";
-import { highlightText } from "../utils/highlightUtils";
+import { highlightText, matchesSearchTerm } from "../utils/highlightUtils";
 import { generateTilesPDF } from "../utils/pdfExportUtils";
 import TopSalesImg from "../assets/TopsalesIcons/TopSales.png";
 import TopSalesSelImg from "../assets/TopsalesIcons/TopSales_sel.png";
@@ -224,9 +224,15 @@ export default function LeadersTab({
       .filter(Boolean);
     if (terms.length > 0) {
       result = result.filter(({ row }) => {
-        const searchText =
-          `${row.STORE_ID ?? ""} ${row.STORE_NAME ?? ""} ${row.REGION_ID ?? ""} ${row.TERRITORY ?? ""}`.toLowerCase();
-        return terms.some((term) => searchText.includes(term));
+        const fields = [
+          row.STORE_ID != null ? String(row.STORE_ID) : "",
+          row.STORE_NAME || "",
+          row.REGION_ID != null ? String(row.REGION_ID) : "",
+          row.TERRITORY || "",
+        ];
+        return terms.some((term) =>
+          fields.some((f) => matchesSearchTerm(f, term)),
+        );
       });
     }
 

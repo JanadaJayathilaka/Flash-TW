@@ -856,12 +856,12 @@ export default function App() {
                     title="Export to Excel"
                     style={{
                       cursor: "pointer",
-                      padding: "3px",
-                      marginRight: "6px",
+                      padding: "2px",
+                      marginRight: "8px",
                       marginLeft: "6px",
                       marginBottom: "7px",
-                      width: "30px",
-                      height: "30px",
+                      width: "32px",
+                      height: "32px",
                     }}
                     src={excelImg}
                     onClick={() => exportActions?.exportExcel?.()}
@@ -872,12 +872,12 @@ export default function App() {
                     title="Export to CSV"
                     style={{
                       cursor: "pointer",
-                      padding: "3px",
-                      marginRight: "6px",
+                      padding: "2px",
+                      marginRight: "8px",
                       marginLeft: "0px",
                       marginBottom: "7px",
-                      width: "30px",
-                      height: "30px",
+                      width: "32px",
+                      height: "32px",
                     }}
                     src={csvImg}
                     onClick={() => exportActions?.exportCSV?.()}

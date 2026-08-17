@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback, useEffect, useRef } from "react";
 import * as XLSX from "xlsx-js-style";
 import { formatNumber, formatPercent } from "../utils/dateUtils";
-import { highlightText } from "../utils/highlightUtils";
+import { highlightText, matchesSearchTerm } from "../utils/highlightUtils";
 import { generateSalesPDF } from "../utils/pdfExportUtils";
 
 function getSearchableRowStrings(r) {
@@ -70,22 +70,75 @@ export default function AllSalesTab({
   const monthStr = String(calendarMonthNumber).padStart(2, "0");
 
   // Parse data and groups
-  const { territories, grandTotal } = useMemo(() => {
-    const territories = {};
+  const { territoryGroups, grandTotal } = useMemo(() => {
+    const groups = {}; // { [territoryName]: { regionId, stores: [], totalRow: null } }
 
     data.forEach((r) => {
-      if (r.IS_GRAND_TOTAL || r.IS_TERRITORY_TOTAL) {
-        return;
-      }
+      if (r.IS_GRAND_TOTAL) return;
       const t = r.TERRITORY || "Unknown";
-      if (!territories[t]) territories[t] = [];
-      territories[t].push(r);
+      if (!groups[t]) {
+        groups[t] = {
+          regionId: Number(r.REGION_ID) || 0,
+          stores: [],
+          totalRow: null,
+        };
+      }
+      if (r.IS_TERRITORY_TOTAL) {
+        const regionPrefix = r.REGION_ID ? `${r.REGION_ID} ` : "";
+        const name = r.STORE_NAME?.startsWith(regionPrefix)
+          ? r.STORE_NAME
+          : `${regionPrefix}${r.STORE_NAME || `${t} Total`}`;
+        groups[t].totalRow = { ...r, STORE_NAME: name };
+        if (r.REGION_ID) {
+          groups[t].regionId = Number(r.REGION_ID) || groups[t].regionId;
+        }
+      } else {
+        groups[t].stores.push(r);
+        if (r.REGION_ID) {
+          groups[t].regionId = Number(r.REGION_ID) || groups[t].regionId;
+        }
+      }
     });
 
-    Object.keys(territories).forEach((t) => {
-      territories[t].sort((a, b) =>
+    // Sort stores within each territory alphabetically & ensure totalRow exists
+    Object.keys(groups).forEach((t) => {
+      groups[t].stores.sort((a, b) =>
         (a.STORE_NAME ?? "").localeCompare(b.STORE_NAME ?? ""),
       );
+
+      if (!groups[t].totalRow && groups[t].stores.length > 0) {
+        const stores = groups[t].stores;
+        const sum = (field) => stores.reduce((acc, s) => acc + (s[field] ?? 0), 0);
+        const cyDay = sum("DAY_SALES_CY");
+        const lyDay = sum("DAY_SALES_LY");
+        const cyWtd = sum("WTD_SALES_CY");
+        const lyWtd = sum("WTD_SALES_LY");
+        const cyQtd = sum("QTD_SALES_CY");
+        const lyQtd = sum("QTD_SALES_LY");
+        const cyYtd = sum("YTD_SALES_CY");
+        const lyYtd = sum("YTD_SALES_LY");
+        const calcComp = (cy, ly) =>
+          cy === 0 || ly === 0 ? 0 : ((cy - ly) / ly) * 100;
+        const regionPrefix = groups[t].regionId ? `${groups[t].regionId} ` : "";
+        groups[t].totalRow = {
+          STORE_NAME: `${regionPrefix}${t} Total`,
+          IS_TERRITORY_TOTAL: true,
+          REGION_ID: groups[t].regionId,
+          TERRITORY: t,
+          DAY_SALES_LY: lyDay,
+          DAY_SALES_CY: cyDay,
+          DAY_SALES_COMP: calcComp(cyDay, lyDay),
+          WTD_SALES_LY: lyWtd,
+          WTD_SALES_CY: cyWtd,
+          WTD_SALES_COMP: calcComp(cyWtd, lyWtd),
+          QTD_SALES_LY: lyQtd,
+          QTD_SALES_CY: cyQtd,
+          QTD_SALES_COMP: calcComp(cyQtd, lyQtd),
+          YTD_SALES_LY: lyYtd,
+          YTD_SALES_CY: cyYtd,
+          YTD_SALES_COMP: calcComp(cyYtd, lyYtd),
+        };
+      }
     });
 
     // Apply search filter
@@ -96,20 +149,33 @@ export default function AllSalesTab({
     )
       .map((s) => s.trim())
       .filter(Boolean);
-    if (terms.length > 0) {
-      Object.keys(territories).forEach((t) => {
-        territories[t] = territories[t].filter((r) =>
-          terms.some((q) => {
-            const searchableStrings = getSearchableRowStrings(r);
-            return searchableStrings.some((str) =>
-              str.toLowerCase().includes(q),
-            );
-          }),
-        );
+
+    const isSearching = terms.length > 0;
+
+    if (isSearching) {
+      Object.keys(groups).forEach((t) => {
+        // Filter store rows
+        groups[t].stores = groups[t].stores.filter((r) => {
+          const searchableStrings = getSearchableRowStrings(r);
+          return terms.some((q) =>
+            searchableStrings.some((str) => matchesSearchTerm(str, q)),
+          );
+        });
+
+        // Filter territory total row
+        if (groups[t].totalRow) {
+          const totalSearchable = getSearchableRowStrings(groups[t].totalRow);
+          const totalMatches = terms.some((q) =>
+            totalSearchable.some((str) => matchesSearchTerm(str, q)),
+          );
+          if (!totalMatches) {
+            groups[t].totalRow = null;
+          }
+        }
       });
     }
 
-    // Dynamically compute Grand Total over ALL store rows (unaffected by search filter, matching Dotnet)
+    // Dynamically compute Grand Total over ALL raw store rows (unaffected by search filter)
     const allStoreRows = data.filter(
       (r) => !r.IS_GRAND_TOTAL && !r.IS_TERRITORY_TOTAL,
     );
@@ -146,75 +212,36 @@ export default function AllSalesTab({
       YTD_SALES_COMP: calcComp(cyYtd, lyYtd),
     };
 
-    return { territories, grandTotal };
+    return { territoryGroups: groups, grandTotal };
   }, [data, search]);
 
   const sortedTerritories = useMemo(() => {
-    return Object.entries(territories)
-      .filter(([, stores]) => stores.length > 0)
-      .sort(([nameA, storesA], [nameB, storesB]) => {
-        const regA = Number(storesA[0]?.REGION_ID) || 0;
-        const regB = Number(storesB[0]?.REGION_ID) || 0;
+    return Object.entries(territoryGroups)
+      .filter(([, group]) => group.stores.length > 0 || group.totalRow !== null)
+      .sort(([, groupA], [, groupB]) => {
+        const regA = groupA.regionId || 0;
+        const regB = groupB.regionId || 0;
         if (regA !== regB) {
           return regA - regB;
         }
-        return nameA.localeCompare(nameB);
+        return 0;
       });
-  }, [territories]);
-
-  // Recalculate territory totals dynamically based on filtered stores (or just use precalculated if unfiltered)
-  const computeTerritoryTotal = (territoryName, stores) => {
-    const sum = (field) => stores.reduce((acc, s) => acc + (s[field] ?? 0), 0);
-    const cyDay = sum("DAY_SALES_CY");
-    const lyDay = sum("DAY_SALES_LY");
-    const cyWtd = sum("WTD_SALES_CY");
-    const lyWtd = sum("WTD_SALES_LY");
-    const cyQtd = sum("QTD_SALES_CY");
-    const lyQtd = sum("QTD_SALES_LY");
-    const cyYtd = sum("YTD_SALES_CY");
-    const lyYtd = sum("YTD_SALES_LY");
-
-    const calcComp = (cy, ly) => {
-      if (cy === 0 || ly === 0) return 0;
-      return ((cy - ly) / ly) * 100;
-    };
-
-    const regionPrefix = stores[0]?.REGION_ID ? `${stores[0].REGION_ID} ` : "";
-
-    return {
-      STORE_NAME: `${regionPrefix}${territoryName} Total`,
-      IS_TERRITORY_TOTAL: true,
-      DAY_SALES_LY: lyDay,
-      DAY_SALES_CY: cyDay,
-      DAY_SALES_COMP: calcComp(cyDay, lyDay),
-      WTD_SALES_LY: lyWtd,
-      WTD_SALES_CY: cyWtd,
-      WTD_SALES_COMP: calcComp(cyWtd, lyWtd),
-      QTD_SALES_LY: lyQtd,
-      QTD_SALES_CY: cyQtd,
-      QTD_SALES_COMP: calcComp(cyQtd, lyQtd),
-      YTD_SALES_LY: lyYtd,
-      YTD_SALES_CY: cyYtd,
-      YTD_SALES_COMP: calcComp(cyYtd, lyYtd),
-    };
-  };
-
-  const isSearching = Boolean(search && search.trim() !== "");
+  }, [territoryGroups]);
 
   // Build rows array representing current table display order
   const displayRows = useMemo(() => {
     const rows = [];
-    sortedTerritories.forEach(([territoryName, stores]) => {
-      rows.push(...stores);
-      if (!isSearching) {
-        rows.push(computeTerritoryTotal(territoryName, stores));
+    sortedTerritories.forEach(([, group]) => {
+      rows.push(...group.stores);
+      if (group.totalRow) {
+        rows.push(group.totalRow);
       }
     });
     if (grandTotal) {
       rows.push(grandTotal);
     }
     return rows;
-  }, [sortedTerritories, grandTotal, isSearching]);
+  }, [sortedTerritories, grandTotal]);
 
   const DT_1_Str = useCallback(() => {
     if (selectedDate) {
@@ -1033,11 +1060,11 @@ export default function AllSalesTab({
           </tr>
         </thead>
         <tbody>
-          {sortedTerritories.map(([territoryName, stores]) => {
+          {sortedTerritories.map(([territoryName, group]) => {
             const rows = [];
 
             // Store Rows
-            stores.forEach((store) => {
+            group.stores.forEach((store) => {
               rows.push(
                 <tr key={store.STORE_ID}>
                   <td className="border-right store-name-cell">
@@ -1102,9 +1129,9 @@ export default function AllSalesTab({
               );
             });
 
-            // Territory Total Row (only show when NOT searching, matching Dotnet)
-            if (!isSearching) {
-              const tTotal = computeTerritoryTotal(territoryName, stores);
+            // Territory Total Row
+            if (group.totalRow) {
+              const tTotal = group.totalRow;
               rows.push(
                 <tr key={`${territoryName}-Total`} className="territory-row">
                   <td className="border-right">
@@ -1286,11 +1313,11 @@ export default function AllSalesTab({
           </tr>
         </thead>
         <tbody>
-          {sortedTerritories.map(([territoryName, stores]) => {
+          {sortedTerritories.map(([territoryName, group]) => {
             const rows = [];
 
             // Store rows
-            stores.forEach((store) => {
+            group.stores.forEach((store) => {
               const storeName = `${store.STORE_ID != null ? `${store.STORE_ID} ` : ""}${store.STORE_NAME || ""}`;
               const firstSale = store.DATE_OPENED
                 ? store.DATE_OPENED.startsWith("'")
@@ -1342,49 +1369,51 @@ export default function AllSalesTab({
             });
 
             // Territory Total Row
-            const tTotal = computeTerritoryTotal(territoryName, stores);
-            rows.push(
-              <tr key={`${territoryName}-Total`} className="territory-row">
-                <td>{tTotal.STORE_NAME}</td>
-                <td></td>
-                <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
-                <td
-                  className={
-                    tTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
-                  }
-                >
-                  {formatPercent(tTotal.DAY_SALES_COMP)}
-                </td>
-                <td>{formatNumber(tTotal.WTD_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.WTD_SALES_CY)}</td>
-                <td
-                  className={
-                    tTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
-                  }
-                >
-                  {formatPercent(tTotal.WTD_SALES_COMP)}
-                </td>
-                <td>{formatNumber(tTotal.QTD_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.QTD_SALES_CY)}</td>
-                <td
-                  className={
-                    tTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
-                  }
-                >
-                  {formatPercent(tTotal.QTD_SALES_COMP)}
-                </td>
-                <td>{formatNumber(tTotal.YTD_SALES_LY)}</td>
-                <td>{formatNumber(tTotal.YTD_SALES_CY)}</td>
-                <td
-                  className={
-                    tTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
-                  }
-                >
-                  {formatPercent(tTotal.YTD_SALES_COMP)}
-                </td>
-              </tr>,
-            );
+            if (group.totalRow) {
+              const tTotal = group.totalRow;
+              rows.push(
+                <tr key={`${territoryName}-Total`} className="territory-row">
+                  <td>{tTotal.STORE_NAME}</td>
+                  <td></td>
+                  <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>
+                  <td>{formatNumber(tTotal.DAY_SALES_CY)}</td>
+                  <td
+                    className={
+                      tTotal.DAY_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
+                    {formatPercent(tTotal.DAY_SALES_COMP)}
+                  </td>
+                  <td>{formatNumber(tTotal.WTD_SALES_LY)}</td>
+                  <td>{formatNumber(tTotal.WTD_SALES_CY)}</td>
+                  <td
+                    className={
+                      tTotal.WTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
+                    {formatPercent(tTotal.WTD_SALES_COMP)}
+                  </td>
+                  <td>{formatNumber(tTotal.QTD_SALES_LY)}</td>
+                  <td>{formatNumber(tTotal.QTD_SALES_CY)}</td>
+                  <td
+                    className={
+                      tTotal.QTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
+                    {formatPercent(tTotal.QTD_SALES_COMP)}
+                  </td>
+                  <td>{formatNumber(tTotal.YTD_SALES_LY)}</td>
+                  <td>{formatNumber(tTotal.YTD_SALES_CY)}</td>
+                  <td
+                    className={
+                      tTotal.YTD_SALES_COMP >= 0 ? "comp-pos" : "comp-neg"
+                    }
+                  >
+                    {formatPercent(tTotal.YTD_SALES_COMP)}
+                  </td>
+                </tr>,
+              );
+            }
 
             return rows;
           })}
