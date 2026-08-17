@@ -14,7 +14,7 @@ Chart.register(...registerables);
 
 const SMA_PERIOD = 7;
 
-function generate10YAxisTicks(minVal, maxVal) {
+function generate6YAxisTicks(minVal, maxVal) {
   if (
     !Number.isFinite(minVal) ||
     !Number.isFinite(maxVal) ||
@@ -22,7 +22,7 @@ function generate10YAxisTicks(minVal, maxVal) {
   ) {
     return [];
   }
-  const rawStep = (maxVal - minVal) / 9;
+  const rawStep = (maxVal - minVal) / 5;
   const exponent = Math.floor(Math.log10(rawStep));
   const fraction = rawStep / Math.pow(10, exponent);
   let niceFraction;
@@ -33,14 +33,14 @@ function generate10YAxisTicks(minVal, maxVal) {
   let step = niceFraction * Math.pow(10, exponent);
 
   let startTick = Math.ceil(minVal / step) * step;
-  // If startTick is too close to minVal (e.g. 357000 vs 356839.6), skip to next round step (358000)
+  // If startTick is too close to minVal, skip to next round step
   if (startTick - minVal < 0.35 * step) {
     startTick += step;
   }
 
   const midTicks = [];
   for (let val = startTick; val < maxVal; val += step) {
-    // If val is too close to maxVal (e.g. within 0.35 * step of 365582.4), skip it
+    // If val is too close to maxVal, skip it
     if (maxVal - val < 0.35 * step) {
       continue;
     }
@@ -48,8 +48,8 @@ function generate10YAxisTicks(minVal, maxVal) {
   }
 
   if (midTicks.length === 0) {
-    const fallbackStep = (maxVal - minVal) / 9;
-    for (let i = 1; i <= 8; i++) {
+    const fallbackStep = (maxVal - minVal) / 5;
+    for (let i = 1; i <= 4; i++) {
       midTicks.push(Math.round((minVal + i * fallbackStep) / 100) * 100);
     }
   }
@@ -152,7 +152,7 @@ function AnalyticsChart({
               font: {
                 family: "Montserrat",
                 size: 14,
-                weight: "600",
+                weight: "normal",
               },
               generateLabels: function (chart) {
                 const original =
@@ -167,7 +167,7 @@ function AnalyticsChart({
           },
           tooltip: {
             enabled: true,
-            titleFont: { family: "Montserrat", size: 14, weight: "bold" },
+            titleFont: { family: "Montserrat", size: 14, weight: "normal" },
             bodyFont: { family: "Montserrat", size: 13 },
             callbacks: {
               label: function (context) {
@@ -220,13 +220,13 @@ function AnalyticsChart({
               font: {
                 family: "Montserrat",
                 size: 12,
-                weight: "bold",
+                weight: "normal",
               },
             },
             min: yMin,
             max: yMax,
             afterBuildTicks: function (axis) {
-              const customTicks = generate10YAxisTicks(axis.min, axis.max);
+              const customTicks = generate6YAxisTicks(axis.min, axis.max);
               if (customTicks.length > 0) {
                 axis.ticks = customTicks;
               }
@@ -238,14 +238,7 @@ function AnalyticsChart({
                 family: "Montserrat",
                 size: 11,
               },
-              callback: function (value, index, ticks) {
-                const isBoundary = index === 0 || index === ticks.length - 1;
-                if (isBoundary) {
-                  return Number(value).toLocaleString(undefined, {
-                    minimumFractionDigits: 1,
-                    maximumFractionDigits: 1,
-                  });
-                }
+              callback: function (value) {
                 return Math.round(value).toLocaleString();
               },
             },
@@ -280,7 +273,7 @@ function AnalyticsChart({
       <h4
         style={{
           fontSize: "16px",
-          fontWeight: 500,
+          fontWeight: 400,
           color: "#475569",
           textAlign: "left",
           marginBottom: "10px",

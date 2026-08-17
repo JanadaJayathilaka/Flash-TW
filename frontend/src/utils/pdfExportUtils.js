@@ -688,7 +688,7 @@ export async function generateAnalyticsPDF(containerId = "dAnltcsCharts", isPrin
 
     // Header Title
     doc.setFontSize(14);
-    doc.setFont("helvetica", "bold");
+    doc.setFont("helvetica", "normal");
     doc.text("SALES - ANALYTICS", pageWidth / 2, 12, { align: "center" });
 
     // Top-Right Timestamp
