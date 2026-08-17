@@ -151,58 +151,95 @@ export default function LeadersTab({
     }
   }, [onBindExportActions, search, getHeaderTitles]);
 
-  const m = useMemo(() => getBestMetric(data), [data]);
-
-  const getNormalizedLift = useMemo(() => {
-    return (row) => {
-      const ly = Number(row[m.ly] ?? 0);
-      const cy = Number(row[m.cy] ?? 0);
-      if (ly === 0 || cy === 0) return 0;
-      return Number(row[m.comp] ?? 0);
-    };
-  }, [m]);
-
   const rankedData = useMemo(() => {
     if (loading || !data || data.length === 0) return [];
 
     const storeRows = data.filter(
       (r) => !r.IS_TERRITORY_TOTAL && !r.IS_GRAND_TOTAL,
     );
-    const territoryRows = data.filter((r) => r.IS_TERRITORY_TOTAL);
 
-    const positiveStores = storeRows.filter(
-      (r) => Number(r[m.ly] ?? 0) > 0 && getNormalizedLift(r) >= 0,
-    );
-    const positiveTerritories = territoryRows.filter(
-      (r) => Number(r[m.ly] ?? 0) > 0 && getNormalizedLift(r) >= 0,
-    );
+    const storeList = storeRows.map((r) => {
+      const cy = Number(r.DAY_SALES_CY ?? 0);
+      const ly = Number(r.DAY_SALES_LY ?? 0);
+      const pct = cy === 0 || ly === 0 ? 0 : ((cy - ly) / ly) * 100;
+      return {
+        STORE_ID: (r.STORE_ID ?? "").toString().trim(),
+        STORE_NAME: r.STORE_NAME || "",
+        REGION_ID: (r.REGION_ID ?? "").toString().trim(),
+        TERRITORY: r.TERRITORY || "",
+        Sales: cy,
+        SalesPrevious: ly,
+        Growth: pct,
+        IS_TERRITORY_TOTAL: false,
+      };
+    });
+
+    // Territory summary grouped from stores (matching salesapp groupByTerritoryAndSum)
+    const map = storeList.reduce((acc, x) => {
+      const key = (x.TERRITORY || "").toString().trim() || "UNKNOWN";
+      const regionId = (x.REGION_ID || "").toString().trim() || "UNKNOWN";
+
+      if (!acc[key]) {
+        acc[key] = {
+          STORE_ID: "",
+          STORE_NAME: "",
+          REGION_ID: regionId,
+          TERRITORY: key,
+          Sales: 0,
+          SalesPrevious: 0,
+          Growth: 0,
+          IS_TERRITORY_TOTAL: true,
+        };
+      }
+      acc[key].Sales += x.Sales;
+      acc[key].SalesPrevious += x.SalesPrevious;
+      return acc;
+    }, {});
+
+    const territoryList = Object.values(map).map((t) => {
+      t.Growth =
+        t.SalesPrevious === 0
+          ? 0
+          : ((t.Sales - t.SalesPrevious) / t.SalesPrevious) * 100;
+      return t;
+    });
 
     let sortedData = [];
     switch (sortMode) {
-      case "storesBySales":
-        sortedData = [...positiveStores].sort((a, b) => {
-          const liftA = (a[m.cy] ?? 0) - (a[m.ly] ?? 0);
-          const liftB = (b[m.cy] ?? 0) - (b[m.ly] ?? 0);
-          return liftB - liftA;
-        });
-        break;
-      case "storesByLift":
+      case "storesBySales": {
+        // Top 10 Stores by $ Sales Lift (filtered for positive sales & growth per salesapp)
+        const positiveStores = storeList.filter(
+          (x) => x.Sales > 0 && x.SalesPrevious > 0 && x.Growth >= 0,
+        );
         sortedData = [...positiveStores].sort(
-          (a, b) => getNormalizedLift(b) - getNormalizedLift(a),
+          (a, b) => (b.Sales - b.SalesPrevious) - (a.Sales - a.SalesPrevious),
         );
         break;
-      case "territoryBySales":
-        sortedData = [...positiveTerritories].sort((a, b) => {
-          const liftA = (a[m.cy] ?? 0) - (a[m.ly] ?? 0);
-          const liftB = (b[m.cy] ?? 0) - (b[m.ly] ?? 0);
-          return liftB - liftA;
-        });
+      }
+      case "storesByLift": {
+        // Top 10 Stores by % Sales Lift
+        const positiveStores = storeList.filter((x) => x.Growth >= 0);
+        sortedData = [...positiveStores].sort(
+          (a, b) => (Number(b.Growth) || 0) - (Number(a.Growth) || 0),
+        );
         break;
-      case "territoryByLift":
+      }
+      case "territoryBySales": {
+        // Territories by Total $ Sales Lift
+        const positiveTerritories = territoryList.filter((x) => x.Growth >= 0);
         sortedData = [...positiveTerritories].sort(
-          (a, b) => getNormalizedLift(b) - getNormalizedLift(a),
+          (a, b) => (b.Sales - b.SalesPrevious) - (a.Sales - a.SalesPrevious),
         );
         break;
+      }
+      case "territoryByLift": {
+        // Territories by Total % Sales Lift
+        const positiveTerritories = territoryList.filter((x) => x.Growth >= 0);
+        sortedData = [...positiveTerritories].sort(
+          (a, b) => (Number(b.Growth) || 0) - (Number(a.Growth) || 0),
+        );
+        break;
+      }
       default:
         break;
     }
@@ -237,7 +274,7 @@ export default function LeadersTab({
     }
 
     return result;
-  }, [data, sortMode, m, loading, search, getNormalizedLift]);
+  }, [data, sortMode, loading, search]);
 
   if (loading) {
     return <div className="loading-view">Loading Top Sales...</div>;
@@ -371,16 +408,16 @@ export default function LeadersTab({
       {/* Tiles Grid matching Dotnet topworstsales.js */}
       <div id="topSales_Grid" className="tile-grid">
         {rankedData.map(({ row, rank, rankClass }) => {
-          const ly = Number(row[m.ly] ?? 0);
-          const cy = Number(row[m.cy] ?? 0);
+          const ly = row.SalesPrevious;
+          const cy = row.Sales;
           const sTotal = ly + cy || 1;
           const wPrev = (ly / sTotal) * 100;
           const wSales = (cy / sTotal) * 100;
           const dLift = cy - ly;
           const isPercentageMode =
             sortMode === "storesByLift" || sortMode === "territoryByLift";
-          const pct = getNormalizedLift(row);
-          const isTerritory = sortMode.includes("territory");
+          const pct = row.Growth;
+          const isTerritory = !!row.IS_TERRITORY_TOTAL;
           const medal = MEDALS[rank];
 
           const deltaText = isPercentageMode
@@ -453,7 +490,7 @@ export default function LeadersTab({
 
                   <div className="mini-values">
                     <div>
-                      ${formatNumber(ly)} / ${formatNumber(cy)}
+                      {`$${formatNumber(ly)} / $${formatNumber(cy)}`}
                     </div>
                     <div
                       className="delta"
@@ -466,7 +503,7 @@ export default function LeadersTab({
 
                 <div className="tile-sales">
                   <div className="lbl">Sales</div>
-                  <div className="val">${formatNumber(cy)}</div>
+                  <div className="val">{`$${formatNumber(cy)}`}</div>
                 </div>
               </div>
             </div>

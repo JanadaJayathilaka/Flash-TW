@@ -156,58 +156,88 @@ export default function LaggardsTab({
     }
   }, [onBindExportActions, search, getHeaderTitles]);
 
-  const m = useMemo(() => getBestMetric(data), [data]);
-
-  const getNormalizedLostSales = useMemo(() => {
-    return (row) => {
-      const ly = Number(row[m.ly] ?? 0);
-      const cy = Number(row[m.cy] ?? 0);
-      if (ly === 0 || cy === 0) return 0;
-      return Number(row[m.comp] ?? 0);
-    };
-  }, [m]);
-
   const rankedData = useMemo(() => {
     if (loading || !data || data.length === 0) return [];
 
     const storeRows = data.filter(
       (r) => !r.IS_TERRITORY_TOTAL && !r.IS_GRAND_TOTAL,
     );
-    const territoryRows = data.filter((r) => r.IS_TERRITORY_TOTAL);
 
-    const negativeStores = storeRows.filter(
-      (r) => getNormalizedLostSales(r) < 0,
-    );
-    const negativeTerritories = territoryRows.filter(
-      (r) => getNormalizedLostSales(r) < 0,
-    );
+    const storeList = storeRows.map((r) => {
+      const cy = Number(r.DAY_SALES_CY ?? 0);
+      const ly = Number(r.DAY_SALES_LY ?? 0);
+      const pct = cy === 0 || ly === 0 ? 0 : ((cy - ly) / ly) * 100;
+      return {
+        STORE_ID: (r.STORE_ID ?? "").toString().trim(),
+        STORE_NAME: r.STORE_NAME || "",
+        REGION_ID: (r.REGION_ID ?? "").toString().trim(),
+        TERRITORY: r.TERRITORY || "",
+        Sales: cy,
+        SalesPrevious: ly,
+        Growth: pct,
+        IS_TERRITORY_TOTAL: false,
+      };
+    });
+
+    const map = storeList.reduce((acc, x) => {
+      const key = (x.TERRITORY || "").toString().trim() || "UNKNOWN";
+      const regionId = (x.REGION_ID || "").toString().trim() || "UNKNOWN";
+
+      if (!acc[key]) {
+        acc[key] = {
+          STORE_ID: "",
+          STORE_NAME: "",
+          REGION_ID: regionId,
+          TERRITORY: key,
+          Sales: 0,
+          SalesPrevious: 0,
+          Growth: 0,
+          IS_TERRITORY_TOTAL: true,
+        };
+      }
+      acc[key].Sales += x.Sales;
+      acc[key].SalesPrevious += x.SalesPrevious;
+      return acc;
+    }, {});
+
+    const territoryList = Object.values(map).map((t) => {
+      t.Growth =
+        t.SalesPrevious === 0
+          ? 0
+          : ((t.Sales - t.SalesPrevious) / t.SalesPrevious) * 100;
+      return t;
+    });
 
     let sortedData = [];
     switch (sortMode) {
-      case "lowestSales":
-        sortedData = [...negativeStores].sort((a, b) => {
-          const dropA = (a[m.ly] ?? 0) - (a[m.cy] ?? 0);
-          const dropB = (b[m.ly] ?? 0) - (b[m.cy] ?? 0);
-          return dropB - dropA;
-        });
-        break;
-      case "highestLost":
+      case "lowestSales": {
+        const negativeStores = storeList.filter((x) => x.Growth < 0);
         sortedData = [...negativeStores].sort(
-          (a, b) => getNormalizedLostSales(a) - getNormalizedLostSales(b),
+          (a, b) => (a.Sales - a.SalesPrevious) - (b.Sales - b.SalesPrevious),
         );
         break;
-      case "territoryLowestSales":
-        sortedData = [...negativeTerritories].sort((a, b) => {
-          const dropA = (a[m.ly] ?? 0) - (a[m.cy] ?? 0);
-          const dropB = (b[m.ly] ?? 0) - (b[m.cy] ?? 0);
-          return dropB - dropA;
-        });
+      }
+      case "highestLost": {
+        const negativeStores = storeList.filter((x) => x.Growth < 0);
+        sortedData = [...negativeStores].sort(
+          (a, b) => (Number(a.Growth) || 0) - (Number(b.Growth) || 0),
+        );
         break;
-      case "territoryHighestLost":
+      }
+      case "territoryLowestSales": {
+        const negativeTerritories = territoryList.filter((x) => x.Growth < 0);
         sortedData = [...negativeTerritories].sort(
-          (a, b) => getNormalizedLostSales(a) - getNormalizedLostSales(b),
+          (a, b) => (a.Sales - a.SalesPrevious) - (b.Sales - b.SalesPrevious),
         );
         break;
+      }
+      case "territoryHighestLost": {
+        const negativeTerritories = territoryList.filter((x) => x.Growth < 0);
+        sortedData = [...negativeTerritories].sort(
+          (a, b) => (Number(a.Growth) || 0) - (Number(b.Growth) || 0),
+        );
+        break;
+      }
       default:
         break;
     }
@@ -242,7 +272,7 @@ export default function LaggardsTab({
     }
 
     return result;
-  }, [data, sortMode, m, loading, search, getNormalizedLostSales]);
+  }, [data, sortMode, loading, search]);
 
   if (loading) {
     return <div className="loading-view">Loading Laggards...</div>;
@@ -254,7 +284,6 @@ export default function LaggardsTab({
 
   return (
     <div>
-      {/* Category Selection Bar with 4 Thin Curved Border Lines (.borderbar) */}
       <div
         style={{
           marginBottom: "40px",
@@ -274,7 +303,7 @@ export default function LaggardsTab({
 
           <label className="img-radio" style={{ cursor: "pointer", margin: 0 }}>
             <input
-              id="rad_LagS_01"
+              id="rad_TopS_01"
               type="radio"
               name="top_laggards_group"
               checked={sortMode === "lowestSales"}
@@ -284,8 +313,12 @@ export default function LaggardsTab({
             <div className="radio-card">
               <img
                 className="radio-icon"
-                src={sortMode === "lowestSales" ? BotSalesSelImg : BotSalesImg}
-                alt="Bottom Stores Sales"
+                src={
+                  sortMode === "lowestSales"
+                    ? BotSalesSelImg
+                    : BotSalesImg
+                }
+                alt="Lowest Sales"
               />
               <span>
                 Bottom 10 Stores by
@@ -310,7 +343,7 @@ export default function LaggardsTab({
                     ? BotSalesLiftSelImg
                     : BotSalesLiftImg
                 }
-                alt="Bottom Stores Drop %"
+                alt="Highest Lost %"
               />
               <span>
                 Bottom 10 Stores by
@@ -373,26 +406,22 @@ export default function LaggardsTab({
         </div>
       </div>
 
-      {/* Tiles Grid matching Dotnet logardsSales.js */}
       <div id="topLaggards_Grid" className="tile-grid">
         {rankedData.map(({ row, rank, rankClass }) => {
-          const ly = Number(row[m.ly] ?? 0);
-          const cy = Number(row[m.cy] ?? 0);
+          const ly = row.SalesPrevious;
+          const cy = row.Sales;
           const sTotal = ly + cy || 1;
           const wPrev = (ly / sTotal) * 100;
           const wSales = (cy / sTotal) * 100;
           const dDrop = ly - cy;
           const isPercentageMode =
-            sortMode === "storesByLift" || sortMode === "territoryByLift";
-          const pct = getNormalizedLift(row);
-          const isTerritory = sortMode.includes("territory");
-          const medal = MEDALS[rank];
+            sortMode === "highestLost" || sortMode === "territoryHighestLost";
+          const pct = row.Growth;
+          const isTerritory = !!row.IS_TERRITORY_TOTAL;
 
           const deltaText = isPercentageMode
             ? `${pct < 0 ? "Drop" : "Lift"} ${Math.abs(Number(pct || 0)).toFixed(2)}%`
-            : `${dDrop > 0 ? "Drop" : "Lift"} $${formatNumber(Math.abs(dDrop))}`;
-          const deltaColor =
-            (isPercentageMode ? pct >= 0 : dDrop <= 0) ? "green" : "red";
+            : `${dDrop >= 0 ? "Drop" : "Lift"} $${formatNumber(Math.abs(dDrop))}`;
 
           return (
             <div
@@ -451,11 +480,11 @@ export default function LaggardsTab({
 
                   <div className="mini-values">
                     <div>
-                      ${formatNumber(ly)} / ${formatNumber(cy)}
+                      {`$${formatNumber(ly)} / $${formatNumber(cy)}`}
                     </div>
                     <div
                       className="delta"
-                      style={{ color: deltaColor }}
+                      style={{ color: "red" }}
                     >
                       {deltaText}
                     </div>
@@ -464,7 +493,7 @@ export default function LaggardsTab({
 
                 <div className="tile-sales">
                   <div className="lbl">Sales</div>
-                  <div className="val">${formatNumber(cy)}</div>
+                  <div className="val">{`$${formatNumber(cy)}`}</div>
                 </div>
               </div>
             </div>

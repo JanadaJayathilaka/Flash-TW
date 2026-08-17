@@ -2304,13 +2304,13 @@ body {
 .rank-10_topSales { background: #7a1fa2; }
 
 /* Laggards Rank Background Colors */
-.rank-1_laggards { background: #b71c1c; }
-.rank-2_laggards { background: #c62828; }
-.rank-3_laggards { background: #d32f2f; }
-.rank-4_laggards { background: #e65100; }
+.rank-1_laggards { background: #b61c1c; }
+.rank-2_laggards { background: #c62827; }
+.rank-3_laggards { background: #e53f3d; }
+.rank-4_laggards { background: #f5511e; }
 .rank-5_laggards { background: #ef6c00; }
-.rank-6_laggards { background: #6d4c41; }
-.rank-7_laggards { background: #8d6e63; }
-.rank-8_laggards { background: #f57f17; }
-.rank-9_laggards { background: #f9a825; }
-.rank-10_laggards { background: #fbc02d; }
+.rank-6_laggards { background: #795548; }
+.rank-7_laggards { background: #997d74; }
+.rank-8_laggards { background: #ff9f00; }
+.rank-9_laggards { background: #ffb019; }
+.rank-10_laggards { background: #f9ba00; }
