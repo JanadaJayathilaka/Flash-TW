@@ -262,29 +262,6 @@ export default function AllSalesTab({
     const curText = currencyMode === "2" ? "NZ$" : "AU$";
     const calText = calendarMode === "fiscal" ? "Fiscal" : "Calendar";
     const titleStr = `FLASH SALES ${curText} (${calText}) ON ${DT_1_Str().toUpperCase()}`;
-    const now = new Date();
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
-    const yy = String(now.getFullYear()).slice(-2);
-    const mmm = months[now.getMonth()];
-    const dd = String(now.getDate()).padStart(2, "0");
-    let hours = now.getHours();
-    const mins = String(now.getMinutes()).padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
-    const timestampStr = `Generated: '${yy} ${mmm} ${dd} | ${hours}:${mins} ${ampm} USA, Pacific`;
 
     const headers = [
       "STORE / TERRITORY",
@@ -305,7 +282,6 @@ export default function AllSalesTab({
 
     const titleRow = new Array(headers.length).fill("");
     titleRow[0] = titleStr;
-    titleRow[headers.length - 1] = timestampStr;
 
     const filterRows = [];
     if (search && search.trim() !== "") {
@@ -314,7 +290,10 @@ export default function AllSalesTab({
       filterRows.push(filterRow);
     }
 
-    const dataRows = displayRows.map((r) => {
+    const tableRows = [];
+    let grandTotalRow = null;
+
+    displayRows.forEach((r) => {
       const isGt = !!r.IS_GRAND_TOTAL;
       const isTerr = !!r.IS_TERRITORY_TOTAL;
       const storeName = isGt
@@ -331,7 +310,7 @@ export default function AllSalesTab({
               : `'${r.DATE_OPENED.length >= 10 ? r.DATE_OPENED.substring(2) : r.DATE_OPENED}`
             : "";
 
-      return [
+      const rowData = [
         storeName,
         firstSale,
         Math.round(r.DAY_SALES_LY ?? 0),
@@ -347,7 +326,17 @@ export default function AllSalesTab({
         Math.round(r.YTD_SALES_CY ?? 0),
         `${(r.YTD_SALES_COMP ?? 0).toFixed(2)}%`,
       ];
+
+      if (isGt) {
+        grandTotalRow = rowData;
+      } else {
+        tableRows.push(rowData);
+      }
     });
+
+    const dataRows = grandTotalRow
+      ? [...tableRows, new Array(headers.length).fill(""), grandTotalRow]
+      : tableRows;
 
     const allRows = [titleRow, ...filterRows, [], headers, ...dataRows];
 

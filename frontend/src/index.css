@@ -195,11 +195,11 @@ body {
 .header-pill {
   background-color: #00FFFF;
   color: #000000;
-  padding: 5px 7px;
-  border-radius: 0 0 5px 5px;
+  padding: 3px 7px;
+  border-radius: 0 0 7px 7px;
   border-top: none;
   font-family: var(--font-family);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 400;
   letter-spacing: 0;
 }

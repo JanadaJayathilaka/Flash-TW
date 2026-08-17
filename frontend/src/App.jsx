@@ -515,7 +515,7 @@ export default function App() {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  fontSize: "1.5rem",
+                  fontSize: "23px",
                   textTransform: "uppercase",
                   lineHeight: 1.2,
                 }}
