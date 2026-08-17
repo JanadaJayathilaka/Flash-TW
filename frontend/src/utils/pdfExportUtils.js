@@ -754,7 +754,8 @@ export async function generateTilesPDF(
       el.style.display = "none";
     });
 
-  clone.querySelectorAll(".tile").forEach((tile) => {
+  const existingTiles = Array.from(clone.querySelectorAll(".tile"));
+  existingTiles.forEach((tile) => {
     tile.style.minHeight = "250px";
     tile.style.padding = "20px 24px";
     tile.style.boxSizing = "border-box";
@@ -765,6 +766,29 @@ export async function generateTilesPDF(
     tile.style.flexDirection = "column";
     tile.style.justifyContent = "space-between";
   });
+
+  // Ensure the print page grid always reserves the full 10-card capacity layout (5 rows x 2 columns).
+  // If there are fewer than 10 cards (e.g. 1, 2, or 3 cards), fill the remaining slots with invisible placeholders.
+  // This guarantees that:
+  // 1) The 10-card cards section remains vertically centered on the page.
+  // 2) Cards fill in order from the top-left corner (Row 1 Col 1 -> Row 1 Col 2 -> Row 2 Col 1...).
+  // 3) When there are only 1 or 2 cards, they stay pinned to the top-left corner of the cards section instead of jumping to the middle.
+  const numTiles = existingTiles.length;
+  if (numTiles > 0 && numTiles < 10) {
+    const tileHeight = existingTiles[0]?.offsetHeight || 250;
+    for (let i = numTiles; i < 10; i++) {
+      const placeholder = document.createElement("div");
+      placeholder.className = "tile-placeholder";
+      placeholder.style.minHeight = `${tileHeight}px`;
+      placeholder.style.height = `${tileHeight}px`;
+      placeholder.style.visibility = "hidden";
+      placeholder.style.margin = "0";
+      placeholder.style.padding = "0";
+      placeholder.style.border = "none";
+      placeholder.style.boxSizing = "border-box";
+      clone.appendChild(placeholder);
+    }
+  }
 
   clone.querySelectorAll(".tile .tile-body").forEach((body) => {
     body.style.padding = "0";
