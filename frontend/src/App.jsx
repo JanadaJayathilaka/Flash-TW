@@ -848,7 +848,7 @@ export default function App() {
                   alignItems: "center",
                   justifyContent: "center",
                   position: "absolute",
-                  right: "120px",
+                  right: "160px",
                   top: "10px",
                   zIndex: 99999,
                   pointerEvents: "none",
