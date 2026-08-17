@@ -14,6 +14,51 @@ Chart.register(...registerables);
 
 const SMA_PERIOD = 7;
 
+function generate10YAxisTicks(minVal, maxVal) {
+  if (
+    !Number.isFinite(minVal) ||
+    !Number.isFinite(maxVal) ||
+    minVal >= maxVal
+  ) {
+    return [];
+  }
+  const rawStep = (maxVal - minVal) / 9;
+  const exponent = Math.floor(Math.log10(rawStep));
+  const fraction = rawStep / Math.pow(10, exponent);
+  let niceFraction;
+  if (fraction <= 1.5) niceFraction = 1;
+  else if (fraction <= 3) niceFraction = 2;
+  else if (fraction <= 7) niceFraction = 5;
+  else niceFraction = 10;
+  let step = niceFraction * Math.pow(10, exponent);
+
+  let startTick = Math.ceil(minVal / step) * step;
+  // If startTick is too close to minVal (e.g. 357000 vs 356839.6), skip to next round step (358000)
+  if (startTick - minVal < 0.35 * step) {
+    startTick += step;
+  }
+
+  const midTicks = [];
+  for (let val = startTick; val < maxVal; val += step) {
+    // If val is too close to maxVal (e.g. within 0.35 * step of 365582.4), skip it
+    if (maxVal - val < 0.35 * step) {
+      continue;
+    }
+    midTicks.push(val);
+  }
+
+  if (midTicks.length === 0) {
+    const fallbackStep = (maxVal - minVal) / 9;
+    for (let i = 1; i <= 8; i++) {
+      midTicks.push(Math.round((minVal + i * fallbackStep) / 100) * 100);
+    }
+  }
+
+  const allTicks = [minVal, ...midTicks, maxVal];
+  const uniqueTicks = Array.from(new Set(allTicks)).sort((a, b) => a - b);
+  return uniqueTicks.map((v) => ({ value: v }));
+}
+
 /**
  * Self-contained Chart Component using HTML5 canvas & Chart.js
  */
@@ -106,7 +151,7 @@ function AnalyticsChart({
               boxHeight: 12,
               font: {
                 family: "Montserrat",
-                size: 12,
+                size: 14,
                 weight: "600",
               },
               generateLabels: function (chart) {
@@ -122,8 +167,8 @@ function AnalyticsChart({
           },
           tooltip: {
             enabled: true,
-            titleFont: { family: "Montserrat", size: 12, weight: "bold" },
-            bodyFont: { family: "Montserrat", size: 11 },
+            titleFont: { family: "Montserrat", size: 14, weight: "bold" },
+            bodyFont: { family: "Montserrat", size: 13 },
             callbacks: {
               label: function (context) {
                 let label = context.dataset.label || "";
@@ -151,11 +196,15 @@ function AnalyticsChart({
               display: false,
             },
             ticks: {
+              autoSkip: true,
+              maxTicksLimit: 5,
+              maxRotation: 0,
+              minRotation: 0,
+              color: "#000000",
               font: {
                 family: "Montserrat",
-                size: 9,
+                size: 11,
               },
-              maxTicksLimit: 12,
             },
           },
           y: {
@@ -170,19 +219,33 @@ function AnalyticsChart({
               text: curLabel,
               font: {
                 family: "Montserrat",
-                size: 10,
+                size: 12,
                 weight: "bold",
               },
             },
             min: yMin,
             max: yMax,
+            afterBuildTicks: function (axis) {
+              const customTicks = generate10YAxisTicks(axis.min, axis.max);
+              if (customTicks.length > 0) {
+                axis.ticks = customTicks;
+              }
+            },
             ticks: {
               includeBounds: true,
+              color: "#000",
               font: {
                 family: "Montserrat",
-                size: 9,
+                size: 11,
               },
-              callback: function (value) {
+              callback: function (value, index, ticks) {
+                const isBoundary = index === 0 || index === ticks.length - 1;
+                if (isBoundary) {
+                  return Number(value).toLocaleString(undefined, {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  });
+                }
                 return Math.round(value).toLocaleString();
               },
             },
@@ -205,12 +268,12 @@ function AnalyticsChart({
     >
       <h4
         style={{
-          fontSize: "14px",
+          fontSize: "16px",
           fontWeight: 500,
           color: "#475569",
           textAlign: "left",
           marginBottom: "10px",
-          marginLeft: "30px",
+          marginLeft: "28px",
         }}
       >
         {title}
@@ -1021,7 +1084,7 @@ export default function AnalyticsTab({
           display: "flex",
           flexDirection: showBoth ? "row" : "column",
           flexWrap: "wrap",
-          gap: "20px",
+          gap: "30px",
           position: "relative",
           marginTop: "20px",
           width: "100%",
@@ -1067,7 +1130,7 @@ export default function AnalyticsTab({
                 <div
                   key={year}
                   style={{
-                    flex: showBoth ? "1 1 calc(50% - 10px)" : "1 1 100%",
+                    flex: showBoth ? "1 1 calc(50% - 20px)" : "1 1 100%",
                     minWidth: showBoth ? "300px" : "100%",
                     position: "relative",
                   }}
