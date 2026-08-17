@@ -1643,12 +1643,25 @@ body {
     print-color-adjust: exact !important;
   }
 
-  .sales-table-print th,
+  .sales-table-print th {
+    display: table-cell !important;
+    padding: 6px 4px !important;
+    font-size: 9px !important;
+    border-bottom: 2px solid #94a3b8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    text-align: right !important;
+    vertical-align: middle !important;
+    background: none !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+  }
+
   .sales-table-print td {
     display: table-cell !important;
     padding: 6px 4px !important;
     font-size: 9px !important;
-    border-bottom: 1px solid #cbd5e1 !important;
+    border-bottom: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     text-align: right !important;
@@ -1659,30 +1672,11 @@ body {
     text-align: left !important;
   }
 
-  .sales-table-print th:nth-child(2),
-  .sales-table-print td:nth-child(2),
-  .sales-table-print th:nth-child(5),
-  .sales-table-print td:nth-child(5),
-  .sales-table-print th:nth-child(8),
-  .sales-table-print td:nth-child(8),
-  .sales-table-print th:nth-child(11),
-  .sales-table-print td:nth-child(11),
-  .sales-table-print th:nth-child(14),
-  .sales-table-print td:nth-child(14) {
-    text-align: center !important;
-  }
-
-  /* Retain original layouts but remove backgrounds for clean printing */
-  .sales-table-print th {
-    background: none !important;
-    border-bottom: 2px solid #94a3b8 !important;
-    font-weight: 600 !important;
-    text-transform: uppercase !important;
-  }
-
   .sales-table-print th:first-child {
     position: static !important;
     background: none !important;
+    text-align: left !important;
+    vertical-align: bottom !important;
   }
 
   .sales-table-print td:first-child {
@@ -1708,12 +1702,14 @@ body {
     position: static !important;
     background: none !important;
     border-top: 2px solid #cbd5e1 !important;
+    color: #000000 !important;
   }
 
   .sales-table-print tr.grand-total-row td:first-child {
     position: static !important;
     background: none !important;
     border-top: 2px solid #cbd5e1 !important;
+    color: #000000 !important;
   }
 
   /* CY Data text color */

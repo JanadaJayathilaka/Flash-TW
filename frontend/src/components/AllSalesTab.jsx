@@ -1274,41 +1274,41 @@ export default function AllSalesTab({
       <table className="sales-table-print">
         <thead>
           <tr>
-            <th>STORE/TERRITORY</th>
-            <th>First Sale</th>
+            <th>STORE / TERRITORY</th>
+            <th>FIRST SALE</th>
             <th>
-              {lyYear} Wk {wk}, Day {dayDisplay} Net $
+              {lyYear} WK {wk}, DAY {dayDisplay} NET $
             </th>
             <th>
-              {cyYear} Wk {wk}, Day {dayDisplay} Net $
+              {cyYear} WK {wk}, DAY {dayDisplay} NET $
             </th>
             <th>
-              1 Day Comp {lyYear} to {cyYear}
+              1 DAY COMP {lyYear} TO {cyYear}
             </th>
             <th>
-              {lyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},{" "}
-              {isCalendar ? "MTD" : "WTD"} Net $
+              {lyYear} {isCalendar ? `MO ${monthStr}` : `WK ${wk}`},{" "}
+              {isCalendar ? "MTD" : "WTD"} NET $
             </th>
             <th>
-              {cyYear} {isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`},{" "}
-              {isCalendar ? "MTD" : "WTD"} Net $
+              {cyYear} {isCalendar ? `MO ${monthStr}` : `WK ${wk}`},{" "}
+              {isCalendar ? "MTD" : "WTD"} NET $
             </th>
             <th>
-              {isCalendar ? "MTD" : "WTD"} Comp {lyYear} to {cyYear}
+              {isCalendar ? "MTD" : "WTD"} COMP {lyYear} TO {cyYear}
             </th>
             <th>
-              {lyYear} Q{q}, QTD Net $
+              {lyYear} Q{q}, QTD NET $
             </th>
             <th>
-              {cyYear} Q{q}, QTD Net $
+              {cyYear} Q{q}, QTD NET $
             </th>
             <th>
-              QTD Comp {lyYear} to {cyYear}
+              QTD COMP {lyYear} TO {cyYear}
             </th>
-            <th>{lyYear}, YTD Net $</th>
-            <th>{cyYear}, YTD Net $</th>
+            <th>{lyYear} YTD NET $</th>
+            <th>{cyYear} YTD NET $</th>
             <th>
-              YTD Comp {lyYear} to {cyYear}
+              YTD COMP {lyYear} TO {cyYear}
             </th>
           </tr>
         </thead>

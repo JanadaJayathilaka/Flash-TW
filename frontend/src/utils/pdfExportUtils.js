@@ -100,22 +100,24 @@ export function generateSalesPDF({
 
   const mainTitle = `FLASH SALES ${currText} (${calText}) ON ${finalDateStr}`;
 
-  // 14 Table Columns
+  // 14 Table Columns (uppercase titles matching salesapp)
   const headers = [
-    ["STORE / TERRITORY",
-     "FIRST SALE",
-     `${lyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
-     `${cyYear} Wk ${wk}, Day ${dayDisplay} Net $`,
-     `1 Day Comp ${lyYear} to ${cyYear}`,
-     `${lyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? "MTD" : "WTD"} Net $`,
-     `${cyYear} ${isCalendar ? `Mo ${monthStr}` : `Wk ${wk}`}, ${isCalendar ? "MTD" : "WTD"} Net $`,
-     `${isCalendar ? "MTD" : "WTD"} Comp ${lyYear} to ${cyYear}`,
-     `${lyYear} Q${q}, QTD Net $`,
-     `${cyYear} Q${q}, QTD Net $`,
-     `QTD Comp ${lyYear} to ${cyYear}`,
-     `${lyYear} YTD Net $`,
-     `${cyYear} YTD Net $`,
-     `YTD Comp ${lyYear} to ${cyYear}`]
+    [
+      "STORE / TERRITORY",
+      "FIRST SALE",
+      `${lyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
+      `${cyYear} WK ${wk}, DAY ${dayDisplay} NET $`,
+      `1 DAY COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
+      `${cyYear} ${isCalendar ? `MO ${monthStr}` : `WK ${wk}`}, ${isCalendar ? "MTD" : "WTD"} NET $`,
+      `${isCalendar ? "MTD" : "WTD"} COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear} Q${q}, QTD NET $`,
+      `${cyYear} Q${q}, QTD NET $`,
+      `QTD COMP ${lyYear} TO ${cyYear}`,
+      `${lyYear} YTD NET $`,
+      `${cyYear} YTD NET $`,
+      `YTD COMP ${lyYear} TO ${cyYear}`,
+    ],
   ];
 
   // Group rows by Territory matching screen hierarchy
@@ -292,7 +294,12 @@ export function generateSalesPDF({
     const rawTotal = group.totalRow;
     const showTotal = !isSearching || rawTotal !== null;
     if (showTotal) {
-      const tLabel = rawTotal?.STORE_NAME || `${group.id} ${tName} Total`;
+      const regionPrefix = group.id ? `${group.id} ` : "";
+      let tLabel = rawTotal?.STORE_NAME || `${regionPrefix}${tName} Total`;
+      if (regionPrefix && !tLabel.startsWith(regionPrefix)) {
+        tLabel = `${regionPrefix}${tLabel}`;
+      }
+
       const totLyDay = rawTotal ? Number(rawTotal.DAY_SALES_LY ?? 0) : tLyDay;
       const totCyDay = rawTotal ? Number(rawTotal.DAY_SALES_CY ?? 0) : tCyDay;
       const totDayComp = rawTotal ? Number(rawTotal.DAY_SALES_COMP ?? 0) : calcComp(tCyDay, tLyDay);
@@ -335,7 +342,11 @@ export function generateSalesPDF({
   });
 
   // Calculate Grand Total across all store rows
-  const sum = (field) => allStoreRows.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
+  const allStoreRows = data.filter(
+    (r) => !r.IS_GRAND_TOTAL && !r.IS_TERRITORY_TOTAL,
+  );
+  const sum = (field) =>
+    allStoreRows.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
   const gLyDay = sum("DAY_SALES_LY");
   const gCyDay = sum("DAY_SALES_CY");
   const gLyWtd = sum("WTD_SALES_LY");
@@ -367,10 +378,6 @@ export function generateSalesPDF({
       formatNumber(gCyYtd),
       formatPercent(gYtdComp),
     ],
-    [
-      "0 Locations yet to report day's sales",
-      "", "", "", "", "", "", "", "", "", "", "", "", ""
-    ],
   ];
 
   function drawPageHeader() {
@@ -397,7 +404,7 @@ export function generateSalesPDF({
     doc.setFont("helvetica", "normal");
     doc.text(
       `Generated: ${formatPDFTimestamp(new Date(), true)}`,
-      pageWidth - 14.2,
+      pageWidth - 13.5,
       10,
       { align: "right" }
     );
@@ -414,8 +421,7 @@ export function generateSalesPDF({
     doc.text("Page " + pageNumber, pageWidth / 2, pageHeight - 5, { align: "center" });
   }
 
-  const GROUP_START_COLS = new Set([0, 1, 5, 8, 11]);
-  const GROUP_END_COLS = new Set([0, 4, 7, 10, 13]);
+  const GROUP_END_COLS = new Set([0, 1, 4, 7, 10, 13]);
   const CENTER_ALIGN_COLS = new Set([1, 4, 7, 10, 13]);
   const RIGHT_ALIGN_COLS = new Set([2, 3, 5, 6, 8, 9, 11, 12]);
   const CY_COLS = new Set([3, 6, 9, 12]);
@@ -425,7 +431,7 @@ export function generateSalesPDF({
     head: headers,
     body: body,
     foot: foot,
-    startY: (search || "").trim() ? 18 : 14,
+    startY: (search || "").trim() ? 17 : 13,
     margin: { top: 18, right: 13.5, bottom: 10, left: 13.5 },
     theme: "plain",
     showHead: "everyPage",
@@ -433,18 +439,18 @@ export function generateSalesPDF({
     columnStyles: {
       0: { cellWidth: 28 },
       1: { cellWidth: 13 },
-      2: { cellWidth: 18 },
-      3: { cellWidth: 18 },
-      4: { cellWidth: 19 },
-      5: { cellWidth: 18 },
-      6: { cellWidth: 18 },
-      7: { cellWidth: 19 },
-      8: { cellWidth: 18 },
-      9: { cellWidth: 18 },
-      10: { cellWidth: 19 },
-      11: { cellWidth: 18 },
-      12: { cellWidth: 18 },
-      13: { cellWidth: 19 },
+      2: { cellWidth: 17.5 },
+      3: { cellWidth: 17.5 },
+      4: { cellWidth: 17.85 },
+      5: { cellWidth: 17.5 },
+      6: { cellWidth: 17.5 },
+      7: { cellWidth: 17.85 },
+      8: { cellWidth: 17.5 },
+      9: { cellWidth: 17.5 },
+      10: { cellWidth: 17.85 },
+      11: { cellWidth: 17.5 },
+      12: { cellWidth: 17.5 },
+      13: { cellWidth: 17.85 },
     },
     styles: {
       fontSize: 7,
@@ -460,7 +466,7 @@ export function generateSalesPDF({
       fontStyle: "bold",
       halign: "center",
       valign: "middle",
-      fontSize: 7,
+      fontSize: 6.8,
       cellPadding: 1.2,
     },
     footStyles: {
@@ -470,12 +476,16 @@ export function generateSalesPDF({
     },
     didParseCell: function (dataCell) {
       const colIndex = dataCell.column.index;
-      const lastColIndex = dataCell.table.columns.length - 1;
 
       // Alignments
       if (dataCell.section === "head") {
-        dataCell.cell.styles.halign = "center";
-        dataCell.cell.styles.valign = "middle";
+        if (colIndex === 0) {
+          dataCell.cell.styles.halign = "left";
+          dataCell.cell.styles.valign = "bottom";
+        } else {
+          dataCell.cell.styles.halign = "center";
+          dataCell.cell.styles.valign = "middle";
+        }
       } else {
         if (RIGHT_ALIGN_COLS.has(colIndex)) {
           dataCell.cell.styles.halign = "right";
@@ -486,41 +496,33 @@ export function generateSalesPDF({
         }
       }
 
-      // Border widths
-      dataCell.cell.styles.lineColor = [120, 120, 120];
+      dataCell.cell.styles.lineColor = [160, 175, 195];
 
       let topBW = 0;
-      let bottomBW = 0;
-      let leftBW = 0;
       let rightBW = 0;
+      let bottomBW = 0;
+      let leftBW = colIndex === 0 ? 0.35 : 0;
 
-      if (GROUP_START_COLS.has(colIndex) || colIndex === 0) {
-        leftBW = 0.4;
-      }
-      if (GROUP_END_COLS.has(colIndex) || colIndex === lastColIndex) {
-        rightBW = 0.4;
+      if (GROUP_END_COLS.has(colIndex)) {
+        rightBW = 0.35;
       }
 
       if (dataCell.section === "head") {
-        topBW = 0.4;
-        bottomBW = 0.4;
+        topBW = 0.35;
+        bottomBW = 0.35;
       } else if (dataCell.section === "body") {
         const meta = rowMeta[dataCell.row.index];
-        if (meta?.isTerritoryTotal) {
-          topBW = 0;
-          bottomBW = 0;
+        if (meta && meta.isTerritoryTotal) {
           dataCell.cell.styles.fontStyle = "bold";
+          dataCell.cell.styles.textColor = [0, 0, 0];
         }
 
-        // CY columns color -> #3A7785 -> [58, 119, 133]
         if (CY_COLS.has(colIndex)) {
           dataCell.cell.styles.textColor = [58, 119, 133];
         }
 
-        // Comp % columns color -> green [40, 167, 69] / red [220, 53, 69]
         if (COMP_COLS.has(colIndex) && meta) {
-          const compIdx = COMP_COLS.get(colIndex);
-          const compVal = meta.comps[compIdx];
+          const compVal = meta.comps[COMP_COLS.get(colIndex)];
           if (compVal > 0) {
             dataCell.cell.styles.textColor = [40, 167, 69];
           } else if (compVal < 0) {
@@ -528,39 +530,10 @@ export function generateSalesPDF({
           }
         }
       } else if (dataCell.section === "foot") {
-        const lastFootRowIndex = dataCell.table.foot.length - 1;
-        const isLocationRow = dataCell.row.index === lastFootRowIndex;
-
-        if (isLocationRow) {
-          if (colIndex === 0) {
-            dataCell.cell.colSpan = dataCell.table.columns.length;
-          }
-          dataCell.cell.styles.fontStyle = "normal";
-          dataCell.cell.styles.fillColor = [255, 255, 255];
-          dataCell.cell.styles.textColor = [40, 40, 40];
-          dataCell.cell.styles.fontSize = 8;
-          topBW = 0;
-          bottomBW = 0;
-          leftBW = 0;
-          rightBW = 0;
-        } else {
-          topBW = 0.4;
-          bottomBW = 0.4;
-          dataCell.cell.styles.fontStyle = "bold";
-
-          if (CY_COLS.has(colIndex)) {
-            dataCell.cell.styles.textColor = [58, 119, 133];
-          }
-          if (COMP_COLS.has(colIndex)) {
-            const gComps = [gDayComp, gWtdComp, gQtdComp, gYtdComp];
-            const compVal = gComps[COMP_COLS.get(colIndex)];
-            if (compVal > 0) {
-              dataCell.cell.styles.textColor = [40, 167, 69];
-            } else if (compVal < 0) {
-              dataCell.cell.styles.textColor = [220, 53, 69];
-            }
-          }
-        }
+        topBW = 0.35;
+        bottomBW = 0.35;
+        dataCell.cell.styles.fontStyle = "bold";
+        dataCell.cell.styles.textColor = [0, 0, 0];
       }
 
       dataCell.cell.styles.lineWidth = {
@@ -570,49 +543,47 @@ export function generateSalesPDF({
         left: leftBW,
       };
     },
-    didDrawPage: function () {
+    didDrawPage: function (pageData) {
       drawPageHeader();
       drawPageNumber();
+
+      // Render subtitle below table on last page
+      const pageInfo = doc.internal.getCurrentPageInfo();
+      if (pageInfo.pageNumber === doc.internal.getNumberOfPages()) {
+        const finalY = pageData.cursor?.y || 200;
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(60, 60, 60);
+        doc.text("0 Locations yet to report day's sales", 13.5, finalY + 4);
+      }
     },
   });
 
-  openPDFOutput(doc, isPrint);
+  const now = new Date();
+  const pad2 = (n) => String(n).padStart(2, "0");
+  const fnTs = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}${pad2(now.getHours())}${pad2(now.getMinutes())}${pad2(now.getSeconds())}`;
+  const filename = `FlashSales_${calendarMode}_${fnTs}`;
+  openPDFOutput(doc, isPrint, filename);
 }
 
 /**
  * Helper to handle PDF download vs print opening
  */
-function openPDFOutput(doc, isPrint) {
-  const pdfBlob = doc.output("blob");
-  const blobUrl = URL.createObjectURL(pdfBlob);
-
+function openPDFOutput(doc, isPrint, filename = "FlashSales") {
   if (isPrint) {
-    const iframe = document.createElement("iframe");
-    iframe.style.position = "fixed";
-    iframe.style.right = "0";
-    iframe.style.bottom = "0";
-    iframe.style.width = "0";
-    iframe.style.height = "0";
-    iframe.style.border = "0";
-    iframe.src = blobUrl;
-    document.body.appendChild(iframe);
-
-    const triggerPrint = () => {
-      try {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-      } catch (err) {
-        console.error("Print error:", err);
+    try {
+      doc.autoPrint();
+      const blobUrl = doc.output("bloburl");
+      const win = window.open(blobUrl, "_blank");
+      if (!win) {
+        window.print();
       }
-    };
-
-    iframe.onload = () => {
-      setTimeout(triggerPrint, 200);
-    };
-
-    setTimeout(triggerPrint, 500);
+    } catch {
+      window.print();
+    }
   } else {
-    window.open(blobUrl, "_blank");
+    const fn = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+    doc.save(fn);
   }
 }
 
