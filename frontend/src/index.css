@@ -648,7 +648,8 @@ body {
 .sales-table th {
   background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
   color: #334155;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -667,6 +668,7 @@ body {
   background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
   z-index: 11;
   border-bottom: 1px solid #cbd5e1;
+  font-weight: 600;
 }
 
 .sales-table td:first-child {
@@ -685,7 +687,7 @@ body {
 /* Column Widths */
 .sales-table th:nth-child(1),
 .sales-table td:nth-child(1) {
-  width: 22%;
+  width: 17%;
   flex-shrink: 0;
 }
 
@@ -705,7 +707,7 @@ body {
 .sales-table td:nth-child(11),
 .sales-table th:nth-child(12),
 .sales-table td:nth-child(12) {
-  width: 6.25%;
+  width: 6.625%;
   flex-shrink: 0;
 }
 
@@ -717,7 +719,7 @@ body {
 .sales-table td:nth-child(10),
 .sales-table th:nth-child(13),
 .sales-table td:nth-child(13) {
-  width: 7%;
+  width: 7.5%;
   flex-shrink: 0;
 }
 
@@ -1659,6 +1661,8 @@ body {
   .sales-table-print th {
     background: none !important;
     border-bottom: 2px solid #94a3b8 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
   }
 
   .sales-table-print th:first-child {
