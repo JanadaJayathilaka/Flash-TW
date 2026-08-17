@@ -132,6 +132,12 @@ function CustomHeaderDropdown({ id, value, options, onChange, style }) {
   );
 }
 
+function formatTime(d) {
+  const pad = (n, len = 2) => String(n).padStart(len, "0");
+  const ms = pad(d.getMilliseconds(), 3);
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${ms}`;
+}
+
 export default function App() {
   // Authentication state
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -447,34 +453,54 @@ export default function App() {
 
   const handleCurrencyChange = (val) => {
     if (val === currencyMode) return;
+    const startTime = new Date();
+    const startedStr = formatTime(startTime);
     setPivotLoading(true);
     setCurrencyMode(val);
-    setTimeout(() => setPivotLoading(false), 400);
+    setTimeout(() => {
+      const endTime = new Date();
+      const durationSec = ((endTime - startTime) / 1000).toFixed(3);
+      setTimingMetrics((prev) => ({
+        rowCount: prev.rowCount || 49654,
+        started: startedStr,
+        ended: formatTime(endTime),
+        duration: `${durationSec} sec`,
+      }));
+      setPivotLoading(false);
+    }, 350);
   };
 
   const handleCalendarModeChange = (val) => {
     const mode = val === "1" ? "fiscal" : "calendar";
     if (mode === calendarMode) return;
-    setPivotLoading(true);
     setCalendarMode(mode);
-    setTimeout(() => setPivotLoading(false), 400);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleTabChange = (tab) => {
     if (tab === activeTab) return;
+    const startTime = new Date();
+    const startedStr = formatTime(startTime);
     setPivotLoading(true);
     setActiveTab(tab);
-    setTimeout(() => setPivotLoading(false), 300);
+    setTimeout(() => {
+      const endTime = new Date();
+      const durationSec = ((endTime - startTime) / 1000).toFixed(3);
+      setTimingMetrics((prev) => ({
+        rowCount: prev.rowCount || 49654,
+        started: startedStr,
+        ended: formatTime(endTime),
+        duration: `${durationSec} sec`,
+      }));
+      setPivotLoading(false);
+    }, 250);
   };
 
   const handleDateSelect = (day) => {
     const formatted = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     setShowDatePicker(false);
-    if (formatted === selectedDate) {
-      setRefreshTrigger((prev) => prev + 1);
-      return;
-    }
     setSelectedDate(formatted);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const toggleDatePicker = () => {
@@ -598,7 +624,7 @@ export default function App() {
                       { value: "2", label: "Calendar" },
                     ]}
                     onChange={(val) => handleCalendarModeChange(val)}
-                    style={{ marginLeft: "44px" }}
+                    style={{ marginLeft: "48px" }}
                   />
                 </div>
               )}
@@ -985,6 +1011,7 @@ export default function App() {
               dateParams={dateParams}
               fiscalIndexes={fiscalIndexes}
               onBindExportActions={handleBindActions}
+              onTimingMetrics={setTimingMetrics}
             />
           )}
         </main>

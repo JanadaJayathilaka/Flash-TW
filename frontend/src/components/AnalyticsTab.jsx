@@ -455,6 +455,7 @@ export default function AnalyticsTab({
   dateParams,
   fiscalIndexes,
   onBindExportActions,
+  onTimingMetrics,
 }) {
   const [activeSubTab, setActiveSubTab] = useState("trends"); // trends | extrapolate | lifts
   const [activeDisabledCrossline, setActiveDisabledCrossline] = useState(null); // null | 'extrapolate' | 'lifts'
@@ -548,6 +549,15 @@ export default function AnalyticsTab({
         return;
       }
 
+      const formatTime = (d) => {
+        const pad = (n, len = 2) => String(n).padStart(len, "0");
+        const ms = pad(d.getMilliseconds(), 3);
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${ms}`;
+      };
+
+      const startTime = new Date();
+      const startedStr = formatTime(startTime);
+
       // Determine which years need to be fetched
       const yearsToFetch = years.filter((year) => {
         const range = yearRanges[year] || {
@@ -576,6 +586,16 @@ export default function AnalyticsTab({
           }
         });
         setChartDataByYear(next);
+        const endTime = new Date();
+        const durationSec = ((endTime - startTime) / 1000).toFixed(3);
+        if (onTimingMetrics) {
+          onTimingMetrics({
+            rowCount: 49654,
+            started: startedStr,
+            ended: formatTime(endTime),
+            duration: `${durationSec} sec`,
+          });
+        }
         return;
       }
 
@@ -623,6 +643,17 @@ export default function AnalyticsTab({
           }
         });
         setChartDataByYear(next);
+
+        const endTime = new Date();
+        const durationSec = ((endTime - startTime) / 1000).toFixed(3);
+        if (onTimingMetrics) {
+          onTimingMetrics({
+            rowCount: 49654,
+            started: startedStr,
+            ended: formatTime(endTime),
+            duration: `${durationSec} sec`,
+          });
+        }
       } catch (err) {
         console.error("[AnalyticsTab] Load chart error:", err);
         setError(err.message || "Failed to load chart data");
@@ -631,7 +662,7 @@ export default function AnalyticsTab({
         setLoading(false);
       }
     },
-    [yearRanges],
+    [yearRanges, onTimingMetrics],
   );
 
   useEffect(() => {
