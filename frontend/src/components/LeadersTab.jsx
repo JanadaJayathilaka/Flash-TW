@@ -377,8 +377,17 @@ export default function LeadersTab({
           const wPrev = (ly / sTotal) * 100;
           const wSales = (cy / sTotal) * 100;
           const dLift = cy - ly;
+          const isPercentageMode =
+            sortMode === "storesByLift" || sortMode === "territoryByLift";
+          const pct = getNormalizedLift(row);
           const isTerritory = sortMode.includes("territory");
           const medal = MEDALS[rank];
+
+          const deltaText = isPercentageMode
+            ? `${pct < 0 ? "Drop" : "Lift"} ${Math.abs(Number(pct || 0)).toFixed(2)}%`
+            : `${dLift >= 0 ? "Lift" : "Drop"} $${formatNumber(Math.abs(dLift))}`;
+          const deltaColor =
+            (isPercentageMode ? pct >= 0 : dLift >= 0) ? "green" : "red";
 
           return (
             <div
@@ -448,11 +457,9 @@ export default function LeadersTab({
                     </div>
                     <div
                       className="delta"
-                      style={{ color: dLift >= 0 ? "green" : "red" }}
+                      style={{ color: deltaColor }}
                     >
-                      {dLift >= 0
-                        ? `Lift $${formatNumber(dLift)}`
-                        : `Drop $${formatNumber(Math.abs(dLift))}`}
+                      {deltaText}
                     </div>
                   </div>
                 </div>

@@ -382,8 +382,17 @@ export default function LaggardsTab({
           const wPrev = (ly / sTotal) * 100;
           const wSales = (cy / sTotal) * 100;
           const dDrop = ly - cy;
+          const isPercentageMode =
+            sortMode === "storesByLift" || sortMode === "territoryByLift";
+          const pct = getNormalizedLift(row);
           const isTerritory = sortMode.includes("territory");
           const medal = MEDALS[rank];
+
+          const deltaText = isPercentageMode
+            ? `${pct < 0 ? "Drop" : "Lift"} ${Math.abs(Number(pct || 0)).toFixed(2)}%`
+            : `${dDrop > 0 ? "Drop" : "Lift"} $${formatNumber(Math.abs(dDrop))}`;
+          const deltaColor =
+            (isPercentageMode ? pct >= 0 : dDrop <= 0) ? "green" : "red";
 
           return (
             <div
@@ -446,11 +455,9 @@ export default function LaggardsTab({
                     </div>
                     <div
                       className="delta"
-                      style={{ color: dDrop > 0 ? "red" : "green" }}
+                      style={{ color: deltaColor }}
                     >
-                      {dDrop > 0
-                        ? `Drop $${formatNumber(dDrop)}`
-                        : `Lift $${formatNumber(Math.abs(dDrop))}`}
+                      {deltaText}
                     </div>
                   </div>
                 </div>
