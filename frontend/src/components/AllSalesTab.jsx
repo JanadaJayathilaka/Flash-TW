@@ -324,7 +324,7 @@ export default function AllSalesTab({
       const isGt = !!r.IS_GRAND_TOTAL;
       const isTerr = !!r.IS_TERRITORY_TOTAL;
       const storeName = isGt
-        ? "GRAND TOTAL"
+        ? "GRAND TOTAL 0 Locations yet to report day's sales"
         : isTerr
           ? r.STORE_NAME
           : `${r.STORE_ID != null ? `${r.STORE_ID} ` : ""}${r.STORE_NAME || ""}`;
@@ -340,17 +340,17 @@ export default function AllSalesTab({
       const rowData = [
         storeName,
         firstSale,
-        Math.round(r.DAY_SALES_LY ?? 0),
-        Math.round(r.DAY_SALES_CY ?? 0),
+        formatNumber(r.DAY_SALES_LY),
+        formatNumber(r.DAY_SALES_CY),
         `${(r.DAY_SALES_COMP ?? 0).toFixed(2)}%`,
-        Math.round(r.WTD_SALES_LY ?? 0),
-        Math.round(r.WTD_SALES_CY ?? 0),
+        formatNumber(r.WTD_SALES_LY),
+        formatNumber(r.WTD_SALES_CY),
         `${(r.WTD_SALES_COMP ?? 0).toFixed(2)}%`,
-        Math.round(r.QTD_SALES_LY ?? 0),
-        Math.round(r.QTD_SALES_CY ?? 0),
+        formatNumber(r.QTD_SALES_LY),
+        formatNumber(r.QTD_SALES_CY),
         `${(r.QTD_SALES_COMP ?? 0).toFixed(2)}%`,
-        Math.round(r.YTD_SALES_LY ?? 0),
-        Math.round(r.YTD_SALES_CY ?? 0),
+        formatNumber(r.YTD_SALES_LY),
+        formatNumber(r.YTD_SALES_CY),
         `${(r.YTD_SALES_COMP ?? 0).toFixed(2)}%`,
       ];
 
