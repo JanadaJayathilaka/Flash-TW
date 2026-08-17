@@ -770,7 +770,15 @@ body {
   font-weight: 700;
   border-top: 1px solid #cbd5e1;
   border-bottom: none;
-  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 48px;
+  padding: 8px 10px;
+}
+
+.sales-table tr.grand-total-row td:nth-child(3n+4) {
+  justify-content: center;
 }
 
 .sales-table tr.grand-total-row td:first-child {
@@ -781,7 +789,11 @@ body {
   background: linear-gradient(to top, #E8EFFA, #ffffff) !important;
   border-top: 1px solid #cbd5e1;
   border-bottom: none;
-  padding-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 48px;
+  padding: 8px 10px;
 }
 
 .comp-pos {
@@ -814,8 +826,11 @@ body {
   font-size: 9px;
   color: #64748b;
   font-weight: 400;
-  display: block;
-  margin-top: 2px;
+  position: absolute;
+  bottom: 4px;
+  left: 10px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 /* Cards (Leaders & Laggards) */
