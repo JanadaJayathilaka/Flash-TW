@@ -732,66 +732,203 @@ export async function generateTilesPDF(
   const originalElement = document.getElementById(containerId);
   if (!originalElement) return;
 
-  // 1. Create off-screen clone with 1400px width for unclipped 2-column print layout matching salesapp
+  // 1. Create off-screen clone with 1200px width for unclipped 2-column print layout matching salesapp
   const clone = originalElement.cloneNode(true);
   clone.id = `${containerId}_PrintClone`;
   clone.style.position = "absolute";
   clone.style.left = "-10000px";
   clone.style.top = "0";
-  clone.style.width = "1400px";
+  clone.style.width = "1200px";
   clone.style.background = "#ffffff";
   clone.style.display = "grid";
   clone.style.gridTemplateColumns = "1fr 1fr";
-  clone.style.gap = "28px";
-  clone.style.padding = "20px";
+  clone.style.gap = "22px";
+  clone.style.padding = "16px";
   clone.style.boxSizing = "border-box";
   document.body.appendChild(clone);
 
-  // Hide headers inside clone if any
+  // Hide empty/unneeded headers
   clone
-    .querySelectorAll("h1,h2,h3,h4,.header,.title,.grid-header,.section-title,.top-title")
+    .querySelectorAll(".tile-title, h1, h2, h3, h4, .header, .title, .grid-header, .section-title, .top-title")
     .forEach((el) => {
       el.style.display = "none";
     });
 
-  // Scale tile typography matching salesapp DownloadSalesTiles
-  const bump = (selector, size) => {
-    clone.querySelectorAll(selector).forEach((el) => {
-      el.style.fontSize = size;
-    });
-  };
-
-  bump(".tile-rank", "54px");
-  bump(".tile-store", "28px");
-  bump(".tile-territory", "18px");
-  bump(".mini-label", "15px");
-  bump(".mini-values", "15px");
-  bump(".tile-sales .lbl", "22px");
-  bump(".tile-sales .val", "26px");
-
   clone.querySelectorAll(".tile").forEach((tile) => {
-    tile.style.padding = "24px";
+    tile.style.minHeight = "250px";
+    tile.style.padding = "20px 24px";
     tile.style.boxSizing = "border-box";
+    tile.style.borderRadius = "12px";
+    tile.style.overflow = "visible";
+    tile.style.position = "relative";
+    tile.style.display = "flex";
+    tile.style.flexDirection = "column";
+    tile.style.justifyContent = "space-between";
+  });
+
+  clone.querySelectorAll(".tile .tile-body").forEach((body) => {
+    body.style.padding = "0";
+    body.style.width = "100%";
+    body.style.overflow = "visible";
+    body.style.display = "flex";
+    body.style.flexDirection = "column";
+    body.style.justifyContent = "space-between";
+    body.style.flex = "1";
+  });
+
+  // Rank: static position so it doesn't overlap store name
+  clone.querySelectorAll(".tile-rank").forEach((rank) => {
+    rank.style.fontSize = "42px";
+    rank.style.fontWeight = "800";
+    rank.style.lineHeight = "1";
+    rank.style.position = "static";
+    rank.style.margin = "0 0 6px 0";
+    rank.style.padding = "0";
+    rank.style.width = "auto";
+  });
+
+  // Medal: vertically centered circular badge
+  clone.querySelectorAll(".medal").forEach((medal) => {
+    medal.style.position = "absolute";
+    medal.style.top = "16px";
+    medal.style.right = "16px";
+    medal.style.width = "36px";
+    medal.style.height = "36px";
+    medal.style.borderRadius = "50%";
+    medal.style.display = "flex";
+    medal.style.flexDirection = "column";
+    medal.style.alignItems = "center";
+    medal.style.justifyContent = "center";
+    medal.style.padding = "0";
+    medal.style.margin = "0";
+    medal.style.boxSizing = "border-box";
+  });
+  clone.querySelectorAll(".medal i").forEach((icon) => {
+    icon.style.fontSize = "16px";
+    icon.style.lineHeight = "1";
+    icon.style.display = "block";
+    icon.style.position = "relative";
+    icon.style.top = "1px";
+    icon.style.margin = "0 0 1px 0";
+    icon.style.padding = "0";
+  });
+  clone.querySelectorAll(".medal span").forEach((span) => {
+    span.style.fontSize = "8px";
+    span.style.lineHeight = "1";
+    span.style.display = "block";
+    span.style.position = "relative";
+    span.style.top = "-3px";
+    span.style.margin = "0";
+    span.style.padding = "0";
+    span.style.fontWeight = "700";
+  });
+
+  // Store & Territory with full line-height and no overflow clipping
+  clone.querySelectorAll(".tile-store").forEach((store) => {
+    store.style.fontSize = "20px";
+    store.style.fontWeight = "800";
+    store.style.lineHeight = "1.35";
+    store.style.margin = "0 0 4px 0";
+    store.style.padding = "0";
+    store.style.overflow = "visible";
+    store.style.whiteSpace = "normal";
+    store.style.textOverflow = "clip";
+  });
+
+  clone.querySelectorAll(".tile-territory").forEach((ter) => {
+    ter.style.fontSize = "12.5px";
+    ter.style.lineHeight = "1.3";
+    ter.style.margin = "0 0 12px 0";
+    ter.style.padding = "0";
+    ter.style.overflow = "visible";
+    ter.style.whiteSpace = "normal";
+    ter.style.opacity = "0.95";
+  });
+
+  // Mini Bar Chart
+  clone.querySelectorAll(".mini-chart").forEach((chart) => {
+    chart.style.margin = "8px 0 10px 0";
+    chart.style.padding = "0";
+  });
+
+  clone.querySelectorAll(".mini-row").forEach((row) => {
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "8px";
+    row.style.margin = "0 0 5px 0";
   });
 
   clone.querySelectorAll(".mini-label").forEach((label) => {
-    label.style.width = "130px";
-    label.style.minWidth = "130px";
+    label.style.width = "100px";
+    label.style.minWidth = "100px";
+    label.style.fontSize = "12.5px";
+    label.style.fontWeight = "700";
+    label.style.lineHeight = "1.2";
   });
 
   clone.querySelectorAll(".mini-track").forEach((track) => {
-    track.style.height = "16px";
+    track.style.flex = "1";
+    track.style.height = "11px";
+    track.style.borderRadius = "999px";
   });
   clone.querySelectorAll(".mini-bar").forEach((bar) => {
     bar.style.height = "100%";
-  });
-  clone.querySelectorAll(".mini-row").forEach((row) => {
-    row.style.marginBottom = "10px";
+    bar.style.borderRadius = "999px";
   });
 
-  // Apply print-only padding-bottom to delta pill to fix vertical alignment in html2canvas
+  // Mini Values & Underline separation
+  clone.querySelectorAll(".mini-values").forEach((mv) => {
+    mv.style.display = "flex";
+    mv.style.alignItems = "center";
+    mv.style.justifyContent = "space-between";
+    mv.style.margin = "10px 0 0 0";
+    mv.style.padding = "0";
+  });
+
+  clone.querySelectorAll(".mini-values > div:first-child").forEach((el) => {
+    el.style.borderBottom = "1px solid rgba(255, 255, 255, 0.75)";
+    el.style.paddingBottom = "6px";
+    el.style.marginRight = "12px";
+    el.style.fontSize = "13px";
+    el.style.lineHeight = "1.2";
+    el.style.flex = "1";
+  });
+
+  // Delta pill badge: perfectly centered text horizontally and vertically
   clone.querySelectorAll(".mini-values .delta").forEach((el) => {
-    el.style.paddingBottom = "12px";
+    const text = el.textContent ? el.textContent.trim() : "";
+    const color = el.style.color || "#15803d";
+    el.innerHTML = `<span style="display:inline-block;position:relative;top:-6px;font-size:11.5px;font-weight:800;line-height:1;color:${color};">${text}</span>`;
+    el.style.display = "inline-flex";
+    el.style.alignItems = "center";
+    el.style.justifyContent = "center";
+    el.style.height = "22px";
+    el.style.padding = "0 10px";
+    el.style.borderRadius = "999px";
+    el.style.background = "#ffffff";
+    el.style.boxSizing = "border-box";
+    el.style.margin = "0";
+    el.style.whiteSpace = "nowrap";
+  });
+
+  // Bottom Sales Row
+  clone.querySelectorAll(".tile-sales").forEach((sales) => {
+    sales.style.display = "flex";
+    sales.style.justifyContent = "space-between";
+    sales.style.alignItems = "baseline";
+    sales.style.paddingTop = "10px";
+    sales.style.margin = "0";
+  });
+
+  clone.querySelectorAll(".tile-sales .lbl").forEach((lbl) => {
+    lbl.style.fontSize = "20px";
+    lbl.style.lineHeight = "1";
+  });
+
+  clone.querySelectorAll(".tile-sales .val").forEach((val) => {
+    val.style.fontSize = "24px";
+    val.style.fontWeight = "900";
+    val.style.lineHeight = "1";
   });
 
   try {
@@ -810,12 +947,18 @@ export async function generateTilesPDF(
 
     const pageWidth = doc.internal.pageSize.width;
     const pageHeight = doc.internal.pageSize.height;
-    const margin = 15;
+    const margin = 12;
 
-    const imgWidth = pageWidth - margin * 2;
+    let imgWidth = pageWidth - margin * 2;
     let finalHeight = (canvas.height * imgWidth) / canvas.width;
-    if (finalHeight > pageHeight - 35) {
-      finalHeight = pageHeight - 35;
+    let imgX = margin;
+    const imgY = subtitleStr ? (search ? 25 : 21) : (search ? 21 : 16);
+    const availableHeight = pageHeight - imgY - 12;
+
+    if (finalHeight > availableHeight) {
+      imgWidth = (availableHeight * canvas.width) / canvas.height;
+      imgX = (pageWidth - imgWidth) / 2;
+      finalHeight = availableHeight;
     }
 
     // Centered Title
@@ -842,13 +985,12 @@ export async function generateTilesPDF(
     doc.setFont("helvetica", "normal");
     doc.text(`Generated: ${formatPDFTimestamp(new Date())}`, pageWidth - margin, 12, { align: "right" });
 
-    const imgY = subtitleStr ? (search ? 25 : 21) : (search ? 21 : 16);
-    doc.addImage(imgData, "PNG", margin, imgY, imgWidth, finalHeight);
+    doc.addImage(imgData, "PNG", imgX, imgY, imgWidth, finalHeight);
 
     doc.setFontSize(8);
     doc.text("Page 1", pageWidth / 2, pageHeight - 5, { align: "center" });
 
-    openPDFOutput(doc, isPrint);
+    openPDFOutput(doc, isPrint, `${mainTitle.replace(/[^a-zA-Z0-9]/g, "_")}`);
   } catch (err) {
     console.error("Error generating tiles PDF:", err);
   } finally {
