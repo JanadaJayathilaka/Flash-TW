@@ -699,105 +699,117 @@ export default function App() {
             style={{
               opacity: 0.7,
               marginLeft: "auto",
+              width: "calc(50% - 170px)",
+              minWidth: "fit-content",
               display: "flex",
               alignItems: "center",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
+              position: "relative",
             }}
           >
             {activeTab === "allSales" && (
               <div
-                id="spSearchSales"
                 style={{
-                  position: "relative",
-                  top: "-7px",
+                  flex: 1,
                   display: "flex",
+                  justifyContent: "center",
                   alignItems: "center",
-                  marginLeft: "-80px",
-                  marginRight: "85px",
+                  minWidth: "365px",
                 }}
               >
-                {/* Window Scaling Control matching Dotnet #sZoomPanel - position: absolute; top: -40px; left: 0; margin-left: 21px */}
                 <div
-                  id="sZoomPanel"
+                  id="spSearchSales"
                   style={{
-                    position: "absolute",
-                    top: "-40px",
-                    left: 0,
-                    marginLeft: "21px",
-                    background: "#ccd9ec40",
-                  }}
-                >
-                  <div className="wc-card">
-                    <div className="wc-control">
-                      <span className="wc-label">Window</span>
-                      <fieldset className="wc-fieldset">
-                        <div className="wc-steps" id="wc-steps-window">
-                          {[75, 80, 90, 100].map((val) => (
-                            <label key={val} className="wc-step">
-                              <input
-                                className="wc-step-input"
-                                type="radio"
-                                name="wc-window"
-                                id={`wc-window-${val}`}
-                                value={val}
-                                checked={zoomLevel === val}
-                                onChange={() => setZoomLevel(val)}
-                              />
-                              <span className="wc-dot"></span>
-                              <span className="wc-step-text">{val}%</span>
-                            </label>
-                          ))}
-                        </div>
-                      </fieldset>
-                    </div>
-                  </div>
-                </div>
-
-                <i
-                  className="material-icons"
-                  style={{
-                    left: "21px",
                     position: "relative",
-                    top: "2px",
-                    marginBottom: "4px",
-                    fontSize: "18px",
-                    color: "#000",
-                    display: "inline-flex",
+                    top: "-7px",
+                    left: "9px",
+                    display: "flex",
                     alignItems: "center",
                   }}
                 >
-                  search
-                </i>
-                <input
-                  id="iSearchSales"
-                  type="text"
-                  className="search-input-field"
-                  style={{
-                    width: "290px",
-                    paddingLeft: "22px",
-                    paddingRight: "25px",
-                    fontSize: "10px",
-                  }}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Separate multiple arguments with ++"
-                  autoComplete="off"
-                />
-                <img
-                  src={clearSearchImg}
-                  alt="Clear"
-                  title="Clear"
-                  className={`srchBox ${!search ? "disabledSrch" : ""}`}
-                  style={{
-                    position: "relative",
-                    right: "20px",
-                    width: "13px",
-                    top: "3px",
-                    cursor: search ? "pointer" : "default",
-                    opacity: search ? 1 : 0.75,
-                  }}
-                  onClick={() => search && setSearch("")}
-                />
+                  {/* Window Scaling Control matching Dotnet #sZoomPanel - position: absolute; top: -40px; left: 0; margin-left: 21px */}
+                  <div
+                    id="sZoomPanel"
+                    style={{
+                      position: "absolute",
+                      top: "-40px",
+                      left: 0,
+                      marginLeft: "21px",
+                      background: "#ccd9ec40",
+                    }}
+                  >
+                    <div className="wc-card">
+                      <div className="wc-control">
+                        <span className="wc-label">Window</span>
+                        <fieldset className="wc-fieldset">
+                          <div className="wc-steps" id="wc-steps-window">
+                            {[75, 80, 90, 100].map((val) => (
+                              <label key={val} className="wc-step">
+                                <input
+                                  className="wc-step-input"
+                                  type="radio"
+                                  name="wc-window"
+                                  id={`wc-window-${val}`}
+                                  value={val}
+                                  checked={zoomLevel === val}
+                                  onChange={() => setZoomLevel(val)}
+                                />
+                                <span className="wc-dot"></span>
+                                <span className="wc-step-text">{val}%</span>
+                              </label>
+                            ))}
+                          </div>
+                        </fieldset>
+                      </div>
+                    </div>
+                  </div>
+
+                  <i
+                    className="material-icons"
+                    style={{
+                      left: "21px",
+                      position: "relative",
+                      top: "2px",
+                      marginBottom: "4px",
+                      fontSize: "18px",
+                      color: "#000",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    search
+                  </i>
+                  <input
+                    id="iSearchSales"
+                    type="text"
+                    className="search-input-field"
+                    style={{
+                      width: "350px",
+                      paddingLeft: "22px",
+                      paddingRight: "25px",
+                      fontSize: "10.5px",
+                    }}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Separate multiple arguments with ++"
+                    autoComplete="off"
+                  />
+                  <img
+                    src={clearSearchImg}
+                    alt="Clear"
+                    title="Clear"
+                    className={`srchBox ${!search ? "disabledSrch" : ""}`}
+                    style={{
+                      position: "relative",
+                      right: "20px",
+                      width: "13px",
+                      top: "3px",
+                      cursor: search ? "pointer" : "default",
+                      opacity: search ? 1 : 0.75,
+                    }}
+                    onClick={() => search && setSearch("")}
+                  />
+                </div>
               </div>
             )}
 
@@ -809,11 +821,11 @@ export default function App() {
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  marginLeft: activeTab === "allSales" ? "-65px" : "15px",
-                  marginRight: activeTab === "allSales" ? "20px" : "15px",
-                  position: "relative",
+                  position: "absolute",
+                  right: "120px",
                   top: "10px",
                   zIndex: 99999,
+                  pointerEvents: "none",
                 }}
               >
                 <img
@@ -833,6 +845,7 @@ export default function App() {
                 marginLeft: "auto",
                 justifyContent: "flex-end",
                 marginRight: "-16px",
+                flexShrink: 0,
               }}
             >
               {activeTab === "allSales" && (

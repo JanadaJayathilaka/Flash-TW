@@ -259,13 +259,15 @@ body {
 }
 
 .header-right {
-  flex: 0 0 auto;
+  flex: 0 0 calc(50% - 170px);
+  width: calc(50% - 170px);
+  min-width: fit-content;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin-left: auto;
   margin-right: 0;
-  gap: 8px;
+  position: relative;
 }
 
 .btn-bar {
@@ -1080,7 +1082,7 @@ body {
   background-color: transparent !important;
   outline: none !important;
   height: 2.2rem !important;
-  font-size: 10px !important;
+  font-size: 11px !important;
   color: #333 !important;
   box-shadow: none !important;
   transition: border-color 0.2s ease;
@@ -1093,7 +1095,7 @@ body {
 
 .search-input-field::placeholder {
   color: #999;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .small-select select {
