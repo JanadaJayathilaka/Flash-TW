@@ -271,16 +271,21 @@ export default function App() {
 
     const normalizeDate = (dStr) => {
       if (!dStr) return "";
-      const d = new Date(dStr);
+      const s = String(dStr).trim();
+      const match = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+      if (match) {
+        const yyyy = match[1];
+        const mm = String(match[2]).padStart(2, "0");
+        const dd = String(match[3]).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
+      }
+      const d = new Date(s);
       if (!isNaN(d.getTime())) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, "0");
         const dd = String(d.getDate()).padStart(2, "0");
         return `${yyyy}-${mm}-${dd}`;
       }
-      let s = String(dStr).trim();
-      if (s.includes("T")) s = s.split("T")[0];
-      if (s.includes(" ")) s = s.split(" ")[0];
       return s;
     };
 
@@ -312,38 +317,38 @@ export default function App() {
 
       const dayCY =
         row.DAY_SALES_CY > 0
-          ? Math.round(row.DAY_SALES_CY * auEqStart)
+          ? Number((row.DAY_SALES_CY * auEqStart).toFixed(0))
           : row.DAY_SALES_CY;
       const dayLY =
         row.DAY_SALES_LY > 0
-          ? Math.round(row.DAY_SALES_LY * auEqEnd)
+          ? Number((row.DAY_SALES_LY * auEqEnd).toFixed(0))
           : row.DAY_SALES_LY;
 
       const wtdCY =
         row.WTD_SALES_CY > 0
-          ? Math.round(row.WTD_SALES_CY * auEqStart)
+          ? Number((row.WTD_SALES_CY * auEqStart).toFixed(0))
           : row.WTD_SALES_CY;
       const wtdLY =
         row.WTD_SALES_LY > 0
-          ? Math.round(row.WTD_SALES_LY * auEqEnd)
+          ? Number((row.WTD_SALES_LY * auEqEnd).toFixed(0))
           : row.WTD_SALES_LY;
 
       const qtdCY =
         row.QTD_SALES_CY > 0
-          ? Math.round(row.QTD_SALES_CY * auEqStart)
+          ? Number((row.QTD_SALES_CY * auEqStart).toFixed(0))
           : row.QTD_SALES_CY;
       const qtdLY =
         row.QTD_SALES_LY > 0
-          ? Math.round(row.QTD_SALES_LY * auEqEnd)
+          ? Number((row.QTD_SALES_LY * auEqEnd).toFixed(0))
           : row.QTD_SALES_LY;
 
       const ytdCY =
         row.YTD_SALES_CY > 0
-          ? Math.round(row.YTD_SALES_CY * auEqStart)
+          ? Number((row.YTD_SALES_CY * auEqStart).toFixed(0))
           : row.YTD_SALES_CY;
       const ytdLY =
         row.YTD_SALES_LY > 0
-          ? Math.round(row.YTD_SALES_LY * auEqEnd)
+          ? Number((row.YTD_SALES_LY * auEqEnd).toFixed(0))
           : row.YTD_SALES_LY;
 
       return {

@@ -83,11 +83,6 @@ export default function AllSalesTab({
         };
       }
       if (r.IS_TERRITORY_TOTAL) {
-        const regionPrefix = r.REGION_ID ? `${r.REGION_ID} ` : "";
-        const name = r.STORE_NAME?.startsWith(regionPrefix)
-          ? r.STORE_NAME
-          : `${regionPrefix}${r.STORE_NAME || `${t} Total`}`;
-        groups[t].totalRow = { ...r, STORE_NAME: name };
         if (r.REGION_ID) {
           groups[t].regionId = Number(r.REGION_ID) || groups[t].regionId;
         }
@@ -99,15 +94,16 @@ export default function AllSalesTab({
       }
     });
 
-    // Sort stores within each territory alphabetically & ensure totalRow exists
+    // Sort stores within each territory alphabetically & dynamically compute totalRow from converted store values
     Object.keys(groups).forEach((t) => {
       groups[t].stores.sort((a, b) =>
         (a.STORE_NAME ?? "").localeCompare(b.STORE_NAME ?? ""),
       );
 
-      if (!groups[t].totalRow && groups[t].stores.length > 0) {
+      if (groups[t].stores.length > 0) {
         const stores = groups[t].stores;
-        const sum = (field) => stores.reduce((acc, s) => acc + (s[field] ?? 0), 0);
+        const sum = (field) =>
+          stores.reduce((acc, s) => acc + Number(s[field] ?? 0), 0);
         const cyDay = sum("DAY_SALES_CY");
         const lyDay = sum("DAY_SALES_LY");
         const cyWtd = sum("WTD_SALES_CY");
