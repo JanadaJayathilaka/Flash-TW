@@ -424,7 +424,7 @@ function StyledSelect({
                 }}
               >
                 {opt.label}
-                {/* Colored strikethrough line overlay */}
+                {/* Red strikethrough line overlay */}
                 {isDisabled && !noStrike && (
                   <span
                     style={{
@@ -432,10 +432,9 @@ function StyledSelect({
                       left: "8px",
                       right: "8px",
                       top: "50%",
-                      height: "0.8px",
-                      background: opt.strikeColor || "#94a3b8",
+                      height: "1px",
+                      background: opt.strikeColor || "#ff2529",
                       transform: "translateY(-50%)",
-                      borderRadius: "1px",
                       pointerEvents: "none",
                     }}
                   />
@@ -817,7 +816,6 @@ export default function AnalyticsTab({
                       label: year.toString(),
                       disabled:
                         year < 2025 || compareYearRight === year.toString(),
-                      strikeColor: getSalesColor(year),
                     })),
                   ]}
                   noBorder={true}
@@ -868,7 +866,6 @@ export default function AnalyticsTab({
                         label: year.toString(),
                         disabled:
                           year < 2025 || compareYearLeft === year.toString(),
-                        strikeColor: getSalesColor(year),
                       })),
                     ]}
                     noBorder={true}
@@ -894,19 +891,16 @@ export default function AnalyticsTab({
                         value: "W",
                         label: "Weekly",
                         disabled: true,
-                        strikeColor: "#94a3b8",
                       },
                       {
                         value: "Q",
                         label: "Quarterly",
                         disabled: true,
-                        strikeColor: "#94a3b8",
                       },
                       {
                         value: "Y",
                         label: "Yearly",
                         disabled: true,
-                        strikeColor: "#94a3b8",
                       },
                     ]}
                     noBorder={true}
@@ -955,25 +949,21 @@ export default function AnalyticsTab({
                           value: "28",
                           label: "28 Day",
                           disabled: true,
-                          strikeColor: "#94a3b8",
                         },
                         {
                           value: "30",
                           label: "30 Day",
                           disabled: true,
-                          strikeColor: "#94a3b8",
                         },
                         {
                           value: "91",
                           label: "91 Day",
                           disabled: true,
-                          strikeColor: "#94a3b8",
                         },
                         {
                           value: "364",
                           label: "364 Day",
                           disabled: true,
-                          strikeColor: "#94a3b8",
                         },
                       ]}
                       noBorder={true}
