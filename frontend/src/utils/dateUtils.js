@@ -230,8 +230,8 @@ export function computeCalendarDateParams(selectedDate) {
   const boxDayCY = `${currentYear} Day ${getDayOfYear(currentDate)}`;
   const boxDayLY = `${prevYear} Day ${getDayOfYear(prevYearSameDay)}`;
 
-  // Week number (calendar week, Sunday=start, week 1 starts Jan 1)
-  const weekNum = Math.ceil(getDayOfYear(currentDate) / 7);
+  // Week number (ISO calendar week matching ISO-8601 standard)
+  const weekNum = getISOWeek(currentDate);
   const quarter = Math.ceil(month / 3);
 
   // Display date
