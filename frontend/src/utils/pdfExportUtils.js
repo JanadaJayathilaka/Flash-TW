@@ -743,7 +743,7 @@ export async function generateTilesPDF(
   clone.style.display = "grid";
   clone.style.gridTemplateColumns = "1fr 1fr";
   clone.style.gap = "22px";
-  clone.style.padding = "16px";
+  clone.style.padding = "0px";
   clone.style.boxSizing = "border-box";
   document.body.appendChild(clone);
 
@@ -949,46 +949,56 @@ export async function generateTilesPDF(
     const pageHeight = doc.internal.pageSize.height;
     const margin = 12;
 
+    const headerBottomY = subtitleStr ? (search ? 25 : 19.5) : (search ? 19.5 : 13.5);
+    const footerY = pageHeight - 8;
+    const availableSpace = footerY - headerBottomY;
+    const minGap = 5;
+
     let imgWidth = pageWidth - margin * 2;
     let finalHeight = (canvas.height * imgWidth) / canvas.width;
-    let imgX = margin;
-    const imgY = subtitleStr ? (search ? 25 : 21) : (search ? 21 : 16);
-    const availableHeight = pageHeight - imgY - 12;
 
-    if (finalHeight > availableHeight) {
-      imgWidth = (availableHeight * canvas.width) / canvas.height;
-      imgX = (pageWidth - imgWidth) / 2;
-      finalHeight = availableHeight;
+    if (finalHeight > availableSpace - minGap * 2) {
+      finalHeight = availableSpace - minGap * 2;
+      imgWidth = (finalHeight * canvas.width) / canvas.height;
     }
+
+    const gap = (availableSpace - finalHeight) / 2;
+    const imgX = (pageWidth - imgWidth) / 2;
+    const imgY = headerBottomY + gap;
+
+    const rightEdge = imgX + imgWidth;
+    const centerX = imgX + imgWidth / 2;
 
     // Centered Title
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(0, 0, 0);
-    doc.text(mainTitle.toUpperCase(), pageWidth / 2, 12, { align: "center" });
+    doc.text(mainTitle.toUpperCase(), centerX, 12, { align: "center" });
 
-    // Subtitle under title
+    // Top-Right Timestamp (perfectly aligned with end of cards)
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Generated: ${formatPDFTimestamp(new Date())}`, rightEdge, 12, { align: "right" });
+
+    // Subtitle under title (perfectly aligned with start of cards)
     if (subtitleStr) {
       doc.setFontSize(10);
       doc.setFont("helvetica", "normal");
-      doc.text(subtitleStr, margin, 18);
+      doc.text(subtitleStr, imgX, 18);
     }
 
     if (search) {
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
-      doc.text(`Filter: ${search}`, margin, subtitleStr ? 23 : 18);
+      doc.text(`Filter: ${search}`, imgX, subtitleStr ? 23 : 18);
     }
-
-    // Top-Right Timestamp
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Generated: ${formatPDFTimestamp(new Date())}`, pageWidth - margin, 12, { align: "right" });
 
     doc.addImage(imgData, "PNG", imgX, imgY, imgWidth, finalHeight);
 
+    // Page 1 footer text (centered and symmetrical to top gap)
     doc.setFontSize(8);
-    doc.text("Page 1", pageWidth / 2, pageHeight - 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Page 1", centerX, footerY, { align: "center" });
 
     openPDFOutput(doc, isPrint, `${mainTitle.replace(/[^a-zA-Z0-9]/g, "_")}`);
   } catch (err) {
