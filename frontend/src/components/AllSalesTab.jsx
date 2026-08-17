@@ -1,5 +1,4 @@
 import React, { useMemo, useCallback, useEffect, useRef } from "react";
-import * as XLSX from "xlsx-js-style";
 import { formatNumber, formatPercent } from "../utils/dateUtils";
 import { highlightText, matchesSearchTerm } from "../utils/highlightUtils";
 import { generateSalesPDF } from "../utils/pdfExportUtils";
@@ -406,7 +405,10 @@ export default function AllSalesTab({
   ]);
 
   // Export Excel matching Dotnet toExcelAndCSV.js exactly
-  const handleExportExcel = useCallback(() => {
+  const handleExportExcel = useCallback(async () => {
+    const XLSXModule = await import("xlsx-js-style");
+    const XLSX = XLSXModule.default || XLSXModule;
+
     const curText = currencyMode === "2" ? "NZ$" : "AU$";
     const calText = calendarMode === "fiscal" ? "Fiscal" : "Calendar";
 

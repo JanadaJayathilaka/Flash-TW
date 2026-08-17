@@ -70,8 +70,8 @@ async function getStoreDetails() {
     return storeDetailsCache;
   }
   const pool = await getPool();
-  // Use GetRegionStoreDetailAndCalendar so store cache is populated from the same SP
-  const result = await pool.request().execute('GetRegionStoreDetailAndCalendar');
+  // Use GetRegionStoreDetailAndCalendarAndRates so store cache uses the updated STORE_MASTER & SALES_TERRITORY_MASTER tables
+  const result = await pool.request().execute('GetRegionStoreDetailAndCalendarAndRates');
   const map = {};
   for (const row of result.recordsets[0]) {
     const id = (row.A ?? '').toString().trim();
