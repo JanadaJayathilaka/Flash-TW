@@ -501,10 +501,21 @@ export function generateSalesPDF({
       let topBW = 0;
       let rightBW = 0;
       let bottomBW = 0;
-      let leftBW = colIndex === 0 ? 0.35 : 0;
+      let leftBW = 0;
 
-      if (GROUP_END_COLS.has(colIndex)) {
-        rightBW = 0.35;
+      // Outer left border and first column dividers
+      if (colIndex === 0) {
+        leftBW = 0.3;
+        rightBW = 0.3;
+      } else if (colIndex === 1) {
+        rightBW = 0.3;
+      } else if (colIndex === 13) {
+        rightBW = 0.3;
+      }
+
+      // Middle 3 vertical dividing lines (after 1 Day Comp, after WTD Comp, after QTD Comp)
+      if (colIndex === 4 || colIndex === 7 || colIndex === 10) {
+        rightBW = 0.45;
       }
 
       if (dataCell.section === "head") {

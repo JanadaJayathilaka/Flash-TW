@@ -1670,6 +1670,22 @@ body {
   .sales-table-print th:nth-child(1),
   .sales-table-print td:nth-child(1) {
     text-align: left !important;
+    border-right: 1px solid #cbd5e1 !important;
+  }
+
+  .sales-table-print th:nth-child(2),
+  .sales-table-print td:nth-child(2) {
+    border-right: 1px solid #cbd5e1 !important;
+  }
+
+  /* Middle 3 vertical dividing lines */
+  .sales-table-print th:nth-child(5),
+  .sales-table-print td:nth-child(5),
+  .sales-table-print th:nth-child(8),
+  .sales-table-print td:nth-child(8),
+  .sales-table-print th:nth-child(11),
+  .sales-table-print td:nth-child(11) {
+    border-right: 1px solid #cbd5e1 !important;
   }
 
   .sales-table-print th:first-child {
