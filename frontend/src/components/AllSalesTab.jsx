@@ -4,21 +4,41 @@ import { highlightText, matchesSearchTerm } from "../utils/highlightUtils";
 import { generateSalesPDF } from "../utils/pdfExportUtils";
 
 function getSearchableRowStrings(r) {
+  if (r.IS_TERRITORY_TOTAL) {
+    const regionPrefix = r.REGION_ID ? `${r.REGION_ID} ` : "";
+    const name = r.STORE_NAME?.startsWith(regionPrefix)
+      ? r.STORE_NAME
+      : `${regionPrefix}${r.STORE_NAME || `${r.TERRITORY || ""} Total`}`;
+
+    return [
+      name,
+      formatNumber(r.DAY_SALES_LY),
+      formatNumber(r.DAY_SALES_CY),
+      formatPercent(r.DAY_SALES_COMP),
+      formatNumber(r.WTD_SALES_LY),
+      formatNumber(r.WTD_SALES_CY),
+      formatPercent(r.WTD_SALES_COMP),
+      formatNumber(r.QTD_SALES_LY),
+      formatNumber(r.QTD_SALES_CY),
+      formatPercent(r.QTD_SALES_COMP),
+      formatNumber(r.YTD_SALES_LY),
+      formatNumber(r.YTD_SALES_CY),
+      formatPercent(r.YTD_SALES_COMP),
+    ];
+  }
+
+  const sid = r.STORE_ID != null ? String(r.STORE_ID).trim() : "";
+  const storeName = r.STORE_NAME ? String(r.STORE_NAME).trim() : "";
   const dateStr = r.DATE_OPENED
     ? r.DATE_OPENED.length >= 10
       ? r.DATE_OPENED.substring(2)
       : r.DATE_OPENED
     : "";
-  const firstSaleStr = dateStr ? `First Sale '${dateStr}` : "";
+  const firstSaleStr = dateStr ? `FIRST SALE '${dateStr}` : "";
+  const locationCell = `${sid} ${storeName} ${firstSaleStr}`.trim();
+
   return [
-    r.STORE_ID != null ? String(r.STORE_ID) : "",
-    r.STORE_NAME || "",
-    dateStr,
-    `'${dateStr}`,
-    firstSaleStr,
-    r.REGION_ID != null ? String(r.REGION_ID) : "",
-    r.TERRITORY || "",
-    // Formatted values (with commas)
+    locationCell,
     formatNumber(r.DAY_SALES_LY),
     formatNumber(r.DAY_SALES_CY),
     formatPercent(r.DAY_SALES_COMP),
@@ -31,15 +51,6 @@ function getSearchableRowStrings(r) {
     formatNumber(r.YTD_SALES_LY),
     formatNumber(r.YTD_SALES_CY),
     formatPercent(r.YTD_SALES_COMP),
-    // Unformatted values (without commas)
-    r.DAY_SALES_LY != null ? String(Math.round(r.DAY_SALES_LY)) : "",
-    r.DAY_SALES_CY != null ? String(Math.round(r.DAY_SALES_CY)) : "",
-    r.WTD_SALES_LY != null ? String(Math.round(r.WTD_SALES_LY)) : "",
-    r.WTD_SALES_CY != null ? String(Math.round(r.WTD_SALES_CY)) : "",
-    r.QTD_SALES_LY != null ? String(Math.round(r.QTD_SALES_LY)) : "",
-    r.QTD_SALES_CY != null ? String(Math.round(r.QTD_SALES_CY)) : "",
-    r.YTD_SALES_LY != null ? String(Math.round(r.YTD_SALES_LY)) : "",
-    r.YTD_SALES_CY != null ? String(Math.round(r.YTD_SALES_CY)) : "",
   ];
 }
 
@@ -136,12 +147,10 @@ export default function AllSalesTab({
       }
     });
 
-    // Apply search filter
-    const terms = (
-      search.includes("++")
-        ? search.toLowerCase().split("++")
-        : search.toLowerCase().split(/\s+/)
-    )
+    // Apply search filter matching salesapp
+    const rawFilter = (search || "").toLowerCase().trim();
+    const terms = rawFilter
+      .split("++")
       .map((s) => s.trim())
       .filter(Boolean);
 
@@ -157,7 +166,7 @@ export default function AllSalesTab({
           );
         });
 
-        // Filter territory total row
+        // Filter territory total row (exact salesapp behavior: each row is toggled independently by its own cell matches)
         if (groups[t].totalRow) {
           const totalSearchable = getSearchableRowStrings(groups[t].totalRow);
           const totalMatches = terms.some((q) =>

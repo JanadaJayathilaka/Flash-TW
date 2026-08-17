@@ -252,11 +252,9 @@ export default function LeadersTab({
       }))
       .slice(0, 10);
 
-    const terms = (
-      search.includes("++")
-        ? search.toLowerCase().split("++")
-        : search.toLowerCase().split(/\s+/)
-    )
+    const rawFilter = (search || "").toLowerCase().trim();
+    const terms = rawFilter
+      .split("++")
       .map((s) => s.trim())
       .filter(Boolean);
     if (terms.length > 0) {
@@ -264,8 +262,15 @@ export default function LeadersTab({
         const fields = [
           row.STORE_ID != null ? String(row.STORE_ID) : "",
           row.STORE_NAME || "",
+          `${row.STORE_ID} ${row.STORE_NAME}`,
           row.REGION_ID != null ? String(row.REGION_ID) : "",
           row.TERRITORY || "",
+          `${row.REGION_ID} ${row.TERRITORY}`,
+          formatNumber(row.Sales),
+          formatPercent(row.Growth),
+          formatNumber(row.SalesPrevious),
+          String(Math.round(row.Sales || 0)),
+          String(Math.round(row.SalesPrevious || 0)),
         ];
         return terms.some((term) =>
           fields.some((f) => matchesSearchTerm(f, term)),
