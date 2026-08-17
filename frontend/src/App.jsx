@@ -150,6 +150,7 @@ export default function App() {
   // Primary pivot data
   const [pivotData, setPivotData] = useState([]);
   const [pivotLoading, setPivotLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Calendar indexes
   const [fiscalIndexes, setFiscalIndexes] = useState(null);
@@ -410,7 +411,7 @@ export default function App() {
     }
 
     loadSalesPivot();
-  }, [isAuthenticated, dateParams]);
+  }, [isAuthenticated, dateParams, refreshTrigger]);
 
   // Calendar picker grid helpers
   const calendarRows = useMemo(() => {
@@ -445,29 +446,47 @@ export default function App() {
   };
 
   const handleCurrencyChange = (val) => {
+    if (val === currencyMode) return;
     setPivotLoading(true);
     setCurrencyMode(val);
     setTimeout(() => setPivotLoading(false), 400);
   };
 
   const handleCalendarModeChange = (val) => {
-    setPivotLoading(true);
     const mode = val === "1" ? "fiscal" : "calendar";
+    if (mode === calendarMode) return;
+    setPivotLoading(true);
     setCalendarMode(mode);
     setTimeout(() => setPivotLoading(false), 400);
   };
 
   const handleTabChange = (tab) => {
+    if (tab === activeTab) return;
     setPivotLoading(true);
     setActiveTab(tab);
     setTimeout(() => setPivotLoading(false), 300);
   };
 
   const handleDateSelect = (day) => {
-    setPivotLoading(true);
     const formatted = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    setSelectedDate(formatted);
     setShowDatePicker(false);
+    if (formatted === selectedDate) {
+      setRefreshTrigger((prev) => prev + 1);
+      return;
+    }
+    setSelectedDate(formatted);
+  };
+
+  const toggleDatePicker = () => {
+    if (activeTab === "analytics") return;
+    if (!showDatePicker && selectedDate) {
+      const [y, m] = selectedDate.split("-").map(Number);
+      if (y && m) {
+        setCalYear(y);
+        setCalMonth(m - 1);
+      }
+    }
+    setShowDatePicker((prev) => !prev);
   };
 
   const handleBindActions = useCallback((actions) => {
@@ -526,10 +545,7 @@ export default function App() {
                     fontWeight: 400,
                     fontStyle: "normal",
                   }}
-                  onClick={() =>
-                    activeTab !== "analytics" &&
-                    setShowDatePicker(!showDatePicker)
-                  }
+                  onClick={toggleDatePicker}
                 >
                   {activeTab === "analytics"
                     ? "SALES - ANALYTICS"
@@ -537,12 +553,14 @@ export default function App() {
                 </span>
                 {activeTab !== "analytics" && (
                   <i
-                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    onClick={toggleDatePicker}
                     className="material-icons"
                     style={{
                       fontSize: "25px",
                       marginLeft: "12px",
                       cursor: "pointer",
+                      position: "relative",
+                      top: "-5px",
                     }}
                   >
                     arrow_drop_down
