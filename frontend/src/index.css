@@ -1146,7 +1146,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 6px;
   border-radius: 4px;
   position: relative;
   background: transparent;
@@ -1179,6 +1179,7 @@ body {
   display: block;
   color: #495057;
   margin: 0;
+  margin-top: 6px;
   line-height: 1.25;
 }
 
@@ -1333,10 +1334,11 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 46px;
+  width: 58px;
   height: 1px;
-  background-color: #ff4d4f;
+  background-color: #ff2529;
   pointer-events: none;
+  border-radius: 1px;
 }
 
 .red-cross-line.line1 {

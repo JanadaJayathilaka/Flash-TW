@@ -259,7 +259,18 @@ function AnalyticsChart({
         chartInstanceRef.current.destroy();
       }
     };
-  }, [labels, salesData, smaData, smaVisible, yMin, yMax, salesColor]);
+  }, [labels, salesData, smaData, yMin, yMax, salesColor, currencyMode]);
+
+  // Smoothly show/hide SMA line without recreating or re-animating the whole chart
+  useEffect(() => {
+    if (
+      chartInstanceRef.current &&
+      chartInstanceRef.current.data.datasets.length > 1
+    ) {
+      chartInstanceRef.current.setDatasetVisibility(1, smaVisible);
+      chartInstanceRef.current.update("none");
+    }
+  }, [smaVisible]);
 
   return (
     <div
@@ -289,7 +300,15 @@ function AnalyticsChart({
  * Custom styled dropdown that supports colored strikethrough on disabled items.
  * Native <select>/<option> elements cannot reliably render text-decoration cross-browser.
  */
-function StyledSelect({ id, value, onChange, options, noBorder, noStrike }) {
+function StyledSelect({
+  id,
+  value,
+  onChange,
+  options,
+  noBorder,
+  noStrike,
+  caretSize = "16px",
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -329,7 +348,7 @@ function StyledSelect({ id, value, onChange, options, noBorder, noStrike }) {
           padding: noBorder ? "1px 0" : "1px 5px 1px 6px",
           fontFamily: "var(--font-family)",
           fontSize: "12px",
-          fontWeight: 600,
+          fontWeight: 400,
           color: "var(--text-secondary)",
           cursor: "pointer",
           whiteSpace: "nowrap",
@@ -340,10 +359,12 @@ function StyledSelect({ id, value, onChange, options, noBorder, noStrike }) {
         <span>{selected ? selected.label : value}</span>
         <span
           style={{
-            fontSize: "13px",
+            fontSize: caretSize,
             color: "#1e293b",
             lineHeight: 1,
             marginLeft: noBorder ? "6px" : "0",
+            display: "inline-flex",
+            alignItems: "center",
           }}
         >
           ▾
@@ -388,7 +409,7 @@ function StyledSelect({ id, value, onChange, options, noBorder, noStrike }) {
                     : isSelected
                       ? "var(--primary-color)"
                       : "var(--text-primary)",
-                  fontWeight: isSelected ? 600 : 400,
+                  fontWeight: 400,
                   background:
                     isSelected && !isDisabled ? "#f0f6ff" : "transparent",
                   userSelect: "none",
@@ -710,6 +731,7 @@ export default function AnalyticsTab({
               { value: "2", label: "NZ$" },
             ]}
             noBorder={true}
+            caretSize="20px"
           />
         </div>
       </div>
@@ -744,7 +766,7 @@ export default function AnalyticsTab({
               <span
                 style={{
                   fontSize: "13px",
-                  fontWeight: 600,
+                  fontWeight: 400,
                   color: "var(--text-secondary)",
                   height: "24px",
                   display: "flex",
@@ -810,7 +832,7 @@ export default function AnalyticsTab({
                   justifyContent: "center",
                   height: "24px",
                   fontSize: "13px",
-                  fontWeight: 600,
+                  fontWeight: 400,
                   color: "var(--text-secondary)",
                 }}
               >
@@ -960,8 +982,9 @@ export default function AnalyticsTab({
                   <span
                     style={{
                       fontSize: "12px",
-                      fontWeight: 600,
+                      fontWeight: 400,
                       color: "var(--text-secondary)",
+                      marginLeft: "8px",
                       marginTop: "4px",
                     }}
                   >
