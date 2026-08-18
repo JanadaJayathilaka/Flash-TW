@@ -82,16 +82,8 @@ function AnalyticsChart({
     if (!canvasRef.current) return;
     const ctx = canvasRef.current.getContext("2d");
 
-    // Compute SMA trend color: green if last point >= first point, red otherwise
-    const validSma = (smaData || []).filter((v) => v !== null);
-    let smaColor = "#00a651"; // default green
-    if (validSma.length >= 2) {
-      const lastVal = validSma[validSma.length - 1];
-      const firstVal = validSma[0];
-      if (lastVal < firstVal) {
-        smaColor = "#d32f2f"; // trending down (red)
-      }
-    }
+    // 7 Day SMA color: 2025 red (#d32f2f), 2026 green (#00a651)
+    const smaColor = parseInt(year, 10) === 2026 ? "#00a651" : "#d32f2f";
 
     const curLabel = currencyMode === "2" ? "Sales NZ$" : "Sales AU$";
 
@@ -252,7 +244,7 @@ function AnalyticsChart({
         chartInstanceRef.current.destroy();
       }
     };
-  }, [labels, salesData, smaData, yMin, yMax, salesColor, currencyMode]);
+  }, [year, labels, salesData, smaData, yMin, yMax, salesColor, currencyMode]);
 
   // Smoothly show/hide SMA line without recreating or re-animating the whole chart
   useEffect(() => {
@@ -445,6 +437,7 @@ export default function AnalyticsTab({
   calendarMode = "fiscal",
   currencyMode = "1",
   onCurrencyChange,
+  onCalendarModeChange,
   dateParams,
   fiscalIndexes,
   onBindExportActions,
@@ -520,6 +513,23 @@ export default function AnalyticsTab({
       }
     }
 
+    // Calendar year ranges using database calendar mappings (matching salesapp prepareDateRanges_CalendarChart)
+    if (compareMode === "calendar" && fiscalIndexes) {
+      const { calendar, calDayIndex } = fiscalIndexes;
+      const activeDetails = calendar[activeDateStr];
+
+      if (activeDetails && activeDetails.CalendarDayInYear) {
+        const activeDayInYear = activeDetails.CalendarDayInYear;
+
+        availableYears.forEach((year) => {
+          const start = calDayIndex?.[`${year}_1`] || `${year}-01-01`;
+          const end = calDayIndex?.[`${year}_${activeDayInYear}`] || `${year}-12-31`;
+          out[year] = { startDate: start, endDate: end };
+        });
+        return out;
+      }
+    }
+
     // Calendar fallback calculations
     availableYears.forEach((year) => {
       let endD = new Date(year, actM - 1, actD);
@@ -582,12 +592,12 @@ export default function AnalyticsTab({
         const endTime = new Date();
         const durationSec = ((endTime - startTime) / 1000).toFixed(3);
         if (onTimingMetrics) {
-          onTimingMetrics({
-            rowCount: 49654,
+          onTimingMetrics((prev) => ({
+            ...prev,
             started: startedStr,
             ended: formatTime(endTime),
             duration: `${durationSec} sec`,
-          });
+          }));
         }
         return;
       }
@@ -640,12 +650,12 @@ export default function AnalyticsTab({
         const endTime = new Date();
         const durationSec = ((endTime - startTime) / 1000).toFixed(3);
         if (onTimingMetrics) {
-          onTimingMetrics({
-            rowCount: 49654,
+          onTimingMetrics((prev) => ({
+            ...prev,
             started: startedStr,
             ended: formatTime(endTime),
             duration: `${durationSec} sec`,
-          });
+          }));
         }
       } catch (err) {
         console.error("[AnalyticsTab] Load chart error:", err);
@@ -810,9 +820,13 @@ export default function AnalyticsTab({
                 <StyledSelect
                   id="selCalTypeFiscalorCal"
                   value={compareMode === "fiscal" ? "1" : "2"}
-                  onChange={(val) =>
-                    setCompareMode(val === "1" ? "fiscal" : "calendar")
-                  }
+                  onChange={(val) => {
+                    const nextMode = val === "1" ? "fiscal" : "calendar";
+                    setCompareMode(nextMode);
+                    if (onCalendarModeChange) {
+                      onCalendarModeChange(val);
+                    }
+                  }}
                   options={[
                     { value: "1", label: "Fiscal" },
                     { value: "2", label: "Calendar" },

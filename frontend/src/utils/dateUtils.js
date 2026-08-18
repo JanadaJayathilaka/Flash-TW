@@ -16,30 +16,62 @@ export function buildFiscalIndexes(items) {
   const calendar = {};
   const dayIndex = {};
   const weekIndex = {};
+  const calDayIndex = {};
 
   for (const x of items) {
-    const date = x.FiscalDate.trim();
-    const year = parseInt(x.FiscalYear, 10);
-    const week = parseInt(x.WeekInYear, 10);
-    const dayWeek = parseInt(x.DayInWeek, 10);
-    const dayYear = parseInt(x.DayInYear, 10);
-    const quarter = parseInt(x.CalQuarter, 10);
+    const date = (x.FiscalDate || x.CalDate || '').trim();
+    if (!date) continue;
+    const fiscalYear = parseInt(x.FiscalYear, 10);
+    const fiscalWeek = parseInt(x.WeekInYear || x.FiscalWeekInYear, 10);
+    const fiscalDayWeek = parseInt(x.DayInWeek || x.FiscalDayInWeek, 10);
+    const fiscalDayYear = parseInt(x.DayInYear || x.FiscalDayInYear, 10);
+    const fiscalQuarter = parseInt(x.CalQuarter || x.FiscalQuarter, 10);
 
-    calendar[date] = { FiscalYear: year, WeekInYear: week, DayInWeek: dayWeek, DayInYear: dayYear, QuarterInYear: quarter };
+    const calendarYear = parseInt(x.CalendarYear, 10);
+    const calendarMonth = parseInt(x.CalendarMonth, 10);
+    const calendarWeek = parseInt(x.CalendarWeekInYear, 10);
+    const calendarDayWeek = parseInt(x.CalendarDayInWeek, 10);
+    const calendarDayYear = parseInt(x.CalendarDayInYear, 10);
+    const calendarQuarter = parseInt(x.CalendarQuarter, 10);
 
-    // DayInYear index for cross-year match
-    dayIndex[`${year}_${dayYear}`] = date;
+    calendar[date] = {
+      CalDate: date,
+      FiscalDate: date,
+      FiscalYear: fiscalYear,
+      WeekInYear: fiscalWeek,
+      FiscalWeekInYear: fiscalWeek,
+      DayInWeek: fiscalDayWeek,
+      FiscalDayInWeek: fiscalDayWeek,
+      DayInYear: fiscalDayYear,
+      FiscalDayInYear: fiscalDayYear,
+      QuarterInYear: fiscalQuarter,
+      FiscalQuarter: fiscalQuarter,
 
-    // Week+DOW index for WTD start
-    weekIndex[`${year}_${week}_${dayWeek}`] = date;
+      CalendarYear: calendarYear,
+      CalendarMonth: calendarMonth,
+      CalendarWeekInYear: calendarWeek,
+      CalendarDayInWeek: calendarDayWeek,
+      CalendarDayInYear: calendarDayYear,
+      CalendarQuarter: calendarQuarter,
+    };
 
-    // Fiscal year start (day 1)
-    if (dayYear === 1) {
-      dayIndex[`${year}_1`] = date;
+    // Fiscal indexes
+    dayIndex[`${fiscalYear}_${fiscalDayYear}`] = date;
+    weekIndex[`${fiscalYear}_${fiscalWeek}_${fiscalDayWeek}`] = date;
+    if (fiscalDayYear === 1) {
+      dayIndex[`${fiscalYear}_1`] = date;
+    }
+
+    // Calendar indexes
+    if (!isNaN(calendarYear) && !isNaN(calendarDayYear)) {
+      calDayIndex[`${calendarYear}_${calendarDayYear}`] = date;
+      if (calendarDayYear === 1) {
+        calDayIndex[`${calendarYear}_1`] = date;
+      }
     }
   }
 
-  return { calendar, dayIndex, weekIndex };
+  return { calendar, dayIndex, weekIndex, calDayIndex };
 }
 
 function fmt(d) {
@@ -187,54 +219,159 @@ export function computeDateParamsFromFiscal(selectedDate, indexes) {
 }
 
 /**
- * Calendar-based date params matching the web app's buildCalendarRanges().
+ * Calendar-based date params matching the web app's prepareDateRanges_Calendar().
  */
-export function computeCalendarDateParams(selectedDate) {
+export function computeCalendarDateParams(selectedDate, fiscalIndexes) {
+  if (fiscalIndexes && fiscalIndexes.calendar) {
+    const { calendar } = fiscalIndexes;
+    const current = calendar[selectedDate];
+    if (current && current.CalendarYear) {
+      const allValues = Object.values(calendar);
+      const sDayInYear = current.CalendarDayInYear;
+      const sThisYear = current.CalendarYear;
+      const sLastYear = sThisYear - 1;
+      const sQuarter = current.CalendarQuarter;
+
+      const prevYearSameDay = allValues.find(
+        (x) => x.CalendarDayInYear === sDayInYear && x.CalendarYear === sLastYear
+      );
+
+      const DT_2 = prevYearSameDay ? prevYearSameDay.CalDate : '';
+
+      const monthThisYear = allValues
+        .filter(
+          (x) =>
+            x.CalendarYear === sThisYear &&
+            x.CalendarMonth === current.CalendarMonth
+        )
+        .sort((a, b) => a.CalDate.localeCompare(b.CalDate));
+
+      const monthLastYear = allValues
+        .filter(
+          (x) =>
+            x.CalendarYear === sLastYear &&
+            x.CalendarMonth === current.CalendarMonth
+        )
+        .sort((a, b) => a.CalDate.localeCompare(b.CalDate));
+
+      const P_WTD_1_S = monthThisYear[0]?.CalDate ?? '';
+      const P_WTD_1_E = selectedDate;
+      const P_WTD_2_S = monthLastYear[0]?.CalDate ?? '';
+      const P_WTD_2_E = DT_2;
+
+      const quarterStartThisYear = allValues
+        .filter(
+          (x) =>
+            x.CalendarYear === sThisYear &&
+            x.CalendarQuarter === sQuarter
+        )
+        .sort((a, b) => a.CalDate.localeCompare(b.CalDate))[0];
+
+      const quarterStartLastYear = allValues
+        .filter(
+          (x) =>
+            x.CalendarYear === sLastYear &&
+            x.CalendarQuarter === sQuarter
+        )
+        .sort((a, b) => a.CalDate.localeCompare(b.CalDate))[0];
+
+      const P_QTD_1_S = quarterStartThisYear?.CalDate ?? '';
+      const P_QTD_1_E = selectedDate;
+      const P_QTD_2_S = quarterStartLastYear?.CalDate ?? '';
+      const P_QTD_2_E = DT_2;
+
+      const yearStartThisYear = allValues
+        .filter((x) => x.CalendarYear === sThisYear)
+        .sort((a, b) => a.CalDate.localeCompare(b.CalDate))[0];
+
+      const yearStartLastYear = allValues
+        .filter((x) => x.CalendarYear === sLastYear)
+        .sort((a, b) => a.CalDate.localeCompare(b.CalDate))[0];
+
+      const P_YTD_1_S = yearStartThisYear?.CalDate ?? '';
+      const P_YTD_1_E = selectedDate;
+      const P_YTD_2_S = yearStartLastYear?.CalDate ?? '';
+      const P_YTD_2_E = DT_2;
+
+      const boxDayCY = `${sThisYear} Day ${sDayInYear}`;
+      const boxDayLY = `${sLastYear} Day ${sDayInYear}`;
+
+      const dateObj = parseIsoDateLocal(selectedDate);
+      const monthNames = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+      ];
+      const dayNames = [
+        'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
+      ];
+      const displayDate = `${dateObj.getFullYear()} ${monthNames[dateObj.getMonth()]} ${dateObj.getDate()}, ${dayNames[dateObj.getDay()]}`.toUpperCase();
+
+      return {
+        displayDate,
+        DT_1: selectedDate,
+        DT_2,
+        P_WTD_1_S,
+        P_WTD_1_E,
+        P_WTD_2_S,
+        P_WTD_2_E,
+        P_QTD_1_S,
+        P_QTD_1_E,
+        P_QTD_2_S,
+        P_QTD_2_E,
+        P_YTD_1_S,
+        P_YTD_1_E,
+        P_YTD_2_S,
+        P_YTD_2_E,
+        weekNumber: current.CalendarWeekInYear || getISOWeek(dateObj),
+        dayNumber: current.CalendarDayInWeek || isoDow(dateObj),
+        quarterNumber: current.CalendarQuarter || Math.ceil((dateObj.getMonth() + 1) / 3),
+        calendarDayOfMonth: dateObj.getDate(),
+        calendarMonthNumber: current.CalendarMonth || dateObj.getMonth() + 1,
+        boxDayCY,
+        boxDayLY,
+      };
+    }
+  }
+
+  // Fallback if no database calendar available
   const [year, month, day] = selectedDate.split('-').map(Number);
   const currentDate = new Date(year, month - 1, day);
 
   const currentYear = currentDate.getFullYear();
   const prevYear = currentYear - 1;
 
-  // Same calendar day last year — leap safe (Feb 29 → Feb 28)
   let prevYearSameDay = new Date(prevYear, month - 1, day);
-  if (prevYearSameDay.getMonth() !== (month - 1)) {
-    prevYearSameDay = new Date(prevYear, month, 0); // last day of prev month
+  if (prevYearSameDay.getMonth() !== month - 1) {
+    prevYearSameDay = new Date(prevYear, month, 0);
   }
 
   const DT_1 = fmt(currentDate);
   const DT_2 = fmt(prevYearSameDay);
 
-  const currentDayOfWeek = currentDate.getDay(); // 0=Sun
+  const currentDayOfWeek = currentDate.getDay();
 
-  // MTD — 1st of the month start
   const P_WTD_1_S = fmt(new Date(currentYear, month - 1, 1));
   const P_WTD_1_E = DT_1;
   const P_WTD_2_S = fmt(new Date(prevYear, month - 1, 1));
   const P_WTD_2_E = DT_2;
 
-  // QTD — standard calendar quarters
   const quarterStartMonth = Math.floor((month - 1) / 3) * 3;
   const P_QTD_1_S = fmt(new Date(currentYear, quarterStartMonth, 1));
   const P_QTD_1_E = DT_1;
   const P_QTD_2_S = fmt(new Date(prevYear, quarterStartMonth, 1));
   const P_QTD_2_E = DT_2;
 
-  // YTD — Jan 1
   const P_YTD_1_S = fmt(new Date(currentYear, 0, 1));
   const P_YTD_1_E = DT_1;
   const P_YTD_2_S = fmt(new Date(prevYear, 0, 1));
   const P_YTD_2_E = DT_2;
 
-  // Box labels: "YEAR Day N" (day-of-year)
   const boxDayCY = `${currentYear} Day ${getDayOfYear(currentDate)}`;
   const boxDayLY = `${prevYear} Day ${getDayOfYear(prevYearSameDay)}`;
 
-  // Week number (ISO calendar week matching ISO-8601 standard)
   const weekNum = getISOWeek(currentDate);
   const quarter = Math.ceil(month / 3);
 
-  // Display date
   const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const displayDate = `${currentYear} ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${dayNames[currentDate.getDay()]}`.toUpperCase();
@@ -249,7 +386,7 @@ export function computeCalendarDateParams(selectedDate) {
     P_YTD_1_S, P_YTD_1_E,
     P_YTD_2_S, P_YTD_2_E,
     weekNumber: weekNum,
-    dayNumber: currentDayOfWeek === 0 ? 7 : currentDayOfWeek, // 1-based for display
+    dayNumber: currentDayOfWeek === 0 ? 7 : currentDayOfWeek,
     quarterNumber: quarter,
     calendarDayOfMonth: currentDate.getDate(),
     calendarMonthNumber: month,

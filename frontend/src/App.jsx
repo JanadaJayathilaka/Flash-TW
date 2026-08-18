@@ -251,10 +251,10 @@ export default function App() {
     if (calendarMode === "fiscal" && fiscalIndexes) {
       return (
         computeDateParamsFromFiscal(selectedDate, fiscalIndexes) ||
-        computeCalendarDateParams(selectedDate)
+        computeCalendarDateParams(selectedDate, fiscalIndexes)
       );
     }
-    return computeCalendarDateParams(selectedDate);
+    return computeCalendarDateParams(selectedDate, fiscalIndexes);
   }, [selectedDate, calendarMode, fiscalIndexes]);
 
   // Currency conversion mapping when NZ$ is active matching Dotnet GetFlashData.js lines 709-736
@@ -466,7 +466,7 @@ export default function App() {
       const endTime = new Date();
       const durationSec = ((endTime - startTime) / 1000).toFixed(3);
       setTimingMetrics((prev) => ({
-        rowCount: prev.rowCount || 49654,
+        ...prev,
         started: startedStr,
         ended: formatTime(endTime),
         duration: `${durationSec} sec`,
@@ -492,7 +492,7 @@ export default function App() {
       const endTime = new Date();
       const durationSec = ((endTime - startTime) / 1000).toFixed(3);
       setTimingMetrics((prev) => ({
-        rowCount: prev.rowCount || 49654,
+        ...prev,
         started: startedStr,
         ended: formatTime(endTime),
         duration: `${durationSec} sec`,
@@ -1013,6 +1013,7 @@ export default function App() {
               calendarMode={calendarMode}
               currencyMode={currencyMode}
               onCurrencyChange={handleCurrencyChange}
+              onCalendarModeChange={handleCalendarModeChange}
               dateParams={dateParams}
               fiscalIndexes={fiscalIndexes}
               onBindExportActions={handleBindActions}
