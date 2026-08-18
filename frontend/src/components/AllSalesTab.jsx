@@ -645,12 +645,12 @@ export default function AllSalesTab({
     // Style Title Row (A1 and G1:N1 merge range)
     if (ws["A1"]) {
       ws["A1"].s = {
-        font: { name: "Arial", sz: 11, bold: true, color: { rgb: "000000" } },
+        font: { name: "Calibri", sz: 14, bold: true, color: { rgb: "000000" } },
         alignment: { horizontal: "left", vertical: "center" },
       };
     }
     const timestampStyle = {
-      font: { name: "Arial", sz: 7, color: { rgb: "000000" } },
+      font: { name: "Calibri", sz: 8, color: { rgb: "000000" } },
       alignment: { horizontal: "right", vertical: "center" },
     };
     ["G1", "H1", "I1", "J1", "K1", "L1", "M1", "N1"].forEach((cellKey) => {
@@ -664,7 +664,7 @@ export default function AllSalesTab({
     // Style Filter Row (A2)
     if (searchFilterText && ws["A2"]) {
       ws["A2"].s = {
-        font: { name: "Arial", sz: 7, bold: false, color: { rgb: "000000" } },
+        font: { name: "Calibri", sz: 8, bold: false, color: { rgb: "000000" } },
         alignment: { horizontal: "left", vertical: "center" },
       };
     }
@@ -680,7 +680,7 @@ export default function AllSalesTab({
       if (!ws[addr]) continue;
       const col = COLS[c];
       ws[addr].s = {
-        font: { name: "Arial", sz: 9, bold: true, color: { rgb: "000000" } },
+        font: { name: "Calibri", sz: 11, bold: true, color: { rgb: "000000" } },
         alignment: {
           horizontal: col.align,
           vertical: "center",
@@ -716,8 +716,8 @@ export default function AllSalesTab({
 
         const cellStyle = {
           font: {
-            name: "Arial",
-            sz: 9,
+            name: "Calibri",
+            sz: 11,
             bold: isTerr,
             ...(fontColor ? { color: { rgb: fontColor } } : {}),
           },
@@ -748,8 +748,8 @@ export default function AllSalesTab({
 
         const cellStyle = {
           font: {
-            name: "Arial",
-            sz: 9,
+            name: "Calibri",
+            sz: 11,
             bold: true,
             color: { rgb: "000000" },
           },
@@ -771,7 +771,7 @@ export default function AllSalesTab({
       const f2Addr = XLSX.utils.encode_cell({ r: footer2RowIndex, c: 0 });
       if (ws[f2Addr]) {
         ws[f2Addr].s = {
-          font: { name: "Arial", sz: 8, bold: false, color: { rgb: "000000" } },
+          font: { name: "Calibri", sz: 8, bold: false, color: { rgb: "000000" } },
           alignment: { horizontal: "left", vertical: "center" },
         };
       }
