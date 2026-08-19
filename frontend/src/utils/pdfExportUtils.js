@@ -506,7 +506,7 @@ export function generateSalesPDF({
       // Outer left border and first column dividers
       if (colIndex === 0) {
         leftBW = 0.3;
-        rightBW = 0.3;
+        rightBW = 0.55;
       } else if (colIndex === 1) {
         rightBW = 0.3;
       } else if (colIndex === 13) {

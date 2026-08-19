@@ -1683,7 +1683,7 @@ body {
   .sales-table-print th:nth-child(1),
   .sales-table-print td:nth-child(1) {
     text-align: left !important;
-    border-right: 1px solid #cbd5e1 !important;
+    border-right: 1.5px solid #cbd5e1 !important;
   }
 
   .sales-table-print th:nth-child(2),
