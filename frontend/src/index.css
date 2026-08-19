@@ -2141,7 +2141,7 @@ body {
 
 .tile .tile-store {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1.2;
   margin-bottom: 4px;
   white-space: nowrap;
@@ -2173,7 +2173,7 @@ body {
 
 .tile .tile-sales .val {
   font-size: 23px;
-  font-weight: 900;
+  font-weight: 600;
   letter-spacing: 0.2px;
 }
 
@@ -2299,7 +2299,7 @@ body {
 }
 
 .mini-values .delta {
-  font-weight: 800;
+  font-weight: 600;
   padding: 1.5px 6px;
   border-radius: 999px;
   background: white;

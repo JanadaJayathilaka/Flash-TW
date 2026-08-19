@@ -803,7 +803,7 @@ export async function generateTilesPDF(
   // Rank: static position so it doesn't overlap store name
   clone.querySelectorAll(".tile-rank").forEach((rank) => {
     rank.style.fontSize = "42px";
-    rank.style.fontWeight = "800";
+    rank.style.fontWeight = "600";
     rank.style.lineHeight = "1";
     rank.style.position = "static";
     rank.style.margin = "0 0 6px 0";
@@ -850,7 +850,7 @@ export async function generateTilesPDF(
   // Store & Territory with full line-height and no overflow clipping
   clone.querySelectorAll(".tile-store").forEach((store) => {
     store.style.fontSize = "20px";
-    store.style.fontWeight = "800";
+    store.style.fontWeight = "600";
     store.style.lineHeight = "1.35";
     store.style.margin = "0 0 4px 0";
     store.style.padding = "0";
@@ -922,7 +922,7 @@ export async function generateTilesPDF(
   clone.querySelectorAll(".mini-values .delta").forEach((el) => {
     const text = el.textContent ? el.textContent.trim() : "";
     const color = el.style.color || "#15803d";
-    el.innerHTML = `<span style="display:inline-block;position:relative;top:-6px;font-size:11.5px;font-weight:800;line-height:1;color:${color};">${text}</span>`;
+    el.innerHTML = `<span style="display:inline-block;position:relative;top:-6px;font-size:11.5px;font-weight:600;line-height:1;color:${color};">${text}</span>`;
     el.style.display = "inline-flex";
     el.style.alignItems = "center";
     el.style.justifyContent = "center";
@@ -951,7 +951,7 @@ export async function generateTilesPDF(
 
   clone.querySelectorAll(".tile-sales .val").forEach((val) => {
     val.style.fontSize = "24px";
-    val.style.fontWeight = "900";
+    val.style.fontWeight = "600";
     val.style.lineHeight = "1";
   });
 
