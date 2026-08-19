@@ -515,7 +515,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: #000000;
   transition: all 0.2s;
   padding: 0;
 }

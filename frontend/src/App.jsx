@@ -728,7 +728,6 @@ export default function App() {
           <div
             className="header-right"
             style={{
-              opacity: 0.7,
               marginLeft: "auto",
               width: "calc(50% - 170px)",
               minWidth: "fit-content",
@@ -902,6 +901,7 @@ export default function App() {
                     className="action-btn"
                     title="Export to CSV"
                     style={{
+                      color: "#000000",
                       cursor: "pointer",
                       padding: "2px",
                       marginRight: "8px",
