@@ -275,19 +275,19 @@ body {
   border-radius: 6px;
   overflow: hidden;
   font-family: Arial, sans-serif;
-  background: #f5f7f9;
+  background: #113a94;
 }
 
 .btn-bar input[type="button"] {
   border: none;
-  border-right: 1px solid #cfd8dc;
+  border-right: 1px solid rgba(255, 255, 255, 0.25);
   background: #113a94;
   padding: 6px 16px;
   font-size: 14px;
   color: white;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
-  opacity: .85;
+  opacity: 1;
 }
 
 .btn-bar input[type="button"]:last-child {
@@ -295,7 +295,8 @@ body {
 }
 
 .btn-bar input[type="button"]:hover {
-  opacity: 0.95;
+  background: #184ebf;
+  opacity: 1;
 }
 
 .btn-bar input[type="button"].active {

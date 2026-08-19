@@ -593,8 +593,19 @@ function openPDFOutput(doc, isPrint, filename = "FlashSales") {
       window.print();
     }
   } else {
-    const fn = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
-    doc.save(fn);
+    // Open in browser tab preview (blob URL) instead of direct file download
+    try {
+      const blobUrl = doc.output("bloburl");
+      const win = window.open(blobUrl, "_blank");
+      if (!win) {
+        const fn = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+        doc.save(fn);
+      }
+    } catch (err) {
+      console.error("Error opening PDF preview in new tab:", err);
+      const fn = filename.endsWith(".pdf") ? filename : `${filename}.pdf`;
+      doc.save(fn);
+    }
   }
 }
 
