@@ -279,14 +279,7 @@ export default function App() {
         const dd = String(match[3]).padStart(2, "0");
         return `${yyyy}-${mm}-${dd}`;
       }
-      const d = new Date(s);
-      if (!isNaN(d.getTime())) {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
-        return `${yyyy}-${mm}-${dd}`;
-      }
-      return s;
+      return s.substring(0, 10);
     };
 
     const rateMap = {};

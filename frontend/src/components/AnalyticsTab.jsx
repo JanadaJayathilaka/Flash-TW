@@ -231,7 +231,7 @@ function AnalyticsChart({
                 size: 11,
               },
               callback: function (value) {
-                return Math.round(value).toLocaleString();
+                return Math.round(value).toLocaleString("en-US");
               },
             },
           },

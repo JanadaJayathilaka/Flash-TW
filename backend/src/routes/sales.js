@@ -132,22 +132,18 @@ function formatDateOnly(value) {
   if (!value) return null;
 
   if (value instanceof Date && !isNaN(value.getTime())) {
-    const y = value.getFullYear();
-    const m = String(value.getMonth() + 1).padStart(2, '0');
-    const d = String(value.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return value.toISOString().split('T')[0];
   }
 
   const str = value.toString().trim();
-  const ymd = str.match(/^(\d{4}-\d{2}-\d{2})/);
-  if (ymd) return ymd[1];
+  const ymd = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (ymd) {
+    return `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
+  }
 
   const parsed = new Date(str);
   if (!isNaN(parsed.getTime())) {
-    const y = parsed.getFullYear();
-    const m = String(parsed.getMonth() + 1).padStart(2, '0');
-    const d = String(parsed.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    return parsed.toISOString().split('T')[0];
   }
 
   return str.substring(0, 10);
@@ -186,13 +182,13 @@ router.get('/dds', async (req, res) => {
       Store_ID: (row.A ?? '').toString().trim(),
       ASGS_NAME: (row.B ?? '').toString().trim(),
       Store_Name: (row.C ?? '').toString().trim(),
-      Date_Opened: (row.D ?? '').toString().trim(),
+      Date_Opened: formatDateOnly(row.D) || (row.D ?? '').toString().trim(),
       Region_ID: (row.E ?? '').toString().trim(),
     }));
 
     // Result set 1 — fiscal calendar: A=FiscalDate, B=FiscalYear, C=WeekInYear, D=DayInWeek, E=DayInYear, F=CalQuarter
     const fiscalCalendar = (result.recordsets[1] || []).map((row) => ({
-      FiscalDate: (row.A ?? '').toString().trim(),
+      FiscalDate: formatDateOnly(row.A) || (row.A ?? '').toString().trim(),
       FiscalYear: (row.B ?? '').toString().trim(),
       WeekInYear: (row.C ?? '').toString().trim(),
       DayInWeek: (row.D ?? '').toString().trim(),
@@ -202,7 +198,7 @@ router.get('/dds', async (req, res) => {
 
     // Result set 2 — currency rates: B=CDate, C=AuDEquiv
     const currencyCal = (result.recordsets[2] || []).map((row) => ({
-      CDate: (row.B ?? '').toString().trim(),
+      CDate: formatDateOnly(row.B) || (row.B ?? '').toString().trim(),
       AuDEquiv: (row.C ?? '').toString().trim(),
     }));
 

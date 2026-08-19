@@ -83,7 +83,17 @@ export function generateSalesPDF({
   if (typeof displayDateStr === "string" && displayDateStr.trim()) {
     finalDateStr = displayDateStr.toUpperCase();
   } else {
-    const dObj = selectedDate ? new Date(selectedDate) : new Date();
+    let dObj;
+    if (selectedDate) {
+      const parts = String(selectedDate).split("T")[0].split("-");
+      if (parts.length === 3) {
+        dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else {
+        dObj = new Date(selectedDate);
+      }
+    } else {
+      dObj = new Date();
+    }
     const monthNames = [
       "JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE",
       "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"
@@ -91,8 +101,8 @@ export function generateSalesPDF({
     const dayNames = [
       "SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"
     ];
-    if (!isNaN(dObj.getTime())) {
-      finalDateStr = `${dObj.getFullYear()} ${monthNames[dObj.getMonth()]} ${dObj.getDate()}, ${dayNames[dObj.getDay()]}`;
+    if (dObj && !isNaN(dObj.getTime())) {
+      finalDateStr = `${dObj.getFullYear()} ${monthNames[dObj.getMonth()]} ${String(dObj.getDate()).padStart(2, "0")}, ${dayNames[dObj.getDay()]}`;
     } else {
       finalDateStr = String(selectedDate || "").toUpperCase();
     }

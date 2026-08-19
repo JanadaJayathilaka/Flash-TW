@@ -54,7 +54,16 @@ const RANK_CLASSES = [
 
 function formatSelectedDate(selectedDate) {
   if (!selectedDate) return "2026 February 10, Tuesday";
-  const d = new Date(selectedDate);
+  const parts = String(selectedDate).split("T")[0].split("-");
+  let d;
+  if (parts.length === 3) {
+    const yyyy = parseInt(parts[0], 10);
+    const mm = parseInt(parts[1], 10) - 1;
+    const dd = parseInt(parts[2], 10);
+    d = new Date(yyyy, mm, dd);
+  } else {
+    d = new Date(selectedDate);
+  }
   if (isNaN(d.getTime())) return String(selectedDate);
   const months = [
     "January",
