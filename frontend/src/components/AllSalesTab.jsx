@@ -1067,13 +1067,17 @@ export default function AllSalesTab({
           </tr>
         </thead>
         <tbody>
-          {sortedTerritories.map(([territoryName, group]) => {
+          {sortedTerritories.map(([territoryName, group], territoryIndex) => {
             const rows = [];
+            const territoryClass =
+              territoryIndex % 2 === 0
+                ? "territory-group-even"
+                : "territory-group-odd";
 
             // Store Rows
             group.stores.forEach((store) => {
               rows.push(
-                <tr key={store.STORE_ID}>
+                <tr key={store.STORE_ID} className={territoryClass}>
                   <td className="border-right store-name-cell">
                     <span className="store-name-text">
                       <strong>{highlightText(store.STORE_ID, search)}</strong>{" "}
@@ -1140,7 +1144,10 @@ export default function AllSalesTab({
             if (group.totalRow) {
               const tTotal = group.totalRow;
               rows.push(
-                <tr key={`${territoryName}-Total`} className="territory-row">
+                <tr
+                  key={`${territoryName}-Total`}
+                  className={`territory-row ${territoryClass}`}
+                >
                   <td className="border-right">
                     {highlightText(tTotal.STORE_NAME, search)}
                   </td>
@@ -1320,8 +1327,12 @@ export default function AllSalesTab({
           </tr>
         </thead>
         <tbody>
-          {sortedTerritories.map(([territoryName, group]) => {
+          {sortedTerritories.map(([territoryName, group], territoryIndex) => {
             const rows = [];
+            const territoryClass =
+              territoryIndex % 2 === 0
+                ? "territory-group-even"
+                : "territory-group-odd";
 
             // Store rows
             group.stores.forEach((store) => {
@@ -1332,7 +1343,7 @@ export default function AllSalesTab({
                   : `'${store.DATE_OPENED.length >= 10 ? store.DATE_OPENED.substring(2) : store.DATE_OPENED}`
                 : "";
               rows.push(
-                <tr key={store.STORE_ID}>
+                <tr key={store.STORE_ID} className={territoryClass}>
                   <td>{storeName}</td>
                   <td>{firstSale}</td>
                   <td>{formatNumber(store.DAY_SALES_LY)}</td>
@@ -1379,7 +1390,10 @@ export default function AllSalesTab({
             if (group.totalRow) {
               const tTotal = group.totalRow;
               rows.push(
-                <tr key={`${territoryName}-Total`} className="territory-row">
+                <tr
+                  key={`${territoryName}-Total`}
+                  className={`territory-row ${territoryClass}`}
+                >
                   <td>{tTotal.STORE_NAME}</td>
                   <td></td>
                   <td>{formatNumber(tTotal.DAY_SALES_LY)}</td>

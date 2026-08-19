@@ -756,6 +756,17 @@ body {
   border-right: none;
 }
 
+/* Territory font color alternation: 1st territory black, 2nd territory rgb(77, 55, 41), etc. */
+.sales-table tr.territory-group-even,
+.sales-table-print tr.territory-group-even {
+  color: #000000;
+}
+
+.sales-table tr.territory-group-odd,
+.sales-table-print tr.territory-group-odd {
+  color: rgb(77, 55, 41);
+}
+
 .sales-table tr.territory-row td {
   background-color: #F7F9FD !important;
   font-weight: 700;
