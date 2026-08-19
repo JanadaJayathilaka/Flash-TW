@@ -851,6 +851,7 @@ export default function AllSalesTab({
   const handleExportPDF = useCallback(
     (isPrint = false) => {
       generateSalesPDF({
+        displayRows,
         data,
         selectedDate,
         weekNumber,
@@ -867,6 +868,7 @@ export default function AllSalesTab({
       });
     },
     [
+      displayRows,
       data,
       selectedDate,
       weekNumber,
