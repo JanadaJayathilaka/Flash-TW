@@ -59,18 +59,9 @@ async function odbcQuery(sql, params) {
   }
 }
 
-// Cache store details so we don't hit SQL Server on every pivot call
-let storeDetailsCache = null;
-let storeCacheTime = 0;
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
 async function getStoreDetails() {
-  const now = Date.now();
-  if (storeDetailsCache && now - storeCacheTime < CACHE_TTL) {
-    return storeDetailsCache;
-  }
   const pool = await getPool();
-  // Use GetRegionStoreDetailAndCalendarAndRates so store cache uses the updated STORE_MASTER & SALES_TERRITORY_MASTER tables
+  // Use GetRegionStoreDetailAndCalendarAndRates so store details use the updated STORE_MASTER & SALES_TERRITORY_MASTER tables
   const result = await pool.request().execute('GetRegionStoreDetailAndCalendarAndRates');
   const map = {};
   for (const row of result.recordsets[0]) {
@@ -82,8 +73,6 @@ async function getStoreDetails() {
       REGION_ID: (row.E ?? '').toString().trim(),
     };
   }
-  storeDetailsCache = map;
-  storeCacheTime = now;
   return map;
 }
 

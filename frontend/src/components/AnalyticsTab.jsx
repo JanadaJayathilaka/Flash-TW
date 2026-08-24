@@ -455,9 +455,6 @@ export default function AnalyticsTab({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Cache of fetched chart data to prevent double loading
-  const loadedMetadataRef = useRef({});
-
   // Years options available
   const availableYears = [2022, 2023, 2024, 2025, 2026];
 
@@ -561,53 +558,12 @@ export default function AnalyticsTab({
       const startTime = new Date();
       const startedStr = formatTime(startTime);
 
-      // Determine which years need to be fetched
-      const yearsToFetch = years.filter((year) => {
-        const range = yearRanges[year] || {
-          startDate: `${year}-01-01`,
-          endDate: `${year}-12-31`,
-        };
-        const cached = loadedMetadataRef.current[year];
-        if (
-          cached &&
-          cached.startDate === range.startDate &&
-          cached.endDate === range.endDate &&
-          cached.mode === mode &&
-          cached.currencyMode === curMode
-        ) {
-          return false; // Already cached and matches criteria
-        }
-        return true;
-      });
-
-      if (yearsToFetch.length === 0) {
-        // All requested years are already cached, update state from cache immediately
-        const next = {};
-        years.forEach((year) => {
-          if (loadedMetadataRef.current[year]) {
-            next[year] = loadedMetadataRef.current[year].data;
-          }
-        });
-        setChartDataByYear(next);
-        const endTime = new Date();
-        const durationSec = ((endTime - startTime) / 1000).toFixed(3);
-        if (onTimingMetrics) {
-          onTimingMetrics((prev) => ({
-            ...prev,
-            started: startedStr,
-            ended: formatTime(endTime),
-            duration: `${durationSec} sec`,
-          }));
-        }
-        return;
-      }
-
       setLoading(true);
       setError(null);
 
       try {
         const fetchedPairs = await Promise.all(
-          yearsToFetch.map(async (year) => {
+          years.map(async (year) => {
             const range = yearRanges[year] || {
               startDate: `${year}-01-01`,
               endDate: `${year}-12-31`,
@@ -621,29 +577,13 @@ export default function AnalyticsTab({
             return {
               year,
               data,
-              startDate: range.startDate,
-              endDate: range.endDate,
             };
           }),
         );
 
-        // Save new results to cache
-        fetchedPairs.forEach((item) => {
-          loadedMetadataRef.current[item.year] = {
-            startDate: item.startDate,
-            endDate: item.endDate,
-            mode: mode,
-            currencyMode: curMode,
-            data: item.data,
-          };
-        });
-
-        // Construct output from cache for all selected years
         const next = {};
-        years.forEach((year) => {
-          if (loadedMetadataRef.current[year]) {
-            next[year] = loadedMetadataRef.current[year].data;
-          }
+        fetchedPairs.forEach((item) => {
+          next[item.year] = item.data;
         });
         setChartDataByYear(next);
 

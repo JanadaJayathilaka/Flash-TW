@@ -451,21 +451,8 @@ export default function App() {
 
   const handleCurrencyChange = (val) => {
     if (val === currencyMode) return;
-    const startTime = new Date();
-    const startedStr = formatTime(startTime);
-    setPivotLoading(true);
     setCurrencyMode(val);
-    setTimeout(() => {
-      const endTime = new Date();
-      const durationSec = ((endTime - startTime) / 1000).toFixed(3);
-      setTimingMetrics((prev) => ({
-        ...prev,
-        started: startedStr,
-        ended: formatTime(endTime),
-        duration: `${durationSec} sec`,
-      }));
-      setPivotLoading(false);
-    }, 350);
+    setRefreshTrigger((prev) => prev + 1);
   };
 
   const handleCalendarModeChange = (val) => {
@@ -477,21 +464,10 @@ export default function App() {
 
   const handleTabChange = (tab) => {
     if (tab === activeTab) return;
-    const startTime = new Date();
-    const startedStr = formatTime(startTime);
-    setPivotLoading(true);
     setActiveTab(tab);
-    setTimeout(() => {
-      const endTime = new Date();
-      const durationSec = ((endTime - startTime) / 1000).toFixed(3);
-      setTimingMetrics((prev) => ({
-        ...prev,
-        started: startedStr,
-        ended: formatTime(endTime),
-        duration: `${durationSec} sec`,
-      }));
-      setPivotLoading(false);
-    }, 250);
+    if (tab !== "analytics") {
+      setRefreshTrigger((prev) => prev + 1);
+    }
   };
 
   const handleDateSelect = (day) => {
