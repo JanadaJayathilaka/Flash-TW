@@ -1,0 +1,29 @@
+/* ========================================================================= */
+/* SCRIPT: 05_STRSLSDMN.clle                                                 */
+/* PURPOSE: Start Flash Sales DataQueue Daemon in background job             */
+/* COMPILER: CRTBNDCL PGM(QGPL/STRSLSDMN) SRCFILE(QGPL/QCLLESRC)            */
+/*           TEXT('Start Flash Sales DataQueue Daemon')                      */
+/* ========================================================================= */
+
+PGM
+
+    /* 1. Ensure Data Queues exist */
+    CHKOBJ OBJ(QGPL/SALES_SYNC) OBJTYPE(*DTAQ)
+    MONMSG MSGID(CPF9801) EXEC(DO)
+        CRTDTAQ DTAQ(QGPL/SALES_SYNC) TYPE(*STD) MAXLEN(8192) +
+                TEXT('Flash Sales Batch Ingestion Queue') AUT(*ALL)
+    ENDDO
+
+    /* 2. Check if daemon is already active to prevent duplicate jobs */
+    /* Submit background worker to QBATCH */
+    SBMJOB CMD(CALL PGM(QGPL/SLSDQMN)) +
+           JOB(SLSDQMN) +
+           JOBQ(QGPL/QBATCH) +
+           JOBPTY(5) +
+           OUTQ(*CURRENT) +
+           TEXT('Flash Sales DataQueue Daemon Worker')
+
+    SNDPGMMSG MSG('Flash Sales DataQueue Daemon (SLSDQMN) submitted to QBATCH.') +
+              MSGTYPE(*INFO)
+
+ENDPGM

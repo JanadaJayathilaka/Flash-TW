@@ -1,0 +1,20 @@
+/* ========================================================================= */
+/* SCRIPT: 06_ENDSLSDMN.clle                                                 */
+/* PURPOSE: Send clean shutdown signal to DataQueue Daemon                   */
+/* COMPILER: CRTBNDCL PGM(QGPL/ENDSLSDMN) SRCFILE(QGPL/QCLLESRC)            */
+/*           TEXT('Stop Flash Sales DataQueue Daemon')                       */
+/* ========================================================================= */
+
+PGM
+    DCL VAR(&DTAQ) TYPE(*CHAR) LEN(10) VALUE('SALES_SYNC')
+    DCL VAR(&LIB)  TYPE(*CHAR) LEN(10) VALUE('QGPL')
+    DCL VAR(&LEN)  TYPE(*DEC)  LEN(5 0) VALUE(9)
+    DCL VAR(&MSG)  TYPE(*CHAR) LEN(9) VALUE('*SHUTDOWN')
+
+    /* Send *SHUTDOWN to Data Queue to instruct daemon to exit LR */
+    CALL PGM(QSYS/QSNDDTAQ) PARM(&DTAQ &LIB &LEN &MSG)
+
+    SNDPGMMSG MSG('Shutdown signal sent to QGPL/SALES_SYNC. Daemon will exit cleanly.') +
+              MSGTYPE(*INFO)
+
+ENDPGM
