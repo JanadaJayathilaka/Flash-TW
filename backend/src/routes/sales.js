@@ -3,6 +3,8 @@ const router = express.Router();
 const { getPool, mssql } = require('../config/sqlServer');
 const { getIbmPool, resetIbmPool } = require('../config/ibmOdbc');
 
+const IBM_SCHEMA = process.env.IBM_DB_SCHEMA || 'MEEGODA11';
+
 // ----- helpers -----
 
 // IBM i ODBC driver often returns lowercase column names — normalise to UPPER so
@@ -10,7 +12,8 @@ const { getIbmPool, resetIbmPool } = require('../config/ibmOdbc');
 function normalizeRow(row) {
   const out = {};
   for (const key of Object.keys(row)) {
-    out[key.toUpperCase()] = row[key];
+    const val = row[key];
+    out[key.toUpperCase()] = typeof val === 'bigint' ? Number(val) : val;
   }
   return out;
 }
@@ -61,10 +64,11 @@ async function odbcQuery(sql, params) {
 
 async function getStoreDetails() {
   const pool = await getPool();
-  // Use GetRegionStoreDetailAndCalendarAndRates so store details use the updated STORE_MASTER & SALES_TERRITORY_MASTER tables
-  const result = await pool.request().execute('GetRegionStoreDetailAndCalendarAndRates');
+  // Use GetStoreDetailsOnly for fast store details fetch (only store master rows, zero calendar/currency overhead)
+  const result = await pool.request().execute('GetStoreDetailsOnly');
+  const rows = result.recordsets?.[0] || result.recordset || [];
   const map = {};
-  for (const row of result.recordsets[0]) {
+  for (const row of rows) {
     const id = (row.A ?? '').toString().trim();
     map[id] = {
       STORE_NAME: (row.C ?? '').toString().trim(),
@@ -141,9 +145,9 @@ function formatDateOnly(value) {
 // GET /api/sales/latest-date — Latest sales date from AHLIBR.STRSLSSMRY (the same table the pivot SP queries)
 router.get('/latest-date', async (req, res) => {
   try {
-    console.log('[latest-date] Querying MAX SALES_ON_DATE from AHLIBR.STRSLSSMRY...');
+    console.log(`[latest-date] Querying MAX SALES_ON_DATE from ${IBM_SCHEMA}.STRSLSSMRY...`);
     const result = await odbcQuery(
-      `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM AHLIBR.STRSLSSMRY WHERE STATUS = 1`,
+      `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1`,
       []
     );
     const raw = result?.[0]?.LATEST_DATE;
@@ -213,7 +217,7 @@ router.get('/pivot', async (req, res) => {
     console.log('[pivot] Starting parallel fetch: ODBC + SQL Server...');
     const [odbcResult, storeMap] = await Promise.all([
       odbcQuery(
-        `{ CALL KANDY.GET_STORE_SALES_BY_DATES_PIVOT(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
+        `{ CALL ${IBM_SCHEMA}.GET_STORE_SALES_BY_DATES_PIVOT(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
         [DT_1, DT_2, P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E, P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E]
       ),
       getStoreDetails(),
@@ -312,7 +316,7 @@ router.get('/hist', async (req, res) => {
     const { date1, date2 } = req.query;
 
     const result = await odbcQuery(
-      `{ CALL KANDY.GET_STORE_SALES_BY_DATES(?, ?) }`,
+      `{ CALL ${IBM_SCHEMA}.GET_STORE_SALES_BY_DATES(?, ?) }`,
       [date1, date2]
     );
 
@@ -353,7 +357,7 @@ router.get('/pivotsum', async (req, res) => {
     console.log('[pivotsum] Starting parallel fetch: ODBC + SQL Server...');
     const [odbcResult, storeMap] = await Promise.all([
       odbcQuery(
-        `{ CALL AHLIBR.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
+        `{ CALL ${IBM_SCHEMA}.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
         [DT_1, DT_2,
          P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E,
          P_QTD_1_S, P_QTD_1_E, P_QTD_2_S, P_QTD_2_E,
@@ -496,11 +500,11 @@ router.get('/debug-pivotsum', async (req, res) => {
     console.log('[debug-pivotsum] Calling SP with params:', params);
 
     // ── Step 1: raw ODBC result (before normalizeRow) ──
-    const pool = await getIbmPool();
+      const pool = await getIbmPool();
     const rawResult = await pool.query(
-      `{ CALL AHLIBR.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
-      params
-    );
+        `{ CALL ${IBM_SCHEMA}.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
+        params
+      );
 
     const rawKeys   = rawResult && rawResult.length > 0 ? Object.keys(rawResult[0]) : [];
     const rawSample = rawResult ? rawResult.slice(0, 2) : [];
@@ -536,7 +540,7 @@ router.get('/available-dates', async (req, res) => {
   try {
     // Step 1: Get the latest date
     const maxResult = await odbcQuery(
-      `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM AHLIBR.STRSLSSMRY WHERE STATUS = 1`,
+      `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1`,
       []
     );
     const maxRaw = maxResult?.[0]?.LATEST_DATE;
@@ -548,7 +552,7 @@ router.get('/available-dates', async (req, res) => {
 
     // Step 2: Get the second-latest distinct date (the one just before the max)
     const prevResult = await odbcQuery(
-      `SELECT MAX(SALES_ON_DATE) AS PREV_DATE FROM AHLIBR.STRSLSSMRY WHERE STATUS = 1 AND SALES_ON_DATE < ?`,
+      `SELECT MAX(SALES_ON_DATE) AS PREV_DATE FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1 AND SALES_ON_DATE < ?`,
       [latestDate]
     );
     const prevRaw = prevResult?.[0]?.PREV_DATE;
@@ -570,7 +574,7 @@ router.get('/available-dates', async (req, res) => {
 router.get('/chart-columns', async (req, res) => {
   try {
     const result = await odbcQuery(
-      `SELECT * FROM AHLIBR.STRSLSSMRY WHERE STATUS = 1 FETCH FIRST 1 ROWS ONLY`,
+      `SELECT * FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1 FETCH FIRST 1 ROWS ONLY`,
       []
     );
     const columns = result && result.length > 0 ? Object.keys(result[0]) : [];
@@ -682,7 +686,7 @@ async function getAnalyticsData(startDate, endDate, modeRaw, smaPeriod) {
 
   const sql = `
     SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-    FROM AHLIBR.STRSLSSMRY
+    FROM ${IBM_SCHEMA}.STRSLSSMRY
     WHERE STATUS = 1
       AND SALES_ON_DATE >= ?
       AND SALES_ON_DATE <= ?
@@ -734,7 +738,7 @@ router.get('/chart', async (req, res) => {
 
     const sql = `
       SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-      FROM AHLIBR.STRSLSSMRY
+      FROM ${IBM_SCHEMA}.STRSLSSMRY
       WHERE STATUS = 1
         AND SALES_ON_DATE >= ?
         AND SALES_ON_DATE <= ?
