@@ -43,9 +43,10 @@ export async function fetchSalesPivotSum(params) {
   }
 
   const data = await res.json();
+  const rows = Array.isArray(data.PivotData) ? data.PivotData : (Array.isArray(data.Rows) ? data.Rows : []);
   return {
-    PivotData: Array.isArray(data.PivotData) ? data.PivotData : [],
-    TotalCount: data.TotalCount ?? 0,
+    PivotData: rows,
+    TotalCount: data.TotalCount ?? rows.length,
   };
 }
 

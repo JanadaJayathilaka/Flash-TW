@@ -1,66 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getPool, mssql } = require('../config/sqlServer');
-const { getIbmPool, resetIbmPool } = require('../config/ibmOdbc');
-
-const IBM_SCHEMA = process.env.IBM_DB_SCHEMA || 'MEEGODA11';
+const ibmiApi = require('../config/ibmiApi');
 
 // ----- helpers -----
-
-// IBM i ODBC driver often returns lowercase column names — normalise to UPPER so
-// the rest of our code can reference e.g. row.STORE_ID, row.TOTAL_DATE_1, etc.
-function normalizeRow(row) {
-  const out = {};
-  for (const key of Object.keys(row)) {
-    const val = row[key];
-    out[key.toUpperCase()] = typeof val === 'bigint' ? Number(val) : val;
-  }
-  return out;
-}
-
-// Retry wrapper for ODBC calls — resets pool on connection failure
-async function odbcQuery(sql, params) {
-  const QUERY_TIMEOUT = 60000; // 60 second timeout
-  for (let attempt = 1; attempt <= 2; attempt++) {
-    try {
-      console.log(`[ODBC] Attempt ${attempt}: getting pool...`);
-      const pool = await getIbmPool();
-      console.log(`[ODBC] Attempt ${attempt}: executing query...`);
-      
-      // Race query against timeout
-      const result = await Promise.race([
-        pool.query(sql, params),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('ODBC query timeout after 60s')), QUERY_TIMEOUT)
-        ),
-      ]);
-      
-      console.log(`[ODBC] Attempt ${attempt}: query returned ${result?.length ?? 0} rows`);
-
-      // Log first row keys for debugging column-name casing
-      if (result && result.length > 0) {
-        console.log('[ODBC] Raw first-row keys:', Object.keys(result[0]));
-      }
-
-      // Normalise every row's keys to UPPERCASE
-      return (result || []).map(normalizeRow);
-    } catch (err) {
-      const msg = (err.message || '').toLowerCase();
-      const odbcMsg = (err.odbcErrors?.[0]?.message || '').toLowerCase();
-      const odbcState = (err.odbcErrors?.[0]?.state || '');
-      const isConnErr = msg.includes('communication link') || msg.includes('connection') || msg.includes('timeout')
-        || odbcMsg.includes('communication link') || odbcMsg.includes('disconnect')
-        || odbcState === '08S01' || odbcState === '08003';
-      console.log(`[ODBC] Attempt ${attempt} failed: ${err.message} | odbc: ${odbcMsg} | state: ${odbcState} | isConnErr: ${isConnErr}`);
-      if (isConnErr && attempt === 1) {
-        console.log('[ODBC] Resetting pool and retrying...');
-        await resetIbmPool();
-        continue;
-      }
-      throw err;
-    }
-  }
-}
 
 async function getStoreDetails() {
   const pool = await getPool();
@@ -91,19 +34,20 @@ function calcComp(cy, ly) {
 }
 
 function sumField(rows, field) {
-  return rows.reduce((s, r) => s + (r[field] || 0), 0);
+  return rows.reduce((acc, r) => acc + (parseFloat(r[field]) || 0), 0);
 }
 
-function buildTerritoryTotal(territory, storeRows, regionId = '') {
-  const dayCY = sumField(storeRows, 'DAY_SALES_CY');
-  const dayLY = sumField(storeRows, 'DAY_SALES_LY');
-  const wtdCY = sumField(storeRows, 'WTD_SALES_CY');
-  const wtdLY = sumField(storeRows, 'WTD_SALES_LY');
-  const ytdCY = sumField(storeRows, 'YTD_SALES_CY');
-  const ytdLY = sumField(storeRows, 'YTD_SALES_LY');
+function buildTerritoryTotal(territory, rows, regionId) {
+  const dayCY = sumField(rows, 'DAY_SALES_CY');
+  const dayLY = sumField(rows, 'DAY_SALES_LY');
+  const wtdCY = sumField(rows, 'WTD_SALES_CY');
+  const wtdLY = sumField(rows, 'WTD_SALES_LY');
+  const ytdCY = sumField(rows, 'YTD_SALES_CY');
+  const ytdLY = sumField(rows, 'YTD_SALES_LY');
+
   return {
     STORE_ID: '',
-    STORE_NAME: territory + ' Total',
+    STORE_NAME: `${territory} Total`,
     TERRITORY: territory,
     REGION_ID: regionId,
     DATE_OPENED: '',
@@ -142,19 +86,10 @@ function formatDateOnly(value) {
   return str.substring(0, 10);
 }
 
-// GET /api/sales/latest-date — Latest sales date from AHLIBR.STRSLSSMRY (the same table the pivot SP queries)
+// GET /api/sales/latest-date — Latest sales date from IBM i REST API
 router.get('/latest-date', async (req, res) => {
   try {
-    console.log(`[latest-date] Querying MAX SALES_ON_DATE from ${IBM_SCHEMA}.STRSLSSMRY...`);
-    const result = await odbcQuery(
-      `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1`,
-      []
-    );
-    const raw = result?.[0]?.LATEST_DATE;
-    console.log('[latest-date] Raw value:', raw, '| type:', typeof raw);
-    // Keep date-only semantics (no UTC conversion)
-    const latestDate = formatDateOnly(raw);
-    console.log('[latest-date] Result:', latestDate);
+    const latestDate = await ibmiApi.getLatestDate();
     res.json({ latestDate });
   } catch (err) {
     console.error('GET /api/sales/latest-date error:', err);
@@ -213,19 +148,19 @@ router.get('/pivot', async (req, res) => {
       P_YTD_2_S, P_YTD_2_E,
     } = req.query;
 
-    // Fetch ODBC pivot data and store details in parallel
-    console.log('[pivot] Starting parallel fetch: ODBC + SQL Server...');
-    const [odbcResult, storeMap] = await Promise.all([
-      odbcQuery(
-        `{ CALL ${IBM_SCHEMA}.GET_STORE_SALES_BY_DATES_PIVOT(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
-        [DT_1, DT_2, P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E, P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E]
-      ),
+    console.log('[pivot] Fetching pivot data via IBM i REST API + SQL Server...');
+    const [rawRows, storeMap] = await Promise.all([
+      ibmiApi.getPivot({
+        DT_1, DT_2,
+        P_WTD_1_S, P_WTD_1_E,
+        P_WTD_2_S, P_WTD_2_E,
+        P_YTD_1_S, P_YTD_1_E,
+        P_YTD_2_S, P_YTD_2_E,
+      }),
       getStoreDetails(),
     ]);
-    console.log(`[pivot] Got ${odbcResult?.length ?? 0} ODBC rows, ${Object.keys(storeMap).length} store entries`);
 
-    // Map ODBC columns to frontend column names and enrich with store metadata
-    const storeRows = odbcResult.map((row) => {
+    const storeRows = (rawRows || []).map((row) => {
       const storeId = (row.STORE_ID ?? '').toString().trim();
       const info = storeMap[storeId] || { STORE_NAME: storeId, TERRITORY: 'Unknown', DATE_OPENED: '' };
 
@@ -310,25 +245,19 @@ router.get('/pivot', async (req, res) => {
   }
 });
 
-// GET /api/sales/hist — Historical sales from IBM i
+// GET /api/sales/hist — Historical sales from IBM i REST API
 router.get('/hist', async (req, res) => {
   try {
     const { date1, date2 } = req.query;
-
-    const result = await odbcQuery(
-      `{ CALL ${IBM_SCHEMA}.GET_STORE_SALES_BY_DATES(?, ?) }`,
-      [date1, date2]
-    );
-
-    // result is an array of rows - send directly
-    res.json(Array.from(result));
+    const result = await ibmiApi.getHist(date1, date2);
+    res.json(Array.from(result || []));
   } catch (err) {
     console.error('GET /api/sales/hist error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/sales/pivotsum — New primary summary endpoint using AHLIBR.GET_SALES_PVT_SUMRY (14 params, includes QTD)
+// GET /api/sales/pivotsum — Primary summary endpoint using IBM i REST API (GET_SALES_PVT_SUMRY)
 router.get('/pivotsum', async (req, res) => {
   try {
     const {
@@ -341,47 +270,23 @@ router.get('/pivotsum', async (req, res) => {
       P_YTD_2_S, P_YTD_2_E,
     } = req.query;
 
-    // ── Heavy debug: dump every param so we can see exactly what the SP receives ──
     const spParams = { DT_1, DT_2, P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E,
                         P_QTD_1_S, P_QTD_1_E, P_QTD_2_S, P_QTD_2_E,
                         P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E };
-    console.log('[pivotsum] ───── Received params ─────');
-    console.log(JSON.stringify(spParams, null, 2));
-    // Check for any undefined / empty params
-    for (const [k, v] of Object.entries(spParams)) {
-      if (v === undefined || v === null || v === '') {
-        console.warn(`[pivotsum] ⚠️  Param ${k} is EMPTY / undefined!`);
-      }
-    }
 
-    console.log('[pivotsum] Starting parallel fetch: ODBC + SQL Server...');
-    const [odbcResult, storeMap] = await Promise.all([
-      odbcQuery(
-        `{ CALL ${IBM_SCHEMA}.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
-        [DT_1, DT_2,
-         P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E,
-         P_QTD_1_S, P_QTD_1_E, P_QTD_2_S, P_QTD_2_E,
-         P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E]
-      ),
+    console.log('[pivotsum] Fetching summary via IBM i REST API + SQL Server...');
+    const [rawRows, storeMap] = await Promise.all([
+      ibmiApi.getPivotSum(spParams),
       getStoreDetails(),
     ]);
-    console.log(`[pivotsum] Got ${odbcResult?.length ?? 0} ODBC rows, ${Object.keys(storeMap).length} store entries`);
+    console.log(`[pivotsum] Done! Got ${rawRows?.length || 0} DB2 rows, ${Object.keys(storeMap).length} stores from SQL Server`);
 
-    // ── Dump first normalised row so we can see actual column names & values ──
-    if (odbcResult && odbcResult.length > 0) {
-      console.log('[pivotsum] First normalised row:', JSON.stringify(odbcResult[0]));
-    } else {
-      console.warn('[pivotsum] ⚠️  0 rows returned from SP — check params above');
-    }
-
-    // Extract TOTAL_ROWS from first row (same value for all rows per SP design)
     let totalRows = 0;
-    if (odbcResult && odbcResult.length > 0 && odbcResult[0].TOTAL_ROWS != null) {
-      totalRows = parseInt(odbcResult[0].TOTAL_ROWS) || 0;
+    if (rawRows && rawRows.length > 0 && rawRows[0].TOTAL_ROWS != null) {
+      totalRows = parseInt(rawRows[0].TOTAL_ROWS) || 0;
     }
 
-    // Map ODBC columns to frontend column names and enrich with store metadata
-    const storeRows = odbcResult.map((row) => {
+    const storeRows = (rawRows || []).map((row) => {
       const storeId = (row.STORE_ID ?? '').toString().trim();
       const info = storeMap[storeId] || { STORE_NAME: storeId, TERRITORY: 'Unknown', DATE_OPENED: '' };
 
@@ -428,141 +333,91 @@ router.get('/pivotsum', async (req, res) => {
     for (const [territory, rows] of Object.entries(territories).sort(([a], [b]) => a.localeCompare(b))) {
       rows.sort((a, b) => a.STORE_NAME.localeCompare(b.STORE_NAME));
       enriched.push(...rows);
-      // Territory total
       const regionId = rows[0]?.REGION_ID || '';
-      const dayCY  = sumField(rows, 'DAY_SALES_CY');
-      const dayLY  = sumField(rows, 'DAY_SALES_LY');
-      const wtdCY  = sumField(rows, 'WTD_SALES_CY');
-      const wtdLY  = sumField(rows, 'WTD_SALES_LY');
-      const qtdCY  = sumField(rows, 'QTD_SALES_CY');
-      const qtdLY  = sumField(rows, 'QTD_SALES_LY');
-      const ytdCY  = sumField(rows, 'YTD_SALES_CY');
-      const ytdLY  = sumField(rows, 'YTD_SALES_LY');
+
+      const dayCY = sumField(rows, 'DAY_SALES_CY');
+      const dayLY = sumField(rows, 'DAY_SALES_LY');
+      const wtdCY = sumField(rows, 'WTD_SALES_CY');
+      const wtdLY = sumField(rows, 'WTD_SALES_LY');
+      const qtdCY = sumField(rows, 'QTD_SALES_CY');
+      const qtdLY = sumField(rows, 'QTD_SALES_LY');
+      const ytdCY = sumField(rows, 'YTD_SALES_CY');
+      const ytdLY = sumField(rows, 'YTD_SALES_LY');
+
       enriched.push({
-        STORE_ID: '', STORE_NAME: territory + ' Total', TERRITORY: territory, REGION_ID: regionId, DATE_OPENED: '',
-        DAY_SALES_CY: dayCY, DAY_SALES_LY: dayLY, DAY_SALES_COMP: calcComp(dayCY, dayLY),
-        WTD_SALES_CY: wtdCY, WTD_SALES_LY: wtdLY, WTD_SALES_COMP: calcComp(wtdCY, wtdLY),
-        QTD_SALES_CY: qtdCY, QTD_SALES_LY: qtdLY, QTD_SALES_COMP: calcComp(qtdCY, qtdLY),
-        YTD_SALES_CY: ytdCY, YTD_SALES_LY: ytdLY, YTD_SALES_COMP: calcComp(ytdCY, ytdLY),
-        IS_TERRITORY_TOTAL: true, IS_GRAND_TOTAL: false,
+        STORE_ID:           '',
+        STORE_NAME:         `${territory} Total`,
+        TERRITORY:          territory,
+        REGION_ID:          regionId,
+        DATE_OPENED:        '',
+        DAY_SALES_CY:       dayCY,
+        DAY_SALES_LY:       dayLY,
+        DAY_SALES_COMP:     calcComp(dayCY, dayLY),
+        WTD_SALES_CY:       wtdCY,
+        WTD_SALES_LY:       wtdLY,
+        WTD_SALES_COMP:     calcComp(wtdCY, wtdLY),
+        QTD_SALES_CY:       qtdCY,
+        QTD_SALES_LY:       qtdLY,
+        QTD_SALES_COMP:     calcComp(qtdCY, qtdLY),
+        YTD_SALES_CY:       ytdCY,
+        YTD_SALES_LY:       ytdLY,
+        YTD_SALES_COMP:     calcComp(ytdCY, ytdLY),
+        IS_TERRITORY_TOTAL: true,
+        IS_GRAND_TOTAL:     false,
       });
     }
 
     // Grand total row
-    const gDayCY  = sumField(storeRows, 'DAY_SALES_CY');
-    const gDayLY  = sumField(storeRows, 'DAY_SALES_LY');
-    const gWtdCY  = sumField(storeRows, 'WTD_SALES_CY');
-    const gWtdLY  = sumField(storeRows, 'WTD_SALES_LY');
-    const gQtdCY  = sumField(storeRows, 'QTD_SALES_CY');
-    const gQtdLY  = sumField(storeRows, 'QTD_SALES_LY');
-    const gYtdCY  = sumField(storeRows, 'YTD_SALES_CY');
-    const gYtdLY  = sumField(storeRows, 'YTD_SALES_LY');
+    const grandDayCY = sumField(storeRows, 'DAY_SALES_CY');
+    const grandDayLY = sumField(storeRows, 'DAY_SALES_LY');
+    const grandWtdCY = sumField(storeRows, 'WTD_SALES_CY');
+    const grandWtdLY = sumField(storeRows, 'WTD_SALES_LY');
+    const grandQtdCY = sumField(storeRows, 'QTD_SALES_CY');
+    const grandQtdLY = sumField(storeRows, 'QTD_SALES_LY');
+    const grandYtdCY = sumField(storeRows, 'YTD_SALES_CY');
+    const grandYtdLY = sumField(storeRows, 'YTD_SALES_LY');
+
     enriched.push({
-      STORE_ID: '', STORE_NAME: 'Grand Total', TERRITORY: '', REGION_ID: '', DATE_OPENED: '',
-      DAY_SALES_CY: gDayCY, DAY_SALES_LY: gDayLY, DAY_SALES_COMP: calcComp(gDayCY, gDayLY),
-      WTD_SALES_CY: gWtdCY, WTD_SALES_LY: gWtdLY, WTD_SALES_COMP: calcComp(gWtdCY, gWtdLY),
-      QTD_SALES_CY: gQtdCY, QTD_SALES_LY: gQtdLY, QTD_SALES_COMP: calcComp(gQtdCY, gQtdLY),
-      YTD_SALES_CY: gYtdCY, YTD_SALES_LY: gYtdLY, YTD_SALES_COMP: calcComp(gYtdCY, gYtdLY),
-      IS_TERRITORY_TOTAL: false, IS_GRAND_TOTAL: true,
+      STORE_ID:           '',
+      STORE_NAME:         'Grand Total',
+      TERRITORY:          '',
+      REGION_ID:          '',
+      DATE_OPENED:        '',
+      DAY_SALES_CY:       grandDayCY,
+      DAY_SALES_LY:       grandDayLY,
+      DAY_SALES_COMP:     calcComp(grandDayCY, grandDayLY),
+      WTD_SALES_CY:       grandWtdCY,
+      WTD_SALES_LY:       grandWtdLY,
+      WTD_SALES_COMP:     calcComp(grandWtdCY, grandWtdLY),
+      QTD_SALES_CY:       grandQtdCY,
+      QTD_SALES_LY:       grandQtdLY,
+      QTD_SALES_COMP:     calcComp(grandQtdCY, grandQtdLY),
+      YTD_SALES_CY:       grandYtdCY,
+      YTD_SALES_LY:       grandYtdLY,
+      YTD_SALES_COMP:     calcComp(grandYtdCY, grandYtdLY),
+      IS_TERRITORY_TOTAL: false,
+      IS_GRAND_TOTAL:     true,
     });
 
-    res.json({ PivotData: enriched, TotalCount: totalRows });
+    res.json({
+      PivotData: enriched,
+      Rows: enriched,
+      TotalCount: totalRows
+    });
   } catch (err) {
     console.error('GET /api/sales/pivotsum error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// GET /api/sales/debug-pivotsum — Self-contained quick-test with hardcoded dates OR query params.
-// Hit http://localhost:3001/api/sales/debug-pivotsum  (no params needed)
-router.get('/debug-pivotsum', async (req, res) => {
-  try {
-    // Use query params if supplied, otherwise use the same date the web app hardcodes
-    const DT_1        = req.query.DT_1        || '2026-02-10';
-    const DT_2        = req.query.DT_2        || '2025-02-11';
-    const P_WTD_1_S   = req.query.P_WTD_1_S   || '2026-02-08';
-    const P_WTD_1_E   = req.query.P_WTD_1_E   || '2026-02-10';
-    const P_WTD_2_S   = req.query.P_WTD_2_S   || '2025-02-09';
-    const P_WTD_2_E   = req.query.P_WTD_2_E   || '2025-02-11';
-    const P_QTD_1_S   = req.query.P_QTD_1_S   || '2026-01-01';
-    const P_QTD_1_E   = req.query.P_QTD_1_E   || '2026-02-10';
-    const P_QTD_2_S   = req.query.P_QTD_2_S   || '2025-01-01';
-    const P_QTD_2_E   = req.query.P_QTD_2_E   || '2025-02-11';
-    const P_YTD_1_S   = req.query.P_YTD_1_S   || '2025-02-02';
-    const P_YTD_1_E   = req.query.P_YTD_1_E   || '2026-02-10';
-    const P_YTD_2_S   = req.query.P_YTD_2_S   || '2024-02-04';
-    const P_YTD_2_E   = req.query.P_YTD_2_E   || '2025-02-11';
-
-    const params = [DT_1, DT_2, P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E,
-                    P_QTD_1_S, P_QTD_1_E, P_QTD_2_S, P_QTD_2_E,
-                    P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E];
-
-    console.log('[debug-pivotsum] Calling SP with params:', params);
-
-    // ── Step 1: raw ODBC result (before normalizeRow) ──
-      const pool = await getIbmPool();
-    const rawResult = await pool.query(
-        `{ CALL ${IBM_SCHEMA}.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
-        params
-      );
-
-    const rawKeys   = rawResult && rawResult.length > 0 ? Object.keys(rawResult[0]) : [];
-    const rawSample = rawResult ? rawResult.slice(0, 2) : [];
-
-    // ── Step 2: normalised result ──
-    const normalised = (rawResult || []).map(normalizeRow);
-    const normKeys   = normalised.length > 0 ? Object.keys(normalised[0]) : [];
-    const normSample = normalised.slice(0, 2);
-
-    const out = {
-      paramsUsed: { DT_1, DT_2, P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E,
-                    P_QTD_1_S, P_QTD_1_E, P_QTD_2_S, P_QTD_2_E,
-                    P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E },
-      totalRows: rawResult?.length ?? 0,
-      rawColumnKeys: rawKeys,
-      rawSampleRows: rawSample,
-      normalisedColumnKeys: normKeys,
-      normalisedSampleRows: normSample,
-    };
-
-    console.log('[debug-pivotsum] Response:', JSON.stringify(out, null, 2));
-    res.json(out);
-  } catch (err) {
-    console.error('GET /api/sales/debug-pivotsum error:', err);
-    res.status(500).json({ error: err.message, stack: err.stack });
-  }
-});
-
 // GET /api/sales/available-dates — Most recent distinct dates with sales data.
-// The web app (FlashSaleC#) hardcodes only the latest 2 dates (e.g. ["2026-02-09","2026-02-10"]).
-// We replicate that by fetching only the TOP 2 most recent distinct dates from the DB.
 router.get('/available-dates', async (req, res) => {
   try {
-    // Step 1: Get the latest date
-    const maxResult = await odbcQuery(
-      `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1`,
-      []
-    );
-    const maxRaw = maxResult?.[0]?.LATEST_DATE;
-    if (!maxRaw) {
-      console.log('[available-dates] No dates found');
-      return res.json({ dates: [] });
-    }
-    const latestDate = formatDateOnly(maxRaw);
-
-    // Step 2: Get the second-latest distinct date (the one just before the max)
-    const prevResult = await odbcQuery(
-      `SELECT MAX(SALES_ON_DATE) AS PREV_DATE FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1 AND SALES_ON_DATE < ?`,
-      [latestDate]
-    );
-    const prevRaw = prevResult?.[0]?.PREV_DATE;
+    const latestDate = await ibmiApi.getLatestDate();
+    if (!latestDate) return res.json({ dates: [] });
+    const prevDate = await ibmiApi.getPrevDate(latestDate);
     const dates = [latestDate];
-    if (prevRaw) {
-      const prev = formatDateOnly(prevRaw);
-      dates.unshift(prev); // put earlier date first → sorted ascending
-    }
-
-    console.log(`[available-dates] Returning ${dates.length} dates:`, dates);
+    if (prevDate) dates.unshift(prevDate);
     res.json({ dates });
   } catch (err) {
     console.error('GET /api/sales/available-dates error:', err);
@@ -570,111 +425,58 @@ router.get('/available-dates', async (req, res) => {
   }
 });
 
-// GET /api/sales/chart-columns — Debug: discover STRSLSSMRY column names
+// GET /api/sales/chart-columns — Discover STRSLSSMRY column names
 router.get('/chart-columns', async (req, res) => {
   try {
-    const result = await odbcQuery(
-      `SELECT * FROM ${IBM_SCHEMA}.STRSLSSMRY WHERE STATUS = 1 FETCH FIRST 1 ROWS ONLY`,
-      []
-    );
-    const columns = result && result.length > 0 ? Object.keys(result[0]) : [];
-    const sampleRow = result && result.length > 0 ? result[0] : null;
-    res.json({ columns, sampleRow });
+    const columns = await ibmiApi.getChartColumns();
+    res.json({ columns, sampleRow: null });
   } catch (err) {
     console.error('GET /api/sales/chart-columns error:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-function toIsoDay(value) {
-  const raw = (value || '').toString().trim();
-  const d = new Date(raw);
-  if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10);
-  return raw.substring(0, 10);
-}
-
-function buildChartPayload(rawRows, mode, smaPeriod) {
-  if (!rawRows || rawRows.length === 0) {
-    return { Labels: [], Sales: [], Sma: [] };
+// Helper for analytics
+function buildChartPayload(rows, mode, period) {
+  const map = {};
+  for (const r of rows) {
+    const dStr = formatDateOnly(r.SALES_ON_DATE);
+    const net = parseFloat(r.TOTAL_SALES) || 0;
+    if (dStr) map[dStr] = net;
   }
 
-  const dailyData = rawRows.map(r => ({
-    date: toIsoDay(r.SALES_ON_DATE),
-    sales: parseFloat(r.TOTAL_SALES) || 0,
-  }));
+  const sortedDates = Object.keys(map).sort();
+  const labels = [];
+  const sales = [];
 
-  const dailySales = dailyData.map(d => d.sales);
-  const dailySma = dailySales.map((_, i) => {
-    if (i < smaPeriod - 1) return null;
-    let sum = 0;
-    for (let j = i - smaPeriod + 1; j <= i; j++) sum += dailySales[j];
-    return parseFloat((sum / smaPeriod).toFixed(2));
-  });
-
-  let labels;
-  let sales;
-  let sma;
-
-  if (mode === 'D') {
-    labels = dailyData.map(d => d.date);
-    sales = dailySales;
-    sma = dailySma;
-  } else if (mode === 'W') {
-    const weekMap = new Map();
-    for (let i = 0; i < dailyData.length; i++) {
-      const d = dailyData[i];
-      const dt = new Date(d.date);
-      const year = dt.getFullYear();
-      const jan4 = new Date(year, 0, 4);
-      const dayOfYear = Math.floor((dt - new Date(year, 0, 1)) / 86400000) + 1;
-      let weekNum = Math.ceil((dayOfYear + jan4.getDay() - 1) / 7);
-      if (weekNum <= 0) weekNum = 53;
-      if (weekNum > 53) weekNum = 53;
-      const key = `W${String(weekNum).padStart(2, '0')}`;
-      if (!weekMap.has(key)) weekMap.set(key, { sales: 0, smaSum: 0, smaCount: 0 });
-      const bucket = weekMap.get(key);
-      bucket.sales += d.sales;
-      if (dailySma[i] !== null) {
-        bucket.smaSum += dailySma[i];
-        bucket.smaCount++;
-      }
+  if (mode === 'M') {
+    const monthMap = {};
+    for (const d of sortedDates) {
+      const ym = d.substring(0, 7);
+      monthMap[ym] = (monthMap[ym] || 0) + map[d];
     }
-    const sorted = Array.from(weekMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-    labels = sorted.map(([k]) => k);
-    sales = sorted.map(([, v]) => v.sales);
-    sma = sorted.map(([, v]) => (v.smaCount > 0 ? parseFloat((v.smaSum / v.smaCount).toFixed(2)) : null));
-  } else if (mode === 'M') {
-    const monthMap = new Map();
-    for (let i = 0; i < dailyData.length; i++) {
-      const key = dailyData[i].date.substring(0, 7);
-      if (!monthMap.has(key)) monthMap.set(key, { sales: 0, smaSum: 0, smaCount: 0 });
-      const bucket = monthMap.get(key);
-      bucket.sales += dailyData[i].sales;
-      if (dailySma[i] !== null) {
-        bucket.smaSum += dailySma[i];
-        bucket.smaCount++;
-      }
+    for (const [ym, val] of Object.entries(monthMap).sort(([a], [b]) => a.localeCompare(b))) {
+      labels.push(ym);
+      sales.push(Math.round(val * 100) / 100);
     }
-    const sorted = Array.from(monthMap.entries());
-    labels = sorted.map(([k]) => k);
-    sales = sorted.map(([, v]) => v.sales);
-    sma = sorted.map(([, v]) => (v.smaCount > 0 ? parseFloat((v.smaSum / v.smaCount).toFixed(2)) : null));
   } else {
-    const yearMap = new Map();
-    for (let i = 0; i < dailyData.length; i++) {
-      const key = dailyData[i].date.substring(0, 4);
-      if (!yearMap.has(key)) yearMap.set(key, { sales: 0, smaSum: 0, smaCount: 0 });
-      const bucket = yearMap.get(key);
-      bucket.sales += dailyData[i].sales;
-      if (dailySma[i] !== null) {
-        bucket.smaSum += dailySma[i];
-        bucket.smaCount++;
-      }
+    for (const d of sortedDates) {
+      labels.push(d);
+      sales.push(Math.round(map[d] * 100) / 100);
     }
-    const sorted = Array.from(yearMap.entries());
-    labels = sorted.map(([k]) => k);
-    sales = sorted.map(([, v]) => v.sales);
-    sma = sorted.map(([, v]) => (v.smaCount > 0 ? parseFloat((v.smaSum / v.smaCount).toFixed(2)) : null));
+  }
+
+  const sma = [];
+  for (let i = 0; i < sales.length; i++) {
+    if (i + 1 < period) {
+      sma.push(null);
+    } else {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j++) {
+        sum += sales[j];
+      }
+      sma.push(Math.round((sum / period) * 100) / 100);
+    }
   }
 
   return { Labels: labels, Sales: sales, Sma: sma };
@@ -684,23 +486,14 @@ async function getAnalyticsData(startDate, endDate, modeRaw, smaPeriod) {
   const mode = (modeRaw || 'D').toString().toUpperCase() === 'Q' ? 'M' : (modeRaw || 'D').toString().toUpperCase();
   const period = parseInt(smaPeriod) || 7;
 
-  const sql = `
-    SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-    FROM ${IBM_SCHEMA}.STRSLSSMRY
-    WHERE STATUS = 1
-      AND SALES_ON_DATE >= ?
-      AND SALES_ON_DATE <= ?
-    GROUP BY SALES_ON_DATE
-    ORDER BY SALES_ON_DATE
-  `;
-
-  const rawRows = await odbcQuery(sql, [startDate, endDate]);
+  console.log('[getAnalyticsData] Fetching analytics via IBM i REST API...');
+  const rawRows = await ibmiApi.getAnalytics(startDate, endDate);
   console.log(`[getAnalyticsData] Got ${rawRows.length} raw daily rows`);
 
   return buildChartPayload(rawRows, mode, period);
 }
 
-// GET /api/sales/analytics — Date-range analytics endpoint (matches web app call shape)
+// GET /api/sales/analytics — Date-range analytics endpoint
 router.get('/analytics', async (req, res) => {
   try {
     const startDate = (req.query.startDate || '').toString();
@@ -712,10 +505,7 @@ router.get('/analytics', async (req, res) => {
       return res.status(400).json({ error: 'startDate and endDate are required' });
     }
 
-    console.log(`[analytics] REST: startDate=${startDate}, endDate=${endDate}, modeRaw=${modeRaw}, smaPeriod=${smaPeriod}`);
-
     const payload = await getAnalyticsData(startDate, endDate, modeRaw, smaPeriod);
-    console.log(`[analytics] REST: Returning ${payload.Labels.length} data points`);
     res.json(payload);
   } catch (err) {
     console.error('GET /api/sales/analytics error:', err);
@@ -723,7 +513,7 @@ router.get('/analytics', async (req, res) => {
   }
 });
 
-// GET /api/sales/chart — Sales chart data for Analytics tab (year range wrapper)
+// GET /api/sales/chart — Sales chart data for Analytics tab
 router.get('/chart', async (req, res) => {
   try {
     const yearFrom = parseInt(req.query.yearFrom) || new Date().getFullYear();
@@ -734,23 +524,8 @@ router.get('/chart', async (req, res) => {
 
     const dateFrom = `${yearFrom}-01-01`;
     const dateTo = `${yearTo}-12-31`;
-    console.log(`[chart] yearFrom=${yearFrom}, yearTo=${yearTo}, mode=${mode}, smaPeriod=${smaPeriod}`);
 
-    const sql = `
-      SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-      FROM ${IBM_SCHEMA}.STRSLSSMRY
-      WHERE STATUS = 1
-        AND SALES_ON_DATE >= ?
-        AND SALES_ON_DATE <= ?
-      GROUP BY SALES_ON_DATE
-      ORDER BY SALES_ON_DATE
-    `;
-
-    const rawRows = await odbcQuery(sql, [dateFrom, dateTo]);
-    console.log(`[chart] Got ${rawRows.length} raw daily rows`);
-
-    const payload = buildChartPayload(rawRows, mode, smaPeriod);
-    console.log(`[chart] Returning ${payload.Labels.length} data points`);
+    const payload = await getAnalyticsData(dateFrom, dateTo, mode, smaPeriod);
     res.json(payload);
   } catch (err) {
     console.error('GET /api/sales/chart error:', err);
