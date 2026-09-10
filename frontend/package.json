@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "deploy": "vite build && sudo cp -r dist/* /var/www/flash-tw-frontend/dist/",
     "lint": "eslint .",
     "preview": "vite preview"
   },

@@ -21,3 +21,6 @@ obj/
 .DS_Store
 *.swp
 *.swo
+
+# Keys & Certificates
+*.pem

@@ -6,13 +6,14 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    port: 5273,
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'http://127.0.0.1:5009',
         changeOrigin: true,
       },
       '/graphql': {
-        target: 'http://localhost:5001',
+        target: 'http://127.0.0.1:5009',
         changeOrigin: true,
       }
     }
