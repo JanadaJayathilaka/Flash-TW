@@ -8,11 +8,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5001',
+        target: 'http://localhost:5009',
         changeOrigin: true,
       },
       '/graphql': {
-        target: 'http://localhost:5001',
+        target: 'http://localhost:5009',
         changeOrigin: true,
       }
     }
