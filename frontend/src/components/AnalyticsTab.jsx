@@ -448,7 +448,7 @@ export default function AnalyticsTab({
   const [compareMode, setCompareMode] = useState(calendarMode); // fiscal | calendar
   const [compareYearLeft, setCompareYearLeft] = useState("2025"); // 2025
   const [compareYearRight, setCompareYearRight] = useState("2026"); // 2026
-  const [viewMode, setViewMode] = useState("D"); // D (Daily) | W (Weekly) | M (Quarterly) | Y (Yearly)
+  const [viewMode, setViewMode] = useState("D"); // D (Daily) | W (Weekly) | M (Monthly) | Q (Quarterly) | Y (Yearly)
   const [smaVisible, setSmaVisible] = useState(false);
 
   const [chartDataByYear, setChartDataByYear] = useState({});
@@ -865,21 +865,10 @@ export default function AnalyticsTab({
                     onChange={(val) => setViewMode(val)}
                     options={[
                       { value: "D", label: "Daily" },
-                      {
-                        value: "W",
-                        label: "Weekly",
-                        disabled: true,
-                      },
-                      {
-                        value: "Q",
-                        label: "Quarterly",
-                        disabled: true,
-                      },
-                      {
-                        value: "Y",
-                        label: "Yearly",
-                        disabled: true,
-                      },
+                      { value: "W", label: "Weekly" },
+                      { value: "M", label: "Monthly" },
+                      { value: "Q", label: "Quarterly" },
+                      { value: "Y", label: "Yearly" },
                     ]}
                     noBorder={true}
                   />
@@ -1111,9 +1100,11 @@ export default function AnalyticsTab({
                   ? "Daily"
                   : viewMode === "W"
                     ? "Weekly"
-                    : viewMode === "Q"
-                      ? "Quarterly"
-                      : "Yearly";
+                    : viewMode === "M"
+                      ? "Monthly"
+                      : viewMode === "Q"
+                        ? "Quarterly"
+                        : "Yearly";
               const title = `Sales Trend - ${compareModeTitle} ${year} (${intervalLabel})`;
               const color = getSalesColor(year);
 

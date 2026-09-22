@@ -20,9 +20,7 @@ async function odbcQuery(sql, params) {
   const QUERY_TIMEOUT = 60000; // 60 second timeout
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      console.log(`[ODBC] Attempt ${attempt}: getting pool...`);
       const pool = await getIbmPool();
-      console.log(`[ODBC] Attempt ${attempt}: executing query...`);
       
       // Race query against timeout
       const result = await Promise.race([
@@ -31,13 +29,6 @@ async function odbcQuery(sql, params) {
           setTimeout(() => reject(new Error('ODBC query timeout after 60s')), QUERY_TIMEOUT)
         ),
       ]);
-      
-      console.log(`[ODBC] Attempt ${attempt}: query returned ${result?.length ?? 0} rows`);
-
-      // Log first row keys for debugging column-name casing
-      if (result && result.length > 0) {
-        console.log('[ODBC] Raw first-row keys:', Object.keys(result[0]));
-      }
 
       // Normalise every row's keys to UPPERCASE
       return (result || []).map(normalizeRow);
@@ -141,13 +132,11 @@ function formatDateOnly(value) {
 // GET /api/sales/latest-date — Latest sales date from AHLIBR.STRSLSSMRY (the same table the pivot SP queries)
 router.get('/latest-date', async (req, res) => {
   try {
-    console.log('[latest-date] Querying MAX SALES_ON_DATE from AHLIBR.STRSLSSMRY...');
     const result = await odbcQuery(
       `SELECT MAX(SALES_ON_DATE) AS LATEST_DATE FROM AHLIBR.STRSLSSMRY WHERE STATUS = 1`,
       []
     );
     const raw = result?.[0]?.LATEST_DATE;
-    console.log('[latest-date] Raw value:', raw, '| type:', typeof raw);
     // Keep date-only semantics (no UTC conversion)
     const latestDate = formatDateOnly(raw);
     console.log('[latest-date] Result:', latestDate);
@@ -337,20 +326,7 @@ router.get('/pivotsum', async (req, res) => {
       P_YTD_2_S, P_YTD_2_E,
     } = req.query;
 
-    // ── Heavy debug: dump every param so we can see exactly what the SP receives ──
-    const spParams = { DT_1, DT_2, P_WTD_1_S, P_WTD_1_E, P_WTD_2_S, P_WTD_2_E,
-                        P_QTD_1_S, P_QTD_1_E, P_QTD_2_S, P_QTD_2_E,
-                        P_YTD_1_S, P_YTD_1_E, P_YTD_2_S, P_YTD_2_E };
-    console.log('[pivotsum] ───── Received params ─────');
-    console.log(JSON.stringify(spParams, null, 2));
-    // Check for any undefined / empty params
-    for (const [k, v] of Object.entries(spParams)) {
-      if (v === undefined || v === null || v === '') {
-        console.warn(`[pivotsum] ⚠️  Param ${k} is EMPTY / undefined!`);
-      }
-    }
-
-    console.log('[pivotsum] Starting parallel fetch: ODBC + SQL Server...');
+    console.log(`[pivotsum] Fetching: DT_1=${DT_1}, DT_2=${DT_2}`);
     const [odbcResult, storeMap] = await Promise.all([
       odbcQuery(
         `{ CALL AHLIBR.GET_SALES_PVT_SUMRY(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }`,
@@ -361,14 +337,7 @@ router.get('/pivotsum', async (req, res) => {
       ),
       getStoreDetails(),
     ]);
-    console.log(`[pivotsum] Got ${odbcResult?.length ?? 0} ODBC rows, ${Object.keys(storeMap).length} store entries`);
-
-    // ── Dump first normalised row so we can see actual column names & values ──
-    if (odbcResult && odbcResult.length > 0) {
-      console.log('[pivotsum] First normalised row:', JSON.stringify(odbcResult[0]));
-    } else {
-      console.warn('[pivotsum] ⚠️  0 rows returned from SP — check params above');
-    }
+    console.log(`[pivotsum] Returned ${odbcResult?.length ?? 0} rows, ${Object.keys(storeMap).length} store entries`);
 
     // Extract TOTAL_ROWS from first row (same value for all rows per SP design)
     let totalRows = 0;
@@ -566,134 +535,89 @@ router.get('/available-dates', async (req, res) => {
   }
 });
 
-// GET /api/sales/chart-columns — Debug: discover STRSLSSMRY column names
-router.get('/chart-columns', async (req, res) => {
-  try {
-    const result = await odbcQuery(
-      `SELECT * FROM AHLIBR.STRSLSSMRY WHERE STATUS = 1 FETCH FIRST 1 ROWS ONLY`,
-      []
-    );
-    const columns = result && result.length > 0 ? Object.keys(result[0]) : [];
-    const sampleRow = result && result.length > 0 ? result[0] : null;
-    res.json({ columns, sampleRow });
-  } catch (err) {
-    console.error('GET /api/sales/chart-columns error:', err);
-    res.status(500).json({ error: err.message });
-  }
-});
 
-function toIsoDay(value) {
-  const raw = (value || '').toString().trim();
-  const d = new Date(raw);
-  if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10);
-  return raw.substring(0, 10);
-}
+const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-function buildChartPayload(rawRows, mode, smaPeriod) {
-  if (!rawRows || rawRows.length === 0) {
+function buildChartPayloadFromSp(rows, mode, smaPeriod) {
+  if (!rows || rows.length === 0) {
     return { Labels: [], Sales: [], Sma: [] };
   }
 
-  const dailyData = rawRows.map(r => ({
-    date: toIsoDay(r.SALES_ON_DATE),
-    sales: parseFloat(r.TOTAL_SALES) || 0,
+  // Clone rows to sort safely
+  let items = rows.map(r => ({
+    period: (r.PERIOD || '').toString().trim(),
+    sales: parseFloat(r.SALES) || 0,
   }));
 
-  const dailySales = dailyData.map(d => d.sales);
-  const dailySma = dailySales.map((_, i) => {
-    if (i < smaPeriod - 1) return null;
-    let sum = 0;
-    for (let j = i - smaPeriod + 1; j <= i; j++) sum += dailySales[j];
-    return parseFloat((sum / smaPeriod).toFixed(2));
-  });
-
-  let labels;
-  let sales;
-  let sma;
-
   if (mode === 'D') {
-    labels = dailyData.map(d => d.date);
-    sales = dailySales;
-    sma = dailySma;
+    // Mode D: dates are YYYY-MM-DD
+    items.sort((a, b) => a.period.localeCompare(b.period));
   } else if (mode === 'W') {
-    const weekMap = new Map();
-    for (let i = 0; i < dailyData.length; i++) {
-      const d = dailyData[i];
-      const dt = new Date(d.date);
-      const year = dt.getFullYear();
-      const jan4 = new Date(year, 0, 4);
-      const dayOfYear = Math.floor((dt - new Date(year, 0, 1)) / 86400000) + 1;
-      let weekNum = Math.ceil((dayOfYear + jan4.getDay() - 1) / 7);
-      if (weekNum <= 0) weekNum = 53;
-      if (weekNum > 53) weekNum = 53;
-      const key = `W${String(weekNum).padStart(2, '0')}`;
-      if (!weekMap.has(key)) weekMap.set(key, { sales: 0, smaSum: 0, smaCount: 0 });
-      const bucket = weekMap.get(key);
-      bucket.sales += d.sales;
-      if (dailySma[i] !== null) {
-        bucket.smaSum += dailySma[i];
-        bucket.smaCount++;
-      }
-    }
-    const sorted = Array.from(weekMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-    labels = sorted.map(([k]) => k);
-    sales = sorted.map(([, v]) => v.sales);
-    sma = sorted.map(([, v]) => (v.smaCount > 0 ? parseFloat((v.smaSum / v.smaCount).toFixed(2)) : null));
+    // Mode W: IBM i ORDER BY 1 orders as strings ('1', '10', '11'...). Sort numerically.
+    items.sort((a, b) => parseInt(a.period, 10) - parseInt(b.period, 10));
   } else if (mode === 'M') {
-    const monthMap = new Map();
-    for (let i = 0; i < dailyData.length; i++) {
-      const key = dailyData[i].date.substring(0, 7);
-      if (!monthMap.has(key)) monthMap.set(key, { sales: 0, smaSum: 0, smaCount: 0 });
-      const bucket = monthMap.get(key);
-      bucket.sales += dailyData[i].sales;
-      if (dailySma[i] !== null) {
-        bucket.smaSum += dailySma[i];
-        bucket.smaCount++;
-      }
-    }
-    const sorted = Array.from(monthMap.entries());
-    labels = sorted.map(([k]) => k);
-    sales = sorted.map(([, v]) => v.sales);
-    sma = sorted.map(([, v]) => (v.smaCount > 0 ? parseFloat((v.smaSum / v.smaCount).toFixed(2)) : null));
-  } else {
-    const yearMap = new Map();
-    for (let i = 0; i < dailyData.length; i++) {
-      const key = dailyData[i].date.substring(0, 4);
-      if (!yearMap.has(key)) yearMap.set(key, { sales: 0, smaSum: 0, smaCount: 0 });
-      const bucket = yearMap.get(key);
-      bucket.sales += dailyData[i].sales;
-      if (dailySma[i] !== null) {
-        bucket.smaSum += dailySma[i];
-        bucket.smaCount++;
-      }
-    }
-    const sorted = Array.from(yearMap.entries());
-    labels = sorted.map(([k]) => k);
-    sales = sorted.map(([, v]) => v.sales);
-    sma = sorted.map(([, v]) => (v.smaCount > 0 ? parseFloat((v.smaSum / v.smaCount).toFixed(2)) : null));
+    // Mode M: months '1'..'12'. Sort numerically.
+    items.sort((a, b) => parseInt(a.period, 10) - parseInt(b.period, 10));
+  } else if (mode === 'Q') {
+    // Mode Q: quarters '1'..'4'. Sort numerically.
+    items.sort((a, b) => parseInt(a.period, 10) - parseInt(b.period, 10));
+  } else if (mode === 'Y') {
+    // Mode Y: years '2024', '2025', '2026'. Sort numerically.
+    items.sort((a, b) => parseInt(a.period, 10) - parseInt(b.period, 10));
   }
+
+  // Format labels for charts
+  let labels;
+  if (mode === 'D') {
+    labels = items.map(d => d.period);
+  } else if (mode === 'W') {
+    labels = items.map(d => {
+      const num = parseInt(d.period, 10);
+      return isNaN(num) ? d.period : `W${String(num).padStart(2, '0')}`;
+    });
+  } else if (mode === 'M') {
+    labels = items.map(d => {
+      const num = parseInt(d.period, 10);
+      return MONTH_NAMES[num] || d.period;
+    });
+  } else if (mode === 'Q') {
+    labels = items.map(d => {
+      const num = parseInt(d.period, 10);
+      return isNaN(num) ? d.period : `Q${num}`;
+    });
+  } else {
+    labels = items.map(d => d.period);
+  }
+
+  const sales = items.map(d => d.sales);
+
+  // Compute Simple Moving Average (SMA)
+  const period = parseInt(smaPeriod) || 7;
+  const sma = sales.map((_, i) => {
+    if (i < period - 1) return null;
+    let sum = 0;
+    for (let j = i - period + 1; j <= i; j++) sum += sales[j];
+    return parseFloat((sum / period).toFixed(2));
+  });
 
   return { Labels: labels, Sales: sales, Sma: sma };
 }
 
 async function getAnalyticsData(startDate, endDate, modeRaw, smaPeriod) {
-  const mode = (modeRaw || 'D').toString().toUpperCase() === 'Q' ? 'M' : (modeRaw || 'D').toString().toUpperCase();
+  const raw = (modeRaw || 'D').toString().toUpperCase().trim();
+  const validModes = ['D', 'W', 'M', 'Q', 'Y'];
+  const mode = validModes.includes(raw) ? raw : 'D';
   const period = parseInt(smaPeriod) || 7;
 
-  const sql = `
-    SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-    FROM AHLIBR.STRSLSSMRY
-    WHERE STATUS = 1
-      AND SALES_ON_DATE >= ?
-      AND SALES_ON_DATE <= ?
-    GROUP BY SALES_ON_DATE
-    ORDER BY SALES_ON_DATE
-  `;
+  console.log(`[getAnalyticsData] Invoking AHLIBR.GET_SALES_ANALYTICS: startDate=${startDate}, endDate=${endDate}, mode=${mode}`);
 
-  const rawRows = await odbcQuery(sql, [startDate, endDate]);
-  console.log(`[getAnalyticsData] Got ${rawRows.length} raw daily rows`);
+  const rows = await odbcQuery(
+    `{ CALL AHLIBR.GET_SALES_ANALYTICS(?, ?, ?) }`,
+    [startDate, endDate, mode]
+  );
+  console.log(`[getAnalyticsData] Stored procedure returned ${rows?.length ?? 0} rows`);
 
-  return buildChartPayload(rawRows, mode, period);
+  return buildChartPayloadFromSp(rows, mode, period);
 }
 
 // GET /api/sales/analytics — Date-range analytics endpoint (matches web app call shape)
@@ -724,28 +648,14 @@ router.get('/chart', async (req, res) => {
   try {
     const yearFrom = parseInt(req.query.yearFrom) || new Date().getFullYear();
     const yearTo = parseInt(req.query.yearTo) || new Date().getFullYear();
-    const modeRaw = (req.query.mode || 'D').toString().toUpperCase();
-    const mode = modeRaw === 'Q' ? 'M' : modeRaw;
+    const modeRaw = (req.query.mode || 'D').toString();
     const smaPeriod = parseInt(req.query.smaPeriod) || 7;
 
     const dateFrom = `${yearFrom}-01-01`;
     const dateTo = `${yearTo}-12-31`;
-    console.log(`[chart] yearFrom=${yearFrom}, yearTo=${yearTo}, mode=${mode}, smaPeriod=${smaPeriod}`);
+    console.log(`[chart] yearFrom=${yearFrom}, yearTo=${yearTo}, mode=${modeRaw}, smaPeriod=${smaPeriod}`);
 
-    const sql = `
-      SELECT SALES_ON_DATE, SUM(NET_SALES) AS TOTAL_SALES
-      FROM AHLIBR.STRSLSSMRY
-      WHERE STATUS = 1
-        AND SALES_ON_DATE >= ?
-        AND SALES_ON_DATE <= ?
-      GROUP BY SALES_ON_DATE
-      ORDER BY SALES_ON_DATE
-    `;
-
-    const rawRows = await odbcQuery(sql, [dateFrom, dateTo]);
-    console.log(`[chart] Got ${rawRows.length} raw daily rows`);
-
-    const payload = buildChartPayload(rawRows, mode, smaPeriod);
+    const payload = await getAnalyticsData(dateFrom, dateTo, modeRaw, smaPeriod);
     console.log(`[chart] Returning ${payload.Labels.length} data points`);
     res.json(payload);
   } catch (err) {
