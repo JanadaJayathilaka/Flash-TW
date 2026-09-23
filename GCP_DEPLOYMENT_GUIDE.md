@@ -337,17 +337,15 @@ Every Sunday morning, the PUB400 server undergoes scheduled system reboot/mainte
 - When PUB400 recovers, the Node.js backend on our side might still hold stale or hung HTTP connections. **Therefore, our backend (Port 6002) must be restarted once the tunnel recovers**.
 
 ### How `watchdog.js` Solves This on Windows:
-We built a pure Node.js native watchdog (`watchdog.js`) that requires **NO Linux bash** and **NO sshpass**:
-1. Every 60 seconds, it probes `http://127.0.0.1:35005/health`.
-2. If down:
-   - Sets a flag file `pub400_restarted.flag`.
-   - Connects to PUB400 over SSH (using Node's `ssh2` library).
-   - Triggers `nohup ./start_all.sh > start_all.log 2>&1 &`.
-3. When UP again:
-   - Detects the flag file.
-   - Automatically executes `pm2 restart flash-sales-backend`.
-   - Cleans up the flag and logs the recovery in `pub400_watchdog.log`.
-   - Your backend is refreshed and 100% operational!
+We built an intelligent Node.js native watchdog daemon (`watchdog.js`):
+1. **Self-Healing Bridge**: It connects directly **outbound** to `pub400.com:2222` over SSH and opens a local bridge on `http://127.0.0.1:35005`.
+   - **Zero Tunnelmole**: You never have to deal with expired Tunnelmole links or 404 errors!
+   - **Zero Firewall Hassle**: Outbound traffic is 100% open by default on Google Cloud.
+2. **Sunday Auto-Recovery**:
+   - Every Sunday morning when PUB400 reboots, the connection closes and `watchdog.js` automatically retries every 5 seconds until PUB400 is back.
+   - Once PUB400 boots, `watchdog.js` re-establishes the tunnel to port 35005.
+   - It automatically runs `pm2 restart flash-sales-backend` to ensure all database connection pools reset.
+   - 100% automated with zero human intervention.
 
 ### Running the Watchdog:
 The watchdog runs continuously under PM2 alongside your backend and frontend.

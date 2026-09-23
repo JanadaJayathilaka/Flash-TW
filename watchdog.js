@@ -1,23 +1,27 @@
 /**
- * Flash-TW PUB400 Connection Watchdog (Node.js - Windows & Linux Native)
+ * Flash-TW PUB400 Self-Healing Tunnel & Watchdog Daemon
  * 
- * Works 100% natively on Windows without needing sshpass or bash.
- * Uses ssh2 (already included in backend/node_modules) to connect to PUB400.
+ * Creates an OUTBOUND SSH tunnel to PUB400:
+ *   Local http://127.0.0.1:35005 -> PUB400 port 35005 (server_odbc.js)
+ * 
+ * Advantages:
+ *   1. Zero Tunnelmole dependency (no 404s, no changing URLs, no rate limits).
+ *   2. Zero incoming firewall rules needed on GCP (outbound is 100% open).
+ *   3. Zero Windows OpenSSH Server needed.
+ *   4. Handles Sunday reboots automatically: reconnects and restarts PM2 backend.
  * 
  * Usage:
- *   node watchdog.js            -> Runs continuous monitoring loop (every 60s)
- *   node watchdog.js --once     -> Runs a single check cycle
- * 
- * In PM2 on Windows:
- *   pm2 start watchdog.js --name "pub400-watchdog"
+ *   node watchdog.js
+ * Or in PM2:
+ *   pm2 start ecosystem.config.js
  */
 
+const net = require('net');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
 const { exec } = require('child_process');
 
-// Locate ssh2 (check local node_modules or backend/node_modules)
 let Client;
 try {
   Client = require('ssh2').Client;
@@ -25,152 +29,144 @@ try {
   try {
     Client = require(path.join(__dirname, 'backend', 'node_modules', 'ssh2')).Client;
   } catch {
-    console.error('❌ Could not locate ssh2. Please run "npm install ssh2" or "cd backend && npm install"');
+    console.error('❌ Could not locate ssh2. Please run "cd backend && npm install"');
     process.exit(1);
   }
 }
 
-const LOG_FILE = path.join(__dirname, 'pub400_watchdog.log');
-const RESTART_FLAG = path.join(__dirname, 'pub400_restarted.flag');
-const CHECK_INTERVAL_MS = 60 * 1000;
+const LOCAL_PORT = 35005;
+const REMOTE_PORT = 35005;
+const PUB400_HOST = 'pub400.com';
+const PUB400_PORT = 2222;
+const PUB400_USER = 'MEEGODA1';
+const PUB400_PASS = 'akila2001';
 const PM2_BACKEND_NAME = 'flash-sales-backend';
+const LOG_FILE = path.join(__dirname, 'pub400_watchdog.log');
 
-function log(message) {
-  const line = `[${new Date().toISOString()}] ${message}\n`;
+let localServer = null;
+let sshClient = null;
+let isConnected = false;
+let isReconnecting = false;
+let needsBackendRestart = false;
+
+function log(msg) {
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
   process.stdout.write(line);
   try {
     fs.appendFileSync(LOG_FILE, line);
-  } catch (err) {
-    console.error('Failed to write to log file:', err.message);
-  }
-}
-
-/**
- * Checks if PUB400 ODBC service & reverse SSH tunnel are UP on local port 35005
- */
-function checkTunnelHealth() {
-  return new Promise((resolve) => {
-    const req = http.get('http://127.0.0.1:35005/health', { timeout: 3000 }, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try {
-          const parsed = JSON.parse(data);
-          resolve(parsed.status === 'UP');
-        } catch {
-          resolve(false);
-        }
-      });
-    });
-
-    req.on('error', () => resolve(false));
-    req.on('timeout', () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
-}
-
-/**
- * SSH into PUB400 and run start_all.sh
- */
-function triggerPub400Restart() {
-  return new Promise((resolve, reject) => {
-    const conn = new Client();
-
-    conn.on('ready', () => {
-      conn.exec("cd /home/MEEGODA1/akila && nohup ./start_all.sh > start_all.log 2>&1 &", (err, stream) => {
-        if (err) {
-          conn.end();
-          return reject(err);
-        }
-
-        stream.on('close', () => {
-          conn.end();
-          resolve();
-        });
-
-        stream.on('data', () => {});
-        stream.stderr.on('data', () => {});
-      });
-    });
-
-    conn.on('error', (err) => {
-      reject(err);
-    });
-
-    conn.connect({
-      host: 'pub400.com',
-      port: 2222,
-      username: 'MEEGODA1',
-      password: 'akila2001',
-      readyTimeout: 20000
-    });
-  });
-}
-
-/**
- * Restart our PM2 backend process to clear stale connection pools and sockets
- */
-function restartBackendPm2() {
-  return new Promise((resolve) => {
-    log(`PUB400 recovered! Restarting our PM2 backend (${PM2_BACKEND_NAME})...`);
-    exec(`pm2 restart ${PM2_BACKEND_NAME}`, (err, stdout, stderr) => {
-      if (err) {
-        log(`⚠️ PM2 restart error: ${err.message}`);
-      } else {
-        log(`✅ Backend restarted successfully via PM2: ${(stdout || '').trim().split('\n')[0]}`);
-      }
-      resolve();
-    });
-  });
-}
-
-/**
- * Single watchdog check cycle
- */
-async function checkOnce() {
-  const isHealthy = await checkTunnelHealth();
-
-  if (isHealthy) {
-    if (fs.existsSync(RESTART_FLAG)) {
-      await restartBackendPm2();
-      try {
-        fs.unlinkSync(RESTART_FLAG);
-      } catch {}
-    }
-    return true;
-  }
-
-  // Tunnel is DOWN
-  log('⚠️ PUB400 tunnel is DOWN (Port 35005 not responding). Triggering start_all.sh on PUB400...');
-  try {
-    fs.writeFileSync(RESTART_FLAG, new Date().toISOString());
   } catch {}
-
-  try {
-    await triggerPub400Restart();
-    log('🚀 Successfully dispatched start_all.sh to PUB400.');
-  } catch (err) {
-    log(`❌ SSH to PUB400 failed: ${err.message} (PUB400 may still be rebooting)`);
-  }
-
-  return false;
 }
 
-// ── Main Execution ──
-if (process.argv.includes('--once')) {
-  checkOnce().then(up => {
-    console.log(`Tunnel Status: ${up ? 'UP' : 'DOWN'}`);
-    process.exit(up ? 0 : 1);
+function startLocalBridge() {
+  if (localServer) return;
+
+  localServer = net.createServer((socket) => {
+    if (!isConnected || !sshClient) {
+      socket.destroy();
+      return;
+    }
+
+    sshClient.forwardOut('127.0.0.1', socket.remotePort, '127.0.0.1', REMOTE_PORT, (err, stream) => {
+      if (err) {
+        socket.destroy();
+        return;
+      }
+      socket.pipe(stream).pipe(socket);
+      stream.on('error', () => socket.destroy());
+      socket.on('error', () => stream.destroy());
+    });
   });
-} else {
-  log('======================================================');
-  log(' PUB400 Watchdog Daemon Started (Interval: 60s)       ');
-  log(' Operating System: Windows / Node.js                  ');
-  log(' Target Port: 127.0.0.1:35005                         ');
-  log('======================================================');
 
-  checkOnce();
-  setInterval(checkOnce, CHECK_INTERVAL_MS);
+  localServer.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      log(`⚠️ Port ${LOCAL_PORT} is already in use by another process.`);
+    } else {
+      log(`⚠️ Bridge error: ${err.message}`);
+    }
+  });
+
+  localServer.listen(LOCAL_PORT, '127.0.0.1', () => {
+    log(`🚀 Local Bridge ready on http://127.0.0.1:${LOCAL_PORT} -> PUB400:${REMOTE_PORT}`);
+  });
 }
+
+function connectToPub400() {
+  if (isReconnecting) return;
+  isReconnecting = true;
+
+  log(`🔄 Connecting outbound SSH tunnel to ${PUB400_HOST}:${PUB400_PORT}...`);
+  sshClient = new Client();
+
+  sshClient.on('ready', () => {
+    isConnected = true;
+    isReconnecting = false;
+    log('✅ Outbound SSH tunnel to PUB400 established successfully!');
+    startLocalBridge();
+
+    // Verify and launch server_odbc.js if not running on PUB400
+    sshClient.exec("ps -ef | grep 'node server_odbc.js' | grep -v grep || (cd /home/MEEGODA1/akila && nohup ./start_all.sh > start_all.log 2>&1 &)", () => {});
+
+    // If recovering after Sunday reboot, restart PM2 backend to refresh connection pools
+    if (needsBackendRestart) {
+      needsBackendRestart = false;
+      log(`PUB400 recovered. Restarting backend PM2 process (${PM2_BACKEND_NAME})...`);
+      exec(`pm2 restart ${PM2_BACKEND_NAME}`, (err, stdout) => {
+        if (!err) {
+          log(`✅ Backend restarted successfully: ${(stdout || '').trim().split('\n')[0]}`);
+        }
+      });
+    }
+  });
+
+  sshClient.on('error', (err) => {
+    isConnected = false;
+    needsBackendRestart = true;
+    log(`⚠️ SSH connection failed: ${err.message} (PUB400 may be rebooting). Retrying in 5s...`);
+  });
+
+  sshClient.on('close', () => {
+    isConnected = false;
+    isReconnecting = false;
+    needsBackendRestart = true;
+    log('⚠️ Tunnel dropped. Reconnecting in 5s...');
+    setTimeout(connectToPub400, 5000);
+  });
+
+  sshClient.connect({
+    host: PUB400_HOST,
+    port: PUB400_PORT,
+    username: PUB400_USER,
+    password: PUB400_PASS,
+    readyTimeout: 20000,
+    keepaliveInterval: 15000,
+    keepaliveCountMax: 3
+  });
+}
+
+// ── Health Check Probe ──
+setInterval(() => {
+  if (!isConnected) return;
+  http.get(`http://127.0.0.1:${LOCAL_PORT}/health`, { timeout: 3000 }, (res) => {
+    let data = '';
+    res.on('data', d => data += d);
+    res.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        if (json.status !== 'UP') {
+          log(`⚠️ Health check returned non-UP status: ${data}`);
+        }
+      } catch {}
+    });
+  }).on('error', () => {
+    // Port not responding
+  });
+}, 30000);
+
+// ── Start Daemon ──
+log('======================================================');
+log(' PUB400 Outbound Tunnel & Watchdog Daemon Started     ');
+log(' Target Port: http://127.0.0.1:35005                  ');
+log(' Destination: pub400.com:2222 (Port 35005)           ');
+log('======================================================');
+
+connectToPub400();
