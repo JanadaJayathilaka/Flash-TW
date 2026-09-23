@@ -6,9 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "deploy": "vite build && sudo cp -r dist/* /var/www/flash-tw-frontend/dist/",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "node server.js",
+    "preview": "vite preview --port 6001 --host",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.0",

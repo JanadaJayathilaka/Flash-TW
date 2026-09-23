@@ -1,0 +1,43 @@
+# ==============================================================================
+# Flash-TW Caddyfile Configuration (Windows & Linux Compatible)
+# Domain: flash-node-no-odbc-db2-mssql.awdspark.com
+# Frontend Port: 6001 | Backend Port: 6002
+# ==============================================================================
+
+flash-node-no-odbc-db2-mssql.awdspark.com {
+    # 1. Reverse Proxy for Backend Express API (Port 6002)
+    handle /api/* {
+        reverse_proxy 127.0.0.1:6002 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 2. Reverse Proxy for GraphQL (Port 6002)
+    handle /graphql* {
+        reverse_proxy 127.0.0.1:6002 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 3. Reverse Proxy for Frontend React App (Port 6001)
+    handle {
+        reverse_proxy 127.0.0.1:6001
+    }
+
+    # 4. Modern Compression
+    encode zstd gzip
+
+    # 5. Access Logs
+    log {
+        output file C:/Flash-TW/caddy_access.log {
+            roll_size 50mb
+            roll_keep 5
+        }
+    }
+}

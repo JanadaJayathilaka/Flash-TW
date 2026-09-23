@@ -9,7 +9,7 @@ const salesRoutes = require('./routes/sales');
 const { getAnalyticsData } = require('./routes/sales');
 
 const app = express();
-const PORT = process.env.PORT || 5009;
+const PORT = process.env.PORT || 6002;
 
 // Middleware
 app.use(cors());

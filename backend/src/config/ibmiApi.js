@@ -26,9 +26,14 @@ async function request(endpoint, options = {}) {
   if (!response.ok) {
     let errDetail;
     try {
-      errDetail = await response.json();
-    } catch {
-      errDetail = await response.text();
+      const text = await response.text();
+      try {
+        errDetail = JSON.parse(text);
+      } catch {
+        errDetail = text;
+      }
+    } catch (readErr) {
+      errDetail = readErr.message;
     }
     throw new Error(
       `IBM i API Error [${response.status} ${response.statusText}]: ${
