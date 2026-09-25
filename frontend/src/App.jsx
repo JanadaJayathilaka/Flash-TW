@@ -502,8 +502,10 @@ export default function App() {
       {/* Top Header Bar */}
       <header className="header-bar">
         <div className="header-pill">React / Tailwind Frontend</div>
-        <div className="header-pill">NodeJS GraphQL / IBM ODBC</div>
-        <div className="header-pill">Servers: Google Cloud and IBM iSeries</div>
+        <div className="header-pill">
+          NodeJS GraphQL / IBM ODBC
+        </div>
+        <div className="header-pill">Servers: AWS Cloud and IBM iSeries</div>
       </header>
 
       <div className="main-container">
