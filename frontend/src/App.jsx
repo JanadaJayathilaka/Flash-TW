@@ -507,7 +507,7 @@ export default function App() {
             ? "NodeJS GraphQL / IBM ODBC"
             : "NodeJS REST API / IBM ODBC"}
         </div>
-        <div className="header-pill">Servers: AWS Cloud and IBM iSeries</div>
+        <div className="header-pill">Servers: Google Cloud and IBM iSeries</div>
       </header>
 
       <div className="main-container">
